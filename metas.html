@@ -1,0 +1,698 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Syros Financial · Metas de Vendas</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600;9..40,700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+:root {
+  --bg: #F2F3F7;
+  --surface: #FFFFFF;
+  --border: #DDE0EC;
+  --text: #1A1917;
+  --text-2: #5C5850;
+  --text-3: #9C9890;
+  --accent: #2A3568;
+  --accent-light: #E8EAF3;
+  --accent-text: #1A2050;
+  --danger: #C0392B;
+  --danger-light: #FDECEA;
+  --success: #166534;
+  --success-light: #dcfce7;
+  --gold: #B8860B;
+  --gold-light: #FEF9E7;
+  --silver: #6B7280;
+  --silver-light: #F3F4F6;
+  --bronze: #92400E;
+  --bronze-light: #FEF3C7;
+  --radius: 10px;
+  --radius-sm: 6px;
+  --shadow: 0 1px 3px rgba(0,0,0,0.06), 0 4px 12px rgba(0,0,0,0.04);
+  --shadow-lg: 0 8px 32px rgba(0,0,0,0.10);
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; font-size: 14px; }
+
+/* LAYOUT */
+.app { display: flex; min-height: 100vh; }
+.sidebar { width: 240px; min-width: 240px; background: var(--accent); color: #fff; display: flex; flex-direction: column; position: sticky; top: 0; height: 100vh; }
+.sidebar-logo { padding: 28px 24px 20px; border-bottom: 1px solid rgba(255,255,255,0.1); }
+.sidebar-logo .brand { font-family: 'DM Serif Display', serif; font-size: 20px; color: #fff; letter-spacing: -0.3px; }
+.sidebar-logo .sub { font-size: 11px; color: rgba(255,255,255,0.5); margin-top: 2px; text-transform: uppercase; letter-spacing: 0.08em; }
+.sidebar-nav { padding: 16px 0; flex: 1; }
+.nav-item { display: flex; align-items: center; gap: 10px; padding: 11px 24px; cursor: pointer; font-size: 13.5px; color: rgba(255,255,255,0.7); border-left: 3px solid transparent; transition: all 0.15s; user-select: none; }
+.nav-item:hover { color: #fff; background: rgba(255,255,255,0.06); }
+.nav-item.active { color: #fff; background: rgba(255,255,255,0.10); border-left-color: rgba(255,255,255,0.6); font-weight: 500; }
+.nav-item .icon { font-size: 18px; width: 20px; text-align: center; }
+.sidebar-footer { padding: 16px 24px; border-top: 1px solid rgba(255,255,255,0.1); font-size: 11px; color: rgba(255,255,255,0.35); line-height: 1.6; }
+.sync-dot { display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: #4ade80; margin-right: 5px; vertical-align: middle; }
+.sync-dot.loading { background: #fbbf24; animation: pulse 1s infinite; }
+.sync-dot.err { background: #f87171; }
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+
+.main { flex: 1; overflow-y: auto; }
+.view { display: none; padding: 36px 40px; max-width: 1000px; }
+.view.active { display: block; }
+
+.page-title { font-family: 'DM Serif Display', serif; font-size: 26px; color: var(--text); letter-spacing: -0.5px; margin-bottom: 4px; }
+.page-sub { font-size: 13px; color: var(--text-2); margin-bottom: 28px; }
+
+/* CARDS RESUMO */
+.summary-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 28px; }
+.summary-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 18px 20px; box-shadow: var(--shadow); }
+.summary-card .label { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-3); margin-bottom: 6px; }
+.summary-card .value { font-family: 'DM Serif Display', serif; font-size: 22px; color: var(--text); }
+.summary-card .sub { font-size: 11.5px; color: var(--text-3); margin-top: 3px; }
+
+/* RANKING */
+.ranking-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 28px; }
+.rank-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 24px 20px; box-shadow: var(--shadow); text-align: center; position: relative; overflow: hidden; transition: box-shadow 0.2s; }
+.rank-card:hover { box-shadow: var(--shadow-lg); }
+.rank-card.gold { border-color: #D4A017; background: linear-gradient(135deg, #FFFBF0 0%, #FEF9E7 100%); }
+.rank-card.silver { border-color: #9CA3AF; background: linear-gradient(135deg, #FAFAFA 0%, #F3F4F6 100%); }
+.rank-card.bronze { border-color: #B45309; background: linear-gradient(135deg, #FFFBF0 0%, #FEF3C7 100%); }
+.rank-badge { font-size: 32px; margin-bottom: 8px; }
+.rank-photo { width: 72px; height: 72px; border-radius: 50%; object-fit: cover; margin: 0 auto 12px; display: block; border: 3px solid var(--border); background: var(--bg); font-size: 28px; line-height: 72px; text-align: center; }
+.rank-card.gold .rank-photo { border-color: #D4A017; }
+.rank-card.silver .rank-photo { border-color: #9CA3AF; }
+.rank-card.bronze .rank-photo { border-color: #B45309; }
+.rank-name { font-weight: 600; font-size: 15px; color: var(--text); margin-bottom: 4px; }
+.rank-comissao { font-family: 'DM Serif Display', serif; font-size: 20px; color: var(--accent); margin-bottom: 2px; }
+.rank-vendas { font-size: 12px; color: var(--text-3); }
+.rank-empty { color: var(--text-3); font-size: 13px; padding: 20px 0; }
+
+/* FORM */
+.card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 24px 28px; box-shadow: var(--shadow); margin-bottom: 20px; }
+.card-title { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-3); margin-bottom: 18px; }
+.form-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+.form-grid-2 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px; }
+.field { display: flex; flex-direction: column; gap: 5px; }
+.field label { font-size: 12px; font-weight: 500; color: var(--text-2); }
+.field input, .field select { padding: 9px 12px; font-size: 13px; font-family: 'DM Sans', sans-serif; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--bg); color: var(--text); outline: none; transition: border 0.15s, box-shadow 0.15s; width: 100%; }
+.field input:focus, .field select:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(42,53,104,0.08); background: #fff; }
+.field .computed { font-size: 13px; padding: 9px 12px; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--accent-light); color: var(--accent-text); font-weight: 600; }
+
+.btn { display: inline-flex; align-items: center; gap: 8px; padding: 10px 20px; border-radius: var(--radius-sm); font-size: 13.5px; font-weight: 500; font-family: 'DM Sans', sans-serif; cursor: pointer; border: none; transition: all 0.15s; }
+.btn-primary { background: var(--accent); color: #fff; }
+.btn-primary:hover { background: #1e2850; }
+.btn-primary:disabled { opacity: 0.6; cursor: not-allowed; }
+.btn-ghost { background: transparent; color: var(--text-2); border: 1px solid var(--border); }
+.btn-ghost:hover { background: var(--bg); }
+.btn-danger { background: var(--danger-light); color: var(--danger); border: 1px solid #f5c6c2; }
+.btn-danger:hover { background: #fbd5d2; }
+
+.form-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px; }
+
+/* TABELA */
+.table-wrap { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; font-size: 13px; }
+thead th { background: var(--bg); padding: 10px 14px; text-align: left; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-3); border-bottom: 1px solid var(--border); white-space: nowrap; }
+tbody tr { border-bottom: 1px solid var(--border); transition: background 0.1s; }
+tbody tr:hover { background: var(--bg); }
+tbody tr:last-child { border-bottom: none; }
+tbody td { padding: 11px 14px; color: var(--text); vertical-align: middle; }
+.ramo-badge { display: inline-block; padding: 3px 9px; border-radius: 99px; font-size: 11.5px; font-weight: 500; white-space: nowrap; }
+.ramo-auto { background: #DBEAFE; color: #1E40AF; }
+.ramo-saude { background: #D1FAE5; color: #065F46; }
+.ramo-vida { background: #EDE9FE; color: #5B21B6; }
+.ramo-residencial { background: #FEF3C7; color: #92400E; }
+.ramo-empresarial { background: #FCE7F3; color: #831843; }
+.ramo-cartao { background: #FEE2E2; color: #991B1B; }
+.ramo-outro { background: var(--bg); color: var(--text-3); }
+
+.vendedor-chip { display: inline-block; padding: 3px 9px; border-radius: 99px; font-size: 11.5px; font-weight: 600; background: var(--accent-light); color: var(--accent-text); }
+.val-green { color: #166534; font-weight: 600; }
+.action-btn { background: none; border: none; cursor: pointer; font-size: 15px; padding: 4px 6px; border-radius: 4px; opacity: 0.5; transition: opacity 0.15s; }
+.action-btn:hover { opacity: 1; }
+
+/* TOAST */
+.toast { position: fixed; bottom: 28px; right: 28px; background: var(--text); color: #fff; padding: 12px 20px; border-radius: var(--radius-sm); font-size: 13px; z-index: 9999; opacity: 0; transform: translateY(8px); transition: all 0.25s; pointer-events: none; max-width: 320px; }
+.toast.show { opacity: 1; transform: translateY(0); }
+.toast.success { background: #166534; }
+.toast.error { background: var(--danger); }
+
+/* MODAL EDITAR */
+.modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.35); z-index: 1000; display: none; align-items: center; justify-content: center; }
+.modal-overlay.open { display: flex; }
+.modal { background: var(--surface); border-radius: var(--radius); padding: 28px 32px; width: 100%; max-width: 620px; box-shadow: var(--shadow-lg); max-height: 90vh; overflow-y: auto; }
+.modal-title { font-family: 'DM Serif Display', serif; font-size: 18px; color: var(--text); margin-bottom: 20px; }
+
+/* MÊS SELECTOR */
+.mes-bar { display: flex; align-items: center; gap: 10px; margin-bottom: 24px; }
+.mes-bar select { padding: 8px 12px; font-size: 13px; font-family: 'DM Sans', sans-serif; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--surface); color: var(--text); outline: none; }
+.mes-bar select:focus { border-color: var(--accent); }
+
+/* EMPTY */
+.empty-state { text-align: center; padding: 48px 0; color: var(--text-3); font-size: 13.5px; }
+.empty-state .icon { font-size: 36px; margin-bottom: 10px; }
+
+/* MOBILE */
+@media (max-width: 768px) {
+  .sidebar { display: none; }
+  .view { padding: 20px 16px; }
+  .summary-grid { grid-template-columns: repeat(2, 1fr); }
+  .ranking-grid { grid-template-columns: 1fr; }
+  .form-grid { grid-template-columns: 1fr 1fr; }
+  .form-grid-2 { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+
+<div class="app">
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <div class="brand">Syros Financial</div>
+      <div class="sub">Metas de Vendas</div>
+    </div>
+    <nav class="sidebar-nav">
+      <div class="nav-item active" onclick="showView('ranking')" id="nav-ranking">
+        <span class="icon">🏆</span> Ranking
+      </div>
+      <div class="nav-item" onclick="showView('nova')" id="nav-nova">
+        <span class="icon">➕</span> Nova Venda
+      </div>
+      <div class="nav-item" onclick="showView('historico')" id="nav-historico">
+        <span class="icon">📋</span> Histórico
+      </div>
+    </nav>
+    <div class="sidebar-footer">
+      <span class="sync-dot" id="syncDot"></span>
+      <span id="syncLabel">Conectado</span>
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <main class="main">
+
+    <!-- RANKING -->
+    <div class="view active" id="view-ranking">
+      <div class="page-title">Ranking do Time</div>
+      <p class="page-sub">Atualizado em tempo real · <span id="mesLabel">—</span></p>
+
+      <div class="mes-bar">
+        <label style="font-size:12px;font-weight:500;color:var(--text-2)">Período:</label>
+        <select id="mesFiltro" onchange="filtrarMes()"></select>
+      </div>
+
+      <div class="summary-grid">
+        <div class="summary-card">
+          <div class="label">Total Vendido (PL)</div>
+          <div class="value" id="totalPL">R$ 0,00</div>
+          <div class="sub">prêmio líquido</div>
+        </div>
+        <div class="summary-card">
+          <div class="label">Total Comissão</div>
+          <div class="value" id="totalComissao">R$ 0,00</div>
+          <div class="sub">equipe completa</div>
+        </div>
+        <div class="summary-card">
+          <div class="label">Nº de Vendas</div>
+          <div class="value" id="totalVendas">0</div>
+          <div class="sub">apólices emitidas</div>
+        </div>
+        <div class="summary-card">
+          <div class="label">Ticket Médio</div>
+          <div class="value" id="ticketMedio">R$ 0,00</div>
+          <div class="sub">por venda</div>
+        </div>
+      </div>
+
+      <div class="ranking-grid" id="rankingGrid">
+        <div class="rank-card"><div class="rank-empty">Carregando...</div></div>
+        <div class="rank-card"><div class="rank-empty">Carregando...</div></div>
+        <div class="rank-card"><div class="rank-empty">Carregando...</div></div>
+      </div>
+    </div>
+
+    <!-- NOVA VENDA -->
+    <div class="view" id="view-nova">
+      <div class="page-title">Nova Venda</div>
+      <p class="page-sub">Registre uma nova apólice emitida</p>
+
+      <div class="card">
+        <div class="card-title">Dados da Venda</div>
+        <form id="formVenda" onsubmit="salvarVenda(event)">
+          <div class="form-grid" style="margin-bottom:14px">
+            <div class="field">
+              <label>Data *</label>
+              <input type="date" id="f_data" required>
+            </div>
+            <div class="field">
+              <label>Segurado *</label>
+              <input type="text" id="f_segurado" placeholder="Nome do cliente" required>
+            </div>
+            <div class="field">
+              <label>Vendedor *</label>
+              <select id="f_vendedor" required>
+                <option value="">Selecione...</option>
+                <option>Silvia</option>
+                <option>Paulo</option>
+                <option>Ícaro</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-grid" style="margin-bottom:14px">
+            <div class="field">
+              <label>Ramo *</label>
+              <select id="f_ramo" required>
+                <option value="">Selecione...</option>
+                <option>Auto</option>
+                <option>Plano de Saúde</option>
+                <option>Residencial</option>
+                <option>Vida mensal</option>
+                <option>Empresarial</option>
+                <option>Cartão Porto</option>
+                <option>Outro</option>
+              </select>
+            </div>
+            <div class="field">
+              <label>Seguradora *</label>
+              <input type="text" id="f_cia" placeholder="Ex: HDI, Bradesco, Amil..." required>
+            </div>
+            <div class="field">
+              <label>SDR / Indicação</label>
+              <input type="text" id="f_sdr" placeholder="Opcional">
+            </div>
+          </div>
+          <div class="form-grid" style="margin-bottom:20px">
+            <div class="field">
+              <label>Prêmio Líquido (R$) *</label>
+              <input type="number" id="f_pl" step="0.01" min="0" placeholder="0,00" required oninput="calcComissao()">
+            </div>
+            <div class="field">
+              <label>% Comissão *</label>
+              <input type="number" id="f_pct" step="0.01" min="0" max="500" placeholder="%" required oninput="calcComissao()">
+            </div>
+            <div class="field">
+              <label>Comissão Calculada</label>
+              <div class="computed" id="f_comissao_preview">R$ 0,00</div>
+            </div>
+          </div>
+          <div class="form-actions">
+            <button type="button" class="btn btn-ghost" onclick="resetForm()">Limpar</button>
+            <button type="submit" class="btn btn-primary" id="btnSalvar">💾 Salvar Venda</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- HISTÓRICO -->
+    <div class="view" id="view-historico">
+      <div class="page-title">Histórico de Vendas</div>
+      <p class="page-sub">Todas as vendas registradas</p>
+
+      <div class="mes-bar">
+        <label style="font-size:12px;font-weight:500;color:var(--text-2)">Período:</label>
+        <select id="mesFiltroHist" onchange="renderHistorico()"></select>
+        <input type="text" id="buscaHist" placeholder="🔍 Buscar segurado ou seguradora..." style="padding:8px 12px;font-size:13px;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--surface);outline:none;width:260px;font-family:'DM Sans',sans-serif" oninput="renderHistorico()">
+      </div>
+
+      <div class="card" style="padding:0">
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Data</th>
+                <th>Segurado</th>
+                <th>Ramo</th>
+                <th>Seguradora</th>
+                <th>Prêmio Liq.</th>
+                <th>%</th>
+                <th>Comissão</th>
+                <th>Vendedor</th>
+                <th>SDR</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody id="tbodyHist"></tbody>
+          </table>
+        </div>
+        <div id="emptyHist" class="empty-state" style="display:none">
+          <div class="icon">📭</div>
+          Nenhuma venda encontrada
+        </div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<!-- MODAL EDITAR -->
+<div class="modal-overlay" id="modalOverlay" onclick="fecharModal(event)">
+  <div class="modal">
+    <div class="modal-title">Editar Venda</div>
+    <input type="hidden" id="edit_id">
+    <div class="form-grid" style="margin-bottom:14px">
+      <div class="field"><label>Data *</label><input type="date" id="edit_data" required></div>
+      <div class="field"><label>Segurado *</label><input type="text" id="edit_segurado" required></div>
+      <div class="field">
+        <label>Vendedor *</label>
+        <select id="edit_vendedor" required>
+          <option>Silvia</option><option>Paulo</option><option>Ícaro</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-grid" style="margin-bottom:14px">
+      <div class="field">
+        <label>Ramo *</label>
+        <select id="edit_ramo" required>
+          <option>Auto</option><option>Plano de Saúde</option><option>Residencial</option>
+          <option>Vida mensal</option><option>Empresarial</option><option>Cartão Porto</option><option>Outro</option>
+        </select>
+      </div>
+      <div class="field"><label>Seguradora *</label><input type="text" id="edit_cia" required></div>
+      <div class="field"><label>SDR / Indicação</label><input type="text" id="edit_sdr"></div>
+    </div>
+    <div class="form-grid" style="margin-bottom:20px">
+      <div class="field"><label>Prêmio Líquido (R$) *</label><input type="number" id="edit_pl" step="0.01" min="0" required oninput="calcComissaoEdit()"></div>
+      <div class="field"><label>% Comissão *</label><input type="number" id="edit_pct" step="0.01" min="0" max="500" required oninput="calcComissaoEdit()"></div>
+      <div class="field"><label>Comissão Calculada</label><div class="computed" id="edit_comissao_preview">R$ 0,00</div></div>
+    </div>
+    <div class="form-actions">
+      <button class="btn btn-ghost" onclick="fecharModalDireto()">Cancelar</button>
+      <button class="btn btn-primary" onclick="salvarEdicao()">💾 Salvar</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<script>
+const SUPABASE_URL = 'https://cbwupjmzhtjqadrcttfs.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNid3Vwam16aHRqcWFkcmN0dGZzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk0NzYzMTcsImV4cCI6MjA5NTA1MjMxN30.nuEZd_hhnCr5gegnAz6_XyDFozIRYUs2EYjO3RQ6WWE';
+const { createClient } = supabase;
+const db = createClient(SUPABASE_URL, SUPABASE_KEY);
+
+// FOTOS DOS VENDEDORES (base64 ou URL — substitua pelas fotos reais)
+const FOTOS = {
+  'Silvia': null,
+  'Paulo':  null,
+  'Ícaro':  null,
+};
+// Emojis fallback por vendedor
+const EMOJIS = { 'Silvia': '👩', 'Paulo': '👨', 'Ícaro': '🧑' };
+
+let todasVendas = [];
+let mesFiltroAtivo = '';
+
+// ── INIT ──────────────────────────────────────────────────────────
+window.addEventListener('DOMContentLoaded', async () => {
+  setSync('loading');
+  popularMeses();
+  await carregarVendas();
+  subscribeRealtime();
+  document.getElementById('f_data').value = hoje();
+});
+
+function hoje() {
+  return new Date().toISOString().split('T')[0];
+}
+
+function popularMeses() {
+  const agora = new Date();
+  const opts = [];
+  for (let i = 0; i < 12; i++) {
+    const d = new Date(agora.getFullYear(), agora.getMonth() - i, 1);
+    const val = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
+    const label = d.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
+    opts.push({ val, label });
+  }
+  const mesAtual = opts[0].val;
+  mesFiltroAtivo = mesAtual;
+
+  ['mesFiltro','mesFiltroHist'].forEach(id => {
+    const sel = document.getElementById(id);
+    sel.innerHTML = opts.map(o => `<option value="${o.val}"${o.val===mesAtual?' selected':''}>${capitalize(o.label)}</option>`).join('');
+  });
+
+  document.getElementById('mesLabel').textContent = capitalize(opts[0].label);
+}
+
+function capitalize(s) { return s.charAt(0).toUpperCase() + s.slice(1); }
+
+// ── SUPABASE ──────────────────────────────────────────────────────
+async function carregarVendas() {
+  const { data, error } = await db.from('vendas').select('*').order('data', { ascending: false });
+  if (error) { setSync('err'); return; }
+  todasVendas = data || [];
+  setSync('ok');
+  renderRanking();
+  renderHistorico();
+}
+
+function subscribeRealtime() {
+  db.channel('vendas-changes')
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'vendas' }, () => {
+      carregarVendas();
+    })
+    .subscribe();
+}
+
+// ── FILTRO MÊS ────────────────────────────────────────────────────
+function filtrarMes() {
+  const val = document.getElementById('mesFiltro').value;
+  mesFiltroAtivo = val;
+  document.getElementById('mesFiltroHist').value = val;
+  const [ano, mes] = val.split('-');
+  const label = new Date(+ano, +mes-1, 1).toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
+  document.getElementById('mesLabel').textContent = capitalize(label);
+  renderRanking();
+}
+
+function vendasDoMes(mes) {
+  if (!mes) return todasVendas;
+  return todasVendas.filter(v => v.data && v.data.startsWith(mes));
+}
+
+// ── RANKING ───────────────────────────────────────────────────────
+function renderRanking() {
+  const mes = document.getElementById('mesFiltro').value;
+  const vendas = vendasDoMes(mes);
+
+  // Sumário
+  const totalPL = vendas.reduce((a,v) => a + (+v.premio_liquido||0), 0);
+  const totalCom = vendas.reduce((a,v) => a + (+v.comissao||0), 0);
+  document.getElementById('totalPL').textContent = fmt(totalPL);
+  document.getElementById('totalComissao').textContent = fmt(totalCom);
+  document.getElementById('totalVendas').textContent = vendas.length;
+  document.getElementById('ticketMedio').textContent = vendas.length ? fmt(totalPL / vendas.length) : 'R$ 0,00';
+
+  // Agrupar por vendedor
+  const map = {};
+  vendas.forEach(v => {
+    if (!map[v.vendedor]) map[v.vendedor] = { comissao: 0, pl: 0, count: 0 };
+    map[v.vendedor].comissao += (+v.comissao||0);
+    map[v.vendedor].pl += (+v.premio_liquido||0);
+    map[v.vendedor].count++;
+  });
+
+  const sorted = Object.entries(map).sort((a,b) => b[1].comissao - a[1].comissao);
+  const classes = ['gold','silver','bronze'];
+  const medals = ['🥇','🥈','🥉'];
+
+  const grid = document.getElementById('rankingGrid');
+  const slots = 3;
+  let html = '';
+  for (let i = 0; i < slots; i++) {
+    const entry = sorted[i];
+    const cls = classes[i] || '';
+    if (entry) {
+      const [nome, stats] = entry;
+      const foto = FOTOS[nome];
+      const fotoHtml = foto
+        ? `<img class="rank-photo" src="${foto}" alt="${nome}">`
+        : `<div class="rank-photo">${EMOJIS[nome] || '🧑'}</div>`;
+      html += `<div class="rank-card ${cls}">
+        <div class="rank-badge">${medals[i]}</div>
+        ${fotoHtml}
+        <div class="rank-name">${nome}</div>
+        <div class="rank-comissao">${fmt(stats.comissao)}</div>
+        <div class="rank-vendas">${stats.count} venda${stats.count!==1?'s':''} · PL ${fmt(stats.pl)}</div>
+      </div>`;
+    } else {
+      html += `<div class="rank-card ${cls}">
+        <div class="rank-badge">${medals[i]}</div>
+        <div class="rank-empty">Sem vendas ainda</div>
+      </div>`;
+    }
+  }
+  grid.innerHTML = html;
+}
+
+// ── HISTÓRICO ─────────────────────────────────────────────────────
+function renderHistorico() {
+  const mes = document.getElementById('mesFiltroHist').value;
+  const busca = document.getElementById('buscaHist').value.toLowerCase().trim();
+  let vendas = vendasDoMes(mes);
+  if (busca) vendas = vendas.filter(v =>
+    (v.segurado||'').toLowerCase().includes(busca) ||
+    (v.cia||'').toLowerCase().includes(busca)
+  );
+
+  const tbody = document.getElementById('tbodyHist');
+  const empty = document.getElementById('emptyHist');
+
+  if (!vendas.length) {
+    tbody.innerHTML = '';
+    empty.style.display = 'block';
+    return;
+  }
+  empty.style.display = 'none';
+
+  tbody.innerHTML = vendas.map(v => `
+    <tr>
+      <td>${fmtData(v.data)}</td>
+      <td style="max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${v.segurado}">${v.segurado}</td>
+      <td><span class="ramo-badge ${ramoClass(v.ramo)}">${v.ramo}</span></td>
+      <td>${v.cia}</td>
+      <td>${fmt(v.premio_liquido)}</td>
+      <td>${(+v.percentual_comissao).toFixed(0)}%</td>
+      <td class="val-green">${fmt(v.comissao)}</td>
+      <td><span class="vendedor-chip">${v.vendedor}</span></td>
+      <td style="color:var(--text-3);font-size:12px">${v.sdr_indicacao||'—'}</td>
+      <td>
+        <button class="action-btn" onclick="abrirEdicao('${v.id}')" title="Editar">✏️</button>
+        <button class="action-btn" onclick="deletarVenda('${v.id}')" title="Excluir">🗑️</button>
+      </td>
+    </tr>
+  `).join('');
+}
+
+// ── FORM NOVA VENDA ───────────────────────────────────────────────
+function calcComissao() {
+  const pl = parseFloat(document.getElementById('f_pl').value) || 0;
+  const pct = parseFloat(document.getElementById('f_pct').value) || 0;
+  document.getElementById('f_comissao_preview').textContent = fmt(pl * pct / 100);
+}
+
+function resetForm() {
+  document.getElementById('formVenda').reset();
+  document.getElementById('f_data').value = hoje();
+  document.getElementById('f_comissao_preview').textContent = 'R$ 0,00';
+}
+
+async function salvarVenda(e) {
+  e.preventDefault();
+  const btn = document.getElementById('btnSalvar');
+  btn.disabled = true;
+  btn.textContent = 'Salvando...';
+
+  const payload = {
+    data: document.getElementById('f_data').value,
+    segurado: document.getElementById('f_segurado').value.trim(),
+    ramo: document.getElementById('f_ramo').value,
+    cia: document.getElementById('f_cia').value.trim(),
+    premio_liquido: parseFloat(document.getElementById('f_pl').value) || 0,
+    percentual_comissao: parseFloat(document.getElementById('f_pct').value) || 0,
+    vendedor: document.getElementById('f_vendedor').value,
+    sdr_indicacao: document.getElementById('f_sdr').value.trim() || null,
+  };
+
+  const { error } = await db.from('vendas').insert([payload]);
+  btn.disabled = false;
+  btn.textContent = '💾 Salvar Venda';
+
+  if (error) { showToast('Erro ao salvar: ' + error.message, 'error'); return; }
+  showToast('Venda registrada com sucesso!', 'success');
+  resetForm();
+  showView('ranking');
+}
+
+// ── EDITAR ────────────────────────────────────────────────────────
+function abrirEdicao(id) {
+  const v = todasVendas.find(x => x.id === id);
+  if (!v) return;
+  document.getElementById('edit_id').value = v.id;
+  document.getElementById('edit_data').value = v.data;
+  document.getElementById('edit_segurado').value = v.segurado;
+  document.getElementById('edit_vendedor').value = v.vendedor;
+  document.getElementById('edit_ramo').value = v.ramo;
+  document.getElementById('edit_cia').value = v.cia;
+  document.getElementById('edit_sdr').value = v.sdr_indicacao || '';
+  document.getElementById('edit_pl').value = v.premio_liquido;
+  document.getElementById('edit_pct').value = v.percentual_comissao;
+  calcComissaoEdit();
+  document.getElementById('modalOverlay').classList.add('open');
+}
+
+function calcComissaoEdit() {
+  const pl = parseFloat(document.getElementById('edit_pl').value) || 0;
+  const pct = parseFloat(document.getElementById('edit_pct').value) || 0;
+  document.getElementById('edit_comissao_preview').textContent = fmt(pl * pct / 100);
+}
+
+async function salvarEdicao() {
+  const id = document.getElementById('edit_id').value;
+  const payload = {
+    data: document.getElementById('edit_data').value,
+    segurado: document.getElementById('edit_segurado').value.trim(),
+    ramo: document.getElementById('edit_ramo').value,
+    cia: document.getElementById('edit_cia').value.trim(),
+    premio_liquido: parseFloat(document.getElementById('edit_pl').value) || 0,
+    percentual_comissao: parseFloat(document.getElementById('edit_pct').value) || 0,
+    vendedor: document.getElementById('edit_vendedor').value,
+    sdr_indicacao: document.getElementById('edit_sdr').value.trim() || null,
+  };
+  const { error } = await db.from('vendas').update(payload).eq('id', id);
+  if (error) { showToast('Erro ao editar: ' + error.message, 'error'); return; }
+  fecharModalDireto();
+  showToast('Venda atualizada!', 'success');
+}
+
+async function deletarVenda(id) {
+  if (!confirm('Excluir esta venda? Esta ação não pode ser desfeita.')) return;
+  const { error } = await db.from('vendas').delete().eq('id', id);
+  if (error) { showToast('Erro ao excluir: ' + error.message, 'error'); return; }
+  showToast('Venda excluída.', 'success');
+}
+
+function fecharModal(e) { if (e.target === document.getElementById('modalOverlay')) fecharModalDireto(); }
+function fecharModalDireto() { document.getElementById('modalOverlay').classList.remove('open'); }
+
+// ── NAV ───────────────────────────────────────────────────────────
+function showView(id) {
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('view-' + id).classList.add('active');
+  document.getElementById('nav-' + id).classList.add('active');
+  if (id === 'historico') renderHistorico();
+}
+
+// ── UTILS ─────────────────────────────────────────────────────────
+function fmt(v) {
+  return (+v||0).toLocaleString('pt-BR', { style:'currency', currency:'BRL' });
+}
+function fmtData(d) {
+  if (!d) return '—';
+  const [y,m,dd] = d.split('-');
+  return `${dd}/${m}/${y}`;
+}
+function ramoClass(r) {
+  const map = {
+    'Auto':'ramo-auto','Plano de Saúde':'ramo-saude','Vida mensal':'ramo-vida',
+    'Residencial':'ramo-residencial','Empresarial':'ramo-empresarial','Cartão Porto':'ramo-cartao'
+  };
+  return map[r] || 'ramo-outro';
+}
+function setSync(state) {
+  const dot = document.getElementById('syncDot');
+  const lbl = document.getElementById('syncLabel');
+  dot.className = 'sync-dot ' + state;
+  lbl.textContent = state==='ok'?'Conectado':state==='loading'?'Sincronizando...':'Erro de conexão';
+}
+let toastTimer;
+function showToast(msg, type='') {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast show ' + type;
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('show'), 3200);
+}
+</script>
+</body>
+</html>
