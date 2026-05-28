@@ -126,6 +126,13 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
 .rank-card.silver .meta-bar-fill{background:#6B7280}
 .rank-card.bronze .meta-bar-fill{background:#B45309}
 .meta-bar-fill.done{background:var(--green)!important}
+.metas-vendedor{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:20px 24px;box-shadow:var(--shadow);margin-bottom:16px}
+.metas-vendedor-header{display:flex;align-items:center;gap:10px;margin-bottom:16px;padding-bottom:12px;border-bottom:1px solid var(--border)}
+.metas-vendedor-nome{font-weight:600;font-size:15px;color:var(--text)}
+.metas-ramo-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:12px}
+.metas-ramo-label{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--text-3);margin-bottom:8px;padding:8px 0 0;grid-column:1/-1;border-top:1px dashed var(--border)}
+@media(max-width:768px){.metas-ramo-grid{grid-template-columns:1fr 1fr}}
+@media(max-width:480px){.metas-ramo-grid{grid-template-columns:1fr}}
 
 /* TABLE */
 .table-wrap{overflow-x:auto}
@@ -203,6 +210,14 @@ canvas{max-height:260px}
 .mobile-nav-item .mn-label{font-size:9.5px;font-weight:500;letter-spacing:.04em}
 
 /* LOADING */
+.dash-prop-item{display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border)}
+.dash-prop-item:last-child{border-bottom:none}
+.dash-prop-prob{display:flex;align-items:center;gap:8px}
+.prob-pill{padding:3px 10px;border-radius:99px;font-size:11.5px;font-weight:700}
+.prob-high{background:#dcfce7;color:#166534}
+.prob-med{background:#FEF9C3;color:#854D0E}
+.prob-low{background:#FEE2E2;color:#991B1B}
+input[type=range]{width:100%;accent-color:var(--accent)}
 .app-loading{min-height:100vh;display:flex;align-items:center;justify-content:center;background:var(--bg)}
 .spinner{width:32px;height:32px;border:3px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .7s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
@@ -272,7 +287,8 @@ canvas{max-height:260px}
     </div>
     <nav class="sidebar-nav">
       <div class="nav-section">Visão Geral</div>
-      <div class="nav-item active" onclick="showView('ranking')" id="nav-ranking"><span class="icon">🏆</span> Ranking</div>
+      <div class="nav-item active" onclick="showView('dashboard')" id="nav-dashboard"><span class="icon">🏠</span> Meu Dashboard</div>
+      <div class="nav-item" onclick="showView('ranking')" id="nav-ranking"><span class="icon">🏆</span> Ranking</div>
       <div class="nav-item" onclick="showView('analises')" id="nav-analises"><span class="icon">📊</span> Análises</div>
       <div class="nav-item" onclick="showView('indicacoes')" id="nav-indicacoes"><span class="icon">🔗</span> Indicações</div>
       <div class="nav-section">Vendas</div>
@@ -292,8 +308,101 @@ canvas{max-height:260px}
 
   <main class="main">
 
+    <!-- DASHBOARD -->
+    <div class="view active" id="view-dashboard">
+      <div class="page-title" id="dashTitle">Meu Dashboard</div>
+      <p class="page-sub" id="dashSub">Seu desempenho pessoal · <span id="dashMesLabel">—</span></p>
+
+      <!-- Cards pessoais -->
+      <div class="summary-grid" style="margin-bottom:24px">
+        <div class="summary-card">
+          <div class="label">Minha Comissão</div>
+          <div class="value" id="dashComissao">R$ 0,00</div>
+          <div class="sub">no mês atual</div>
+          <div class="delta neutral" id="dashDeltaCom"></div>
+        </div>
+        <div class="summary-card">
+          <div class="label">Meu PL</div>
+          <div class="value" id="dashPL">R$ 0,00</div>
+          <div class="sub">prêmio líquido</div>
+        </div>
+        <div class="summary-card">
+          <div class="label">Minhas Vendas</div>
+          <div class="value" id="dashVendas">0</div>
+          <div class="sub">apólices no mês</div>
+        </div>
+        <div class="summary-card">
+          <div class="label">Posição no Ranking</div>
+          <div class="value" id="dashPosicao">—</div>
+          <div class="sub">entre os vendedores</div>
+        </div>
+      </div>
+
+      <!-- Meta geral pessoal -->
+      <div class="card" id="dashMetaCard" style="margin-bottom:20px;display:none">
+        <div class="card-header">
+          <div class="card-title">Progresso da Meta Geral</div>
+          <span id="dashMetaPct" style="font-size:13px;font-weight:600;color:var(--accent)"></span>
+        </div>
+        <div class="meta-bar" style="height:10px;margin-bottom:8px">
+          <div class="meta-bar-fill" id="dashMetaFill" style="width:0%"></div>
+        </div>
+        <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--text-2)">
+          <span>Realizado: <strong id="dashMetaRealizado"></strong></span>
+          <span>Meta: <strong id="dashMetaValor"></strong></span>
+          <span>Falta: <strong id="dashMetaFalta"></strong></span>
+        </div>
+      </div>
+
+      <!-- Metas por produto -->
+      <div class="card" id="dashMetaRamoCard" style="margin-bottom:20px;display:none">
+        <div class="card-title">Meta por Produto</div>
+        <div id="dashMetasRamo"></div>
+      </div>
+
+      <!-- Previsão de Fechamento -->
+      <div class="card" style="margin-bottom:20px">
+        <div class="card-header">
+          <div class="card-title">Previsão de Fechamento (Pipeline)</div>
+          <button class="btn btn-ghost" style="font-size:12px;padding:6px 12px" onclick="showView('propostas')">Ver propostas →</button>
+        </div>
+        <div id="dashPrevisao">
+          <div class="empty-state" style="padding:24px 0"><div class="icon">📄</div>Nenhuma proposta aberta</div>
+        </div>
+        <div id="dashPrevisaoTotal" style="display:none;margin-top:16px;padding-top:16px;border-top:1px solid var(--border)">
+          <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px">
+            <div>
+              <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:var(--text-3);margin-bottom:4px">Comissão Esperada (ponderada)</div>
+              <div style="font-family:'DM Serif Display',serif;font-size:24px;color:var(--accent)" id="dashPrevTotal">R$ 0,00</div>
+              <div style="font-size:12px;color:var(--text-3);margin-top:2px" id="dashPrevSub"></div>
+            </div>
+            <div style="text-align:right">
+              <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:var(--text-3);margin-bottom:4px">Projeção do Mês</div>
+              <div style="font-family:'DM Serif Display',serif;font-size:24px;color:var(--green)" id="dashProjTotal">R$ 0,00</div>
+              <div style="font-size:12px;color:var(--text-3);margin-top:2px">comissão atual + previsão</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Últimas vendas pessoais -->
+      <div class="card" style="padding:0">
+        <div class="card-header" style="padding:18px 24px 0">
+          <div class="card-title" style="margin-bottom:0">Minhas Últimas Vendas</div>
+          <button class="btn btn-ghost" style="font-size:12px;padding:6px 12px" onclick="showView('nova')">+ Nova venda</button>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Data</th><th>Segurado</th><th>Ramo</th><th>Cia</th><th>Comissão</th></tr></thead>
+            <tbody id="tbodyDash"></tbody>
+          </table>
+        </div>
+        <div id="emptyDash" class="empty-state" style="display:none;padding:24px 0"><div class="icon">📭</div>Nenhuma venda este mês</div>
+      </div>
+    </div>
+
     <!-- RANKING -->
-    <div class="view active" id="view-ranking">
+    <div class="view" id="view-ranking">
       <div class="page-title">Ranking do Time</div>
       <p class="page-sub">Atualizado em tempo real · <span id="mesLabel">—</span></p>
       <div class="mes-bar">
@@ -405,7 +514,7 @@ canvas{max-height:260px}
         <button class="btn btn-primary" onclick="abrirModalProposta()">➕ Nova Proposta</button>
       </div>
       <div class="card" style="padding:0"><div class="table-wrap">
-        <table><thead><tr><th>Data</th><th>Segurado</th><th>Ramo</th><th>Seguradora</th><th>PL</th><th>Vendedor</th><th>Status</th><th></th></tr></thead>
+        <table><thead><tr><th>Data</th><th>Segurado</th><th>Ramo</th><th>Seguradora</th><th>PL</th><th>Com. Est.</th><th>Prob.</th><th>Prev. Fecha.</th><th>Vendedor</th><th>Status</th><th></th></tr></thead>
         <tbody id="tbodyProp"></tbody></table>
       </div><div id="emptyProp" class="empty-state" style="display:none"><div class="icon">📄</div>Nenhuma proposta ainda</div></div>
     </div>
@@ -413,17 +522,12 @@ canvas{max-height:260px}
     <!-- METAS -->
     <div class="view" id="view-metas">
       <div class="page-title">Definir Metas</div>
-      <p class="page-sub">Configure a meta de comissão mensal por vendedor</p>
-      <div class="card">
-        <div class="card-title">Meta do Mês</div>
-        <div class="form-grid-2" style="margin-bottom:16px">
-          <div class="field"><label>Mês</label><select id="metaMes"></select></div>
-        </div>
-        <div id="metasForm"></div>
-        <div class="form-actions">
-          <button class="btn btn-primary" onclick="salvarMetas()">💾 Salvar Metas</button>
-        </div>
+      <p class="page-sub">Configure metas de comissão por vendedor — geral e por produto</p>
+      <div class="mes-bar" style="margin-bottom:20px">
+        <label style="font-size:12px;font-weight:500;color:var(--text-2)">Mês:</label>
+        <select id="metaMes"></select>
       </div>
+      <div id="metasForm"></div>
     </div>
 
     <!-- EXPORTAR -->
@@ -455,7 +559,8 @@ canvas{max-height:260px}
 
 <!-- MOBILE NAV -->
 <nav class="mobile-nav" id="mobileNav" style="display:none">
-  <div class="mobile-nav-item active" id="mnav-ranking" onclick="showView('ranking')"><span class="mn-icon">🏆</span><span class="mn-label">Ranking</span></div>
+  <div class="mobile-nav-item active" id="mnav-dashboard" onclick="showView('dashboard')"><span class="mn-icon">🏠</span><span class="mn-label">Dashboard</span></div>
+  <div class="mobile-nav-item" id="mnav-ranking" onclick="showView('ranking')"><span class="mn-icon">🏆</span><span class="mn-label">Ranking</span></div>
   <div class="mobile-nav-item" id="mnav-analises" onclick="showView('analises')"><span class="mn-icon">📊</span><span class="mn-label">Análises</span></div>
   <div class="mobile-nav-item" id="mnav-nova" onclick="showView('nova')"><span class="mn-icon">➕</span><span class="mn-label">Venda</span></div>
   <div class="mobile-nav-item" id="mnav-historico" onclick="showView('historico')"><span class="mn-icon">📋</span><span class="mn-label">Histórico</span></div>
@@ -540,7 +645,7 @@ const EMOJIS={'Silvia':'👩','Paulo':'👨','Ícaro':'🧑'};
 const VENDEDORES=['Silvia','Paulo','Ícaro'];
 const CORES_VENDEDOR={'Silvia':'#6366f1','Paulo':'#f59e0b','Ícaro':'#10b981'};
 
-let todasVendas=[], todasPropostas=[], todasMetas=[];
+let todasVendas=[], todasPropostas=[], todasMetas=[], todasMetasRamo=[];
 let currentUser=null, currentProfile=null;
 let charts={};
 let metasAntesDoBatch={};
@@ -574,6 +679,7 @@ async function iniciarApp(user){
   document.getElementById('sidebarNome').textContent=profile?.nome||user.email;
   document.getElementById('sidebarEmail').textContent=user.email;
   if(profile?.vendedor) document.getElementById('f_vendedor').value=profile.vendedor;
+  showView('dashboard');
 
   popularMeses();
   setSync('loading');
@@ -641,22 +747,28 @@ async function carregarVendas(){
   if(error){setSync('err');return;}
   todasVendas=data||[];
   setSync('ok');
-  renderRanking();renderHistorico();renderIndicacoes();renderPropostas();
+  renderRanking();renderHistorico();renderIndicacoes();renderPropostas();renderDashboard();
   if(document.getElementById('view-analises').classList.contains('active')) renderAnalises();
 }
 async function carregarPropostas(){
   const{data}=await db.from('propostas').select('*').order('data',{ascending:false});
-  todasPropostas=data||[];renderPropostas();
+  todasPropostas=data||[];renderPropostas();renderDashboard();
 }
 async function carregarMetas(){
-  const{data}=await db.from('metas_mensais').select('*');
-  todasMetas=data||[];renderFormMetas();
+  const[{data:d1},{data:d2}]=await Promise.all([
+    db.from('metas_mensais').select('*'),
+    db.from('metas_ramo').select('*')
+  ]);
+  todasMetas=d1||[];
+  todasMetasRamo=d2||[];
+  renderFormMetas();
 }
 function subscribeRealtime(){
   db.channel('all-changes')
     .on('postgres_changes',{event:'*',schema:'public',table:'vendas'},()=>carregarVendas())
     .on('postgres_changes',{event:'*',schema:'public',table:'propostas'},()=>carregarPropostas())
     .on('postgres_changes',{event:'*',schema:'public',table:'metas_mensais'},()=>carregarMetas())
+    .on('postgres_changes',{event:'*',schema:'public',table:'metas_ramo'},()=>carregarMetas())
     .subscribe();
 }
 
@@ -716,6 +828,11 @@ function renderRanking(){
   // Metas do mês
   const metasMes={};
   todasMetas.filter(m=>m.mes===mes).forEach(m=>metasMes[m.vendedor]=+m.meta_comissao);
+  const metasRamoMes={};
+  todasMetasRamo.filter(m=>m.mes===mes).forEach(m=>{
+    if(!metasRamoMes[m.vendedor]) metasRamoMes[m.vendedor]={};
+    metasRamoMes[m.vendedor][m.ramo]=+m.meta_comissao;
+  });
 
   const map={};
   vendas.forEach(v=>{
@@ -755,11 +872,24 @@ function renderRanking(){
     const deltaStr=antCom>0?deltaTexto(s.comissao,antCom):'';
     const meta=metasMes[nome]||0;
     const pct=meta>0?Math.min(100,(s.comissao/meta)*100):0;
+    // Metas por ramo para este vendedor
+    const metasRamoV=(metasRamoMes||{})[nome]||{};
+    const ramoComissoes={};
+    vendas.filter(x=>x.vendedor===nome).forEach(x=>{ramoComissoes[x.ramo]=(ramoComissoes[x.ramo]||0)+(+x.comissao||0);});
+    const ramoBarras=Object.entries(metasRamoV).filter(([r,m])=>m>0).map(([r,m])=>{
+      const atual=ramoComissoes[r]||0;
+      const p=Math.min(100,(atual/m)*100);
+      return `<div style="margin-top:6px">
+        <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--text-3);margin-bottom:2px"><span>${r}</span><span>${fmt(atual)}/${fmt(m)}</span></div>
+        <div class="meta-bar"><div class="meta-bar-fill ${p>=100?'done':''}" style="width:${p}%;background:${p>=100?'var(--green)':'#6366f1'}"></div></div>
+      </div>`;
+    }).join('');
     const metaHtml=meta>0?`
       <div class="meta-bar-wrap">
-        <div class="meta-bar-label"><span>Meta: ${fmt(meta)}</span><span>${pct.toFixed(0)}%</span></div>
+        <div class="meta-bar-label"><span>Meta geral: ${fmt(meta)}</span><span>${pct.toFixed(0)}%</span></div>
         <div class="meta-bar"><div class="meta-bar-fill ${pct>=100?'done':''}" style="width:${pct}%"></div></div>
-      </div>`:'';
+        ${ramoBarras}
+      </div>`:(ramoBarras?`<div class="meta-bar-wrap">${ramoBarras}</div>`:'');
     return `<div class="rank-card ${classes[i]}">
       <div class="rank-badge">${medals[i]}</div>
       ${fotoHtml}
@@ -940,19 +1070,26 @@ function renderPropostas(){
   const empty=document.getElementById('emptyProp');
   if(!todasPropostas.length){tbody.innerHTML='';empty.style.display='block';return;}
   empty.style.display='none';
-  tbody.innerHTML=todasPropostas.map(p=>`
-    <tr>
+  tbody.innerHTML=todasPropostas.map(p=>{
+    const comEst=(+p.premio_liquido||0)*(+p.percentual_comissao||0)/100;
+    const prob=p.probabilidade??50;
+    const probCls=prob>=70?'prob-high':prob>=40?'prob-med':'prob-low';
+    return `<tr>
       <td>${fmtData(p.data)}</td>
-      <td style="max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${p.segurado}</td>
+      <td style="max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${p.segurado}</td>
       <td><span class="ramo-badge ${ramoClass(p.ramo)}">${p.ramo}</span></td>
-      <td>${p.cia}</td><td>${fmt(p.premio_liquido)}</td>
+      <td>${p.cia}</td>
+      <td>${fmt(p.premio_liquido)}</td>
+      <td class="val-green">${fmt(comEst)}</td>
+      <td><span class="prob-pill ${probCls}">${prob}%</span></td>
+      <td style="font-size:12px;color:var(--text-3)">${p.previsao_fechamento?fmtData(p.previsao_fechamento):'—'}</td>
       <td><span class="vendedor-chip">${p.vendedor}</span></td>
       <td><span class="status-badge status-${p.status}">${capitalize(p.status)}</span></td>
       <td>
         <button class="action-btn" onclick="editarProposta('${p.id}')" title="Editar">✏️</button>
         <button class="action-btn" onclick="deletarProposta('${p.id}')" title="Excluir">🗑️</button>
       </td>
-    </tr>`).join('');
+    </tr>`;}).join('');
 }
 
 function abrirModalProposta(){
@@ -962,6 +1099,9 @@ function abrirModalProposta(){
   ['prop_segurado','prop_pl','prop_pct'].forEach(id=>document.getElementById(id).value='');
   document.getElementById('prop_status').value='aberta';
   document.getElementById('prop_comissao_preview').textContent='R$ 0,00';
+  document.getElementById('prop_prob').value=50;
+  document.getElementById('prop_prob_val').textContent='50%';
+  document.getElementById('prop_prev_fecha').value='';
   if(currentProfile?.vendedor) document.getElementById('prop_vendedor').value=currentProfile.vendedor;
   document.getElementById('modalProposta').classList.add('open');
 }
@@ -977,6 +1117,10 @@ function editarProposta(id){
   document.getElementById('prop_status').value=p.status;
   document.getElementById('prop_pl').value=p.premio_liquido;
   document.getElementById('prop_pct').value=p.percentual_comissao;
+  const prob=p.probabilidade??50;
+  document.getElementById('prop_prob').value=prob;
+  document.getElementById('prop_prob_val').textContent=prob+'%';
+  document.getElementById('prop_prev_fecha').value=p.previsao_fechamento||'';
   calcComissaoProp();
   document.getElementById('modalProposta').classList.add('open');
 }
@@ -991,6 +1135,8 @@ async function salvarProposta(){
     percentual_comissao:parseFloat(document.getElementById('prop_pct').value)||0,
     vendedor:document.getElementById('prop_vendedor').value,
     status:document.getElementById('prop_status').value,
+    probabilidade:parseInt(document.getElementById('prop_prob').value)||50,
+    previsao_fechamento:document.getElementById('prop_prev_fecha').value||null,
   };
   if(!payload.segurado||!payload.ramo||!payload.cia||!payload.vendedor){showToast('Preencha todos os campos obrigatórios.','error');return;}
   const{error}=id?await db.from('propostas').update(payload).eq('id',id):await db.from('propostas').insert([payload]);
@@ -1011,21 +1157,51 @@ function fecharModalProp(e){if(e.target===document.getElementById('modalProposta
 function fecharModalPropDireto(){document.getElementById('modalProposta').classList.remove('open');}
 
 // ── METAS ─────────────────────────────────────────────────────────────
+const RAMOS_META=['Auto','Plano de Saúde','Residencial','Vida mensal','Empresarial','Cartão Porto','Outro'];
+
 function renderFormMetas(){
   const mes=mesSelecionado('metaMes');
   const metasMes={};
   todasMetas.filter(m=>m.mes===mes).forEach(m=>metasMes[m.vendedor]=+m.meta_comissao);
-  document.getElementById('metasForm').innerHTML=VENDEDORES.map(v=>`
-    <div class="field">
-      <label>Meta de comissão — ${v} (R$)</label>
-      <input type="number" id="meta_${v}" step="0.01" min="0" placeholder="0,00" value="${metasMes[v]||''}">
+  const metasRamoMes={};
+  todasMetasRamo.filter(m=>m.mes===mes).forEach(m=>{
+    if(!metasRamoMes[m.vendedor]) metasRamoMes[m.vendedor]={};
+    metasRamoMes[m.vendedor][m.ramo]=+m.meta_comissao;
+  });
+
+  document.getElementById('metasForm').innerHTML = VENDEDORES.map(v=>`
+    <div class="metas-vendedor">
+      <div class="metas-vendedor-header">
+        <span style="font-size:22px">${EMOJIS[v]||'🧑'}</span>
+        <div class="metas-vendedor-nome">${v}</div>
+      </div>
+      <div class="field">
+        <label>🎯 Meta Geral de Comissão (R$)</label>
+        <input type="number" id="meta_${v}" step="0.01" min="0" placeholder="Ex: 10000,00" value="${metasMes[v]||''}">
+      </div>
+      <div class="metas-ramo-label">Meta por Produto (R$)</div>
+      <div class="metas-ramo-grid">
+        ${RAMOS_META.map(r=>`
+          <div class="field" style="margin-bottom:0">
+            <label style="font-size:11px">${r}</label>
+            <input type="number" id="meta_${v}_${r.replace(/\s+/g,'_').replace('/','_')}" step="0.01" min="0" placeholder="0,00"
+              value="${(metasRamoMes[v]||{})[r]||''}">
+          </div>`).join('')}
+      </div>
     </div>`).join('');
 }
+
 async function salvarMetas(){
   const mes=mesSelecionado('metaMes');
-  const ops=VENDEDORES.map(async v=>{
+  const ops=[];
+  VENDEDORES.forEach(v=>{
     const val=parseFloat(document.getElementById(`meta_${v}`).value)||0;
-    await db.from('metas_mensais').upsert({vendedor:v,mes,meta_comissao:val},{onConflict:'vendedor,mes'});
+    ops.push(db.from('metas_mensais').upsert({vendedor:v,mes,meta_comissao:val},{onConflict:'vendedor,mes'}));
+    RAMOS_META.forEach(r=>{
+      const key=`meta_${v}_${r.replace(/\s+/g,'_').replace('/','_')}`;
+      const rval=parseFloat(document.getElementById(key).value)||0;
+      ops.push(db.from('metas_ramo').upsert({vendedor:v,mes,ramo:r,meta_comissao:rval},{onConflict:'vendedor,mes,ramo'}));
+    });
   });
   await Promise.all(ops);
   await carregarMetas();
@@ -1171,6 +1347,137 @@ async function deletarVenda(id){
 function fecharModal(e){if(e.target===document.getElementById('modalOverlay'))fecharModalDireto();}
 function fecharModalDireto(){document.getElementById('modalOverlay').classList.remove('open');}
 
+// ── DASHBOARD ─────────────────────────────────────────────────────────
+function renderDashboard(){
+  if(!currentProfile) return;
+  const vendedor=currentProfile.vendedor||'';
+  const mesAtual=new Date();
+  const mes=`${mesAtual.getFullYear()}-${String(mesAtual.getMonth()+1).padStart(2,'0')}`;
+  const mesAnt=mesAnteriorDe(mes);
+
+  // Título personalizado
+  document.getElementById('dashTitle').textContent=vendedor?`Olá, ${vendedor} 👋`:'Meu Dashboard';
+  document.getElementById('dashMesLabel').textContent=capitalize(mesAtual.toLocaleDateString('pt-BR',{month:'long',year:'numeric'}));
+
+  // Vendas do mês
+  const minhasVendas=vendasDoMes(mes).filter(v=>!vendedor||v.vendedor===vendedor);
+  const minhasVendasAnt=vendasDoMes(mesAnt).filter(v=>!vendedor||v.vendedor===vendedor);
+  const minhaCom=soma(minhasVendas,'comissao');
+  const meuPL=soma(minhasVendas,'premio_liquido');
+  const minhaComAnt=soma(minhasVendasAnt,'comissao');
+
+  document.getElementById('dashComissao').textContent=fmt(minhaCom);
+  document.getElementById('dashPL').textContent=fmt(meuPL);
+  document.getElementById('dashVendas').textContent=minhasVendas.length;
+
+  // Delta comissão
+  if(minhaComAnt>0){
+    const diff=((minhaCom-minhaComAnt)/minhaComAnt*100);
+    const el=document.getElementById('dashDeltaCom');
+    el.className='delta '+(diff>=0?'up':'down');
+    el.textContent=(diff>=0?'▲':'▼')+' '+Math.abs(diff).toFixed(1)+'% vs mês anterior';
+  }
+
+  // Posição no ranking
+  const mapRank={};
+  vendasDoMes(mes).forEach(v=>{mapRank[v.vendedor]=(mapRank[v.vendedor]||0)+(+v.comissao||0);});
+  const sorted=Object.entries(mapRank).sort((a,b)=>b[1]-a[1]);
+  const pos=sorted.findIndex(([n])=>n===vendedor);
+  const emojis=['🥇','🥈','🥉'];
+  document.getElementById('dashPosicao').textContent=pos>=0?(emojis[pos]||`${pos+1}º`):'—';
+
+  // Meta geral
+  const metaGeral=todasMetas.find(m=>m.mes===mes&&m.vendedor===vendedor);
+  const metaCard=document.getElementById('dashMetaCard');
+  if(metaGeral&&+metaGeral.meta_comissao>0){
+    const meta=+metaGeral.meta_comissao;
+    const pct=Math.min(100,(minhaCom/meta)*100);
+    const falta=Math.max(0,meta-minhaCom);
+    metaCard.style.display='block';
+    document.getElementById('dashMetaPct').textContent=pct.toFixed(0)+'%';
+    document.getElementById('dashMetaFill').style.width=pct+'%';
+    document.getElementById('dashMetaFill').className='meta-bar-fill'+(pct>=100?' done':'');
+    document.getElementById('dashMetaRealizado').textContent=fmt(minhaCom);
+    document.getElementById('dashMetaValor').textContent=fmt(meta);
+    document.getElementById('dashMetaFalta').textContent=pct>=100?'✅ Meta batida!':fmt(falta);
+  } else { metaCard.style.display='none'; }
+
+  // Metas por ramo
+  const metasRamoV=todasMetasRamo.filter(m=>m.mes===mes&&m.vendedor===vendedor&&+m.meta_comissao>0);
+  const ramoCard=document.getElementById('dashMetaRamoCard');
+  if(metasRamoV.length){
+    ramoCard.style.display='block';
+    const ramoReal={};
+    minhasVendas.forEach(v=>{ramoReal[v.ramo]=(ramoReal[v.ramo]||0)+(+v.comissao||0);});
+    document.getElementById('dashMetasRamo').innerHTML=metasRamoV.map(m=>{
+      const atual=ramoReal[m.ramo]||0;
+      const p=Math.min(100,(atual/+m.meta_comissao)*100);
+      return `<div style="margin-bottom:12px">
+        <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px">
+          <span style="font-weight:500">${m.ramo}</span>
+          <span style="color:var(--text-3)">${fmt(atual)} / ${fmt(+m.meta_comissao)} (${p.toFixed(0)}%)</span>
+        </div>
+        <div class="meta-bar" style="height:8px">
+          <div class="meta-bar-fill ${p>=100?'done':''}" style="width:${p}%;background:${p>=100?'var(--green)':'#6366f1'}"></div>
+        </div>
+      </div>`;
+    }).join('');
+  } else { ramoCard.style.display='none'; }
+
+  // Previsão de fechamento — propostas abertas do vendedor
+  const propAbertas=todasPropostas.filter(p=>p.status==='aberta'&&(!vendedor||p.vendedor===vendedor));
+  const divPrev=document.getElementById('dashPrevisao');
+  const divPrevTotal=document.getElementById('dashPrevisaoTotal');
+
+  if(!propAbertas.length){
+    divPrev.innerHTML='<div class="empty-state" style="padding:24px 0"><div class="icon">📄</div>Nenhuma proposta aberta</div>';
+    divPrevTotal.style.display='none';
+  } else {
+    let totalPrevPonderado=0;
+    divPrev.innerHTML=propAbertas.map(p=>{
+      const comEst=(+p.premio_liquido||0)*(+p.percentual_comissao||0)/100;
+      const prob=p.probabilidade??50;
+      const prevPond=comEst*(prob/100);
+      totalPrevPonderado+=prevPond;
+      const probCls=prob>=70?'prob-high':prob>=40?'prob-med':'prob-low';
+      const dataFecha=p.previsao_fechamento?`· Fecha ${fmtData(p.previsao_fechamento)}`:'';
+      return `<div class="dash-prop-item">
+        <div>
+          <div style="font-weight:500;font-size:13px">${p.segurado}</div>
+          <div style="font-size:11.5px;color:var(--text-3)">${p.ramo} · ${p.cia} ${dataFecha}</div>
+        </div>
+        <div class="dash-prop-prob">
+          <div style="text-align:right;font-size:12px;color:var(--text-2)">${fmt(comEst)}<br><span style="font-size:11px;color:var(--text-3)">est. comissão</span></div>
+          <span class="prob-pill ${probCls}">${prob}%</span>
+          <div style="text-align:right;font-size:12px;font-weight:600;color:var(--accent)">${fmt(prevPond)}<br><span style="font-size:11px;color:var(--text-3);font-weight:400">ponderado</span></div>
+        </div>
+      </div>`;
+    }).join('');
+
+    divPrevTotal.style.display='block';
+    document.getElementById('dashPrevTotal').textContent=fmt(totalPrevPonderado);
+    document.getElementById('dashPrevSub').textContent=`${propAbertas.length} proposta${propAbertas.length!==1?'s':''} em aberto`;
+    document.getElementById('dashProjTotal').textContent=fmt(minhaCom+totalPrevPonderado);
+  }
+
+  // Últimas vendas pessoais
+  const ultimas=minhasVendas.slice(0,6);
+  const tbody=document.getElementById('tbodyDash');
+  const empty=document.getElementById('emptyDash');
+  if(!ultimas.length){tbody.innerHTML='';empty.style.display='block';}
+  else{
+    empty.style.display='none';
+    tbody.innerHTML=ultimas.map(v=>`
+      <tr>
+        <td>${fmtData(v.data)}</td>
+        <td style="max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${v.segurado}</td>
+        <td><span class="ramo-badge ${ramoClass(v.ramo)}">${v.ramo}</span></td>
+        <td>${v.cia}</td>
+        <td class="val-green">${fmt(v.comissao)}</td>
+      </tr>`).join('');
+  }
+}
+
 // ── NAV ───────────────────────────────────────────────────────────────
 function showView(id){
   document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
@@ -1184,6 +1491,7 @@ function showView(id){
   if(id==='indicacoes') renderIndicacoes();
   if(id==='exportar') renderPrevia();
   if(id==='metas') renderFormMetas();
+  if(id==='dashboard') renderDashboard();
   window.scrollTo(0,0);
 }
 
