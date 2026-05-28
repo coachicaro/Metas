@@ -1379,13 +1379,21 @@ function renderDashboard(){
     el.textContent=(diff>=0?'▲':'▼')+' '+Math.abs(diff).toFixed(1)+'% vs mês anterior';
   }
 
-  // Posição no ranking
+  // Posição no ranking — usa todas as vendas do mês, todos vendedores
   const mapRank={};
-  vendasDoMes(mes).forEach(v=>{mapRank[v.vendedor]=(mapRank[v.vendedor]||0)+(+v.comissao||0);});
-  const sorted=Object.entries(mapRank).sort((a,b)=>b[1]-a[1]);
-  const pos=sorted.findIndex(([n])=>n.trim()===vendedor);
+  vendasDoMes(mes).forEach(v=>{
+    const nome=(v.vendedor||'').trim();
+    if(nome) mapRank[nome]=(mapRank[nome]||0)+(+v.comissao||0);
+  });
+  // Garantir que o vendedor logado apareça mesmo com 0
+  if(vendedor && !(vendedor in mapRank)) mapRank[vendedor]=0;
+  const sortedRank=Object.entries(mapRank).sort((a,b)=>b[1]-a[1]);
+  const pos=vendedor?sortedRank.findIndex(([n])=>n===vendedor):-1;
   const emojis=['🥇','🥈','🥉'];
-  document.getElementById('dashPosicao').textContent=pos>=0?(emojis[pos]||`${pos+1}º`):'—';
+  const posEl=document.getElementById('dashPosicao');
+  if(!vendedor){ posEl.textContent='—'; }
+  else if(pos>=0){ posEl.textContent=emojis[pos]||(pos+1)+'º'; }
+  else{ posEl.textContent='—'; }
 
   // Meta geral
   const metaGeral=todasMetas.find(m=>m.mes===mes&&m.vendedor===vendedor);
