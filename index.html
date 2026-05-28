@@ -1349,8 +1349,8 @@ function fecharModalDireto(){document.getElementById('modalOverlay').classList.r
 
 // ── DASHBOARD ─────────────────────────────────────────────────────────
 function renderDashboard(){
-  if(!currentProfile) return;
-  const vendedor=currentProfile.vendedor||'';
+  // Funciona mesmo sem perfil carregado ainda
+  const vendedor=(currentProfile?.vendedor||'').trim();
   const mesAtual=new Date();
   const mes=`${mesAtual.getFullYear()}-${String(mesAtual.getMonth()+1).padStart(2,'0')}`;
   const mesAnt=mesAnteriorDe(mes);
@@ -1359,9 +1359,10 @@ function renderDashboard(){
   document.getElementById('dashTitle').textContent=vendedor?`Olá, ${vendedor} 👋`:'Meu Dashboard';
   document.getElementById('dashMesLabel').textContent=capitalize(mesAtual.toLocaleDateString('pt-BR',{month:'long',year:'numeric'}));
 
-  // Vendas do mês
-  const minhasVendas=vendasDoMes(mes).filter(v=>!vendedor||v.vendedor===vendedor);
-  const minhasVendasAnt=vendasDoMes(mesAnt).filter(v=>!vendedor||v.vendedor===vendedor);
+  // Filtra por vendedor se tiver perfil, senão mostra tudo
+  const filtrar=v=>!vendedor||v.vendedor.trim()===vendedor;
+  const minhasVendas=vendasDoMes(mes).filter(filtrar);
+  const minhasVendasAnt=vendasDoMes(mesAnt).filter(filtrar);
   const minhaCom=soma(minhasVendas,'comissao');
   const meuPL=soma(minhasVendas,'premio_liquido');
   const minhaComAnt=soma(minhasVendasAnt,'comissao');
@@ -1382,7 +1383,7 @@ function renderDashboard(){
   const mapRank={};
   vendasDoMes(mes).forEach(v=>{mapRank[v.vendedor]=(mapRank[v.vendedor]||0)+(+v.comissao||0);});
   const sorted=Object.entries(mapRank).sort((a,b)=>b[1]-a[1]);
-  const pos=sorted.findIndex(([n])=>n===vendedor);
+  const pos=sorted.findIndex(([n])=>n.trim()===vendedor);
   const emojis=['🥇','🥈','🥉'];
   document.getElementById('dashPosicao').textContent=pos>=0?(emojis[pos]||`${pos+1}º`):'—';
 
@@ -1425,7 +1426,7 @@ function renderDashboard(){
   } else { ramoCard.style.display='none'; }
 
   // Previsão de fechamento — propostas abertas do vendedor
-  const propAbertas=todasPropostas.filter(p=>p.status==='aberta'&&(!vendedor||p.vendedor===vendedor));
+  const propAbertas=todasPropostas.filter(p=>p.status==='aberta'&&(!vendedor||p.vendedor.trim()===vendedor));
   const divPrev=document.getElementById('dashPrevisao');
   const divPrevTotal=document.getElementById('dashPrevisaoTotal');
 
