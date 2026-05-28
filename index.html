@@ -148,14 +148,39 @@ tbody td { padding: 11px 14px; color: var(--text); vertical-align: middle; }
 .empty-state { text-align: center; padding: 48px 0; color: var(--text-3); font-size: 13.5px; }
 .empty-state .icon { font-size: 36px; margin-bottom: 10px; }
 
+/* MOBILE NAV BAR */
+.mobile-nav {
+  display: none;
+  position: fixed;
+  bottom: 0; left: 0; right: 0;
+  height: 64px;
+  background: var(--accent);
+  border-top: 1px solid rgba(255,255,255,0.1);
+  z-index: 500;
+  justify-content: space-around;
+  align-items: center;
+  padding-bottom: env(safe-area-inset-bottom);
+}
+.mobile-nav-item {
+  display: flex; flex-direction: column; align-items: center; gap: 3px;
+  color: rgba(255,255,255,0.55); cursor: pointer; padding: 8px 20px;
+  transition: color 0.15s; user-select: none; flex: 1;
+}
+.mobile-nav-item.active { color: #fff; }
+.mobile-nav-item .mn-icon { font-size: 22px; line-height: 1; }
+.mobile-nav-item .mn-label { font-size: 10px; font-weight: 500; letter-spacing: 0.04em; }
+
 /* MOBILE */
 @media (max-width: 768px) {
   .sidebar { display: none; }
+  .mobile-nav { display: flex; }
+  .main { padding-bottom: 64px; }
   .view { padding: 20px 16px; }
   .summary-grid { grid-template-columns: repeat(2, 1fr); }
   .ranking-grid { grid-template-columns: 1fr; }
   .form-grid { grid-template-columns: 1fr 1fr; }
   .form-grid-2 { grid-template-columns: 1fr; }
+  .toast { bottom: 80px; left: 16px; right: 16px; width: auto; }
 }
 </style>
 </head>
@@ -340,6 +365,22 @@ tbody td { padding: 11px 14px; color: var(--text); vertical-align: middle; }
 
   </main>
 </div>
+
+<!-- MOBILE NAV BAR -->
+<nav class="mobile-nav">
+  <div class="mobile-nav-item active" id="mnav-ranking" onclick="showView('ranking')">
+    <span class="mn-icon">&#127942;</span>
+    <span class="mn-label">Ranking</span>
+  </div>
+  <div class="mobile-nav-item" id="mnav-nova" onclick="showView('nova')">
+    <span class="mn-icon">&#10133;</span>
+    <span class="mn-label">Nova Venda</span>
+  </div>
+  <div class="mobile-nav-item" id="mnav-historico" onclick="showView('historico')">
+    <span class="mn-icon">&#128203;</span>
+    <span class="mn-label">Hist&#243;rico</span>
+  </div>
+</nav>
 
 <!-- MODAL EDITAR -->
 <div class="modal-overlay" id="modalOverlay" onclick="fecharModal(event)">
@@ -658,9 +699,13 @@ function fecharModalDireto() { document.getElementById('modalOverlay').classList
 function showView(id) {
   document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
   document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.querySelectorAll('.mobile-nav-item').forEach(n => n.classList.remove('active'));
   document.getElementById('view-' + id).classList.add('active');
   document.getElementById('nav-' + id).classList.add('active');
+  const mnav = document.getElementById('mnav-' + id);
+  if (mnav) mnav.classList.add('active');
   if (id === 'historico') renderHistorico();
+  window.scrollTo(0, 0);
 }
 
 // ── UTILS ─────────────────────────────────────────────────────────
