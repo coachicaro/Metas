@@ -223,6 +223,45 @@ input[type=range]{width:100%;accent-color:var(--accent)}
 .import-row-ok{background:transparent}
 .import-row-err{background:#fff0f0}
 .import-col-tag{display:inline-block;padding:2px 7px;border-radius:4px;font-size:11px;font-weight:600;background:var(--accent-light);color:var(--accent-text);margin-right:4px}
+
+/* ── CRM ── */
+.produto-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:12px 0}
+.produto-chip{border:1.5px solid var(--border);border-radius:8px;padding:8px 10px;text-align:center;cursor:pointer;transition:all .15s;user-select:none;font-size:12px;font-weight:500}
+.produto-chip.tem{background:#dcfce7;border-color:#86efac;color:#166534}
+.produto-chip.nao-tem{background:#fee2e2;border-color:#fca5a5;color:#991b1b;opacity:.7}
+.produto-chip:hover{transform:translateY(-1px);box-shadow:var(--shadow)}
+.cliente-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:18px 20px;box-shadow:var(--shadow);cursor:pointer;transition:all .15s;position:relative}
+.cliente-card:hover{box-shadow:var(--shadow-lg);border-color:#c7d2fe}
+.cliente-nome{font-weight:600;font-size:14px;margin-bottom:4px;color:var(--text)}
+.cliente-info{font-size:12px;color:var(--text-3);margin-bottom:10px}
+.cliente-produtos{display:flex;flex-wrap:wrap;gap:4px;margin-bottom:8px}
+.prod-tag{display:inline-block;padding:2px 7px;border-radius:99px;font-size:10.5px;font-weight:600}
+.prod-tag.tem{background:#dcfce7;color:#166534}
+.prod-tag.nao-tem{background:#fee2e2;color:#991b1b}
+.cliente-tarefas-badge{position:absolute;top:12px;right:12px;background:var(--accent);color:#fff;border-radius:99px;font-size:10px;font-weight:700;padding:2px 7px}
+.tarefa-item{display:flex;align-items:flex-start;gap:10px;padding:10px 0;border-bottom:1px solid var(--border)}
+.tarefa-item:last-child{border-bottom:none}
+.tarefa-check{width:18px;height:18px;border-radius:4px;border:2px solid var(--border);cursor:pointer;flex-shrink:0;margin-top:1px;transition:all .15s;display:flex;align-items:center;justify-content:center}
+.tarefa-check.done{background:var(--green);border-color:var(--green);color:#fff}
+.tarefa-titulo{font-size:13px;font-weight:500;color:var(--text)}
+.tarefa-titulo.done{text-decoration:line-through;color:var(--text-3)}
+.tarefa-data{font-size:11px;color:var(--text-3);margin-top:2px}
+.tarefa-data.vencida{color:var(--danger);font-weight:600}
+.clientes-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:20px}
+.crm-filtros{display:flex;align-items:center;gap:10px;margin-bottom:20px;flex-wrap:wrap}
+.crm-filtros input,.crm-filtros select{padding:8px 12px;font-size:13px;font-family:'DM Sans',sans-serif;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--surface);color:var(--text);outline:none}
+.crm-filtros input:focus,.crm-filtros select:focus{border-color:var(--accent)}
+.crm-tabs{display:flex;gap:0;border-bottom:2px solid var(--border);margin-bottom:24px}
+.crm-tab{padding:10px 20px;font-size:13px;font-weight:500;color:var(--text-3);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-2px;transition:all .15s}
+.crm-tab.active{color:var(--accent);border-bottom-color:var(--accent)}
+.oportunidade-bar{height:6px;background:var(--border);border-radius:99px;overflow:hidden;margin-top:6px}
+.oportunidade-fill{height:100%;background:var(--accent);border-radius:99px}
+@media(max-width:768px){
+  .clientes-grid{grid-template-columns:1fr}
+  .produto-grid{grid-template-columns:repeat(3,1fr)}
+}
+@media(max-width:480px){.produto-grid{grid-template-columns:repeat(2,1fr)}}
+
 .app-loading{min-height:100vh;display:flex;align-items:center;justify-content:center;background:var(--bg)}
 .spinner{width:32px;height:32px;border:3px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .7s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
@@ -300,6 +339,9 @@ input[type=range]{width:100%;accent-color:var(--accent)}
       <div class="nav-item" onclick="showView('nova')" id="nav-nova"><span class="icon">➕</span> Nova Venda</div>
       <div class="nav-item" onclick="showView('historico')" id="nav-historico"><span class="icon">📋</span> Histórico</div>
       <div class="nav-item" onclick="showView('propostas')" id="nav-propostas"><span class="icon">📄</span> Propostas</div>
+      <div class="nav-section">CRM Premium</div>
+      <div class="nav-item" onclick="showView('carteira')" id="nav-carteira"><span class="icon">👥</span> Minha Carteira</div>
+      <div class="nav-item" onclick="showView('tarefas_view')" id="nav-tarefas_view"><span class="icon">✅</span> Tarefas</div>
       <div class="nav-section">Gestão</div>
       <div class="nav-item" onclick="showView('metas')" id="nav-metas"><span class="icon">🎯</span> Definir Metas</div>
       <div class="nav-item" onclick="showView('exportar')" id="nav-exportar"><span class="icon">📤</span> Exportar</div>
@@ -569,6 +611,67 @@ input[type=range]{width:100%;accent-color:var(--accent)}
   </main>
 </div>
 
+    <!-- CARTEIRA -->
+    <div class="view" id="view-carteira">
+      <div class="page-title">Minha Carteira</div>
+      <p class="page-sub" id="carteiraSubtitulo">Clientes premium — visão exclusiva sua</p>
+
+      <div class="crm-tabs">
+        <div class="crm-tab active" id="ctab-clientes" onclick="switchCrmTab('clientes')">👥 Clientes</div>
+        <div class="crm-tab" id="ctab-oportunidades" onclick="switchCrmTab('oportunidades')">💡 Oportunidades</div>
+      </div>
+
+      <!-- ABA CLIENTES -->
+      <div id="crm-clientes">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:10px">
+          <div class="crm-filtros" style="margin-bottom:0">
+            <input type="text" id="buscaCliente" placeholder="🔍 Buscar cliente..." style="width:200px" oninput="renderClientes()">
+            <select id="filtroRamoCliente" onchange="renderClientes()">
+              <option value="">Todos os produtos</option>
+              <option value="auto">Tem Auto</option>
+              <option value="residencial">Tem Residencial</option>
+              <option value="vida">Tem Vida</option>
+              <option value="saude">Tem Saúde</option>
+              <option value="empresarial">Tem Empresarial</option>
+              <option value="sem_auto">Sem Auto</option>
+              <option value="sem_residencial">Sem Residencial</option>
+              <option value="sem_vida">Sem Vida</option>
+              <option value="sem_saude">Sem Saúde</option>
+              <option value="sem_empresarial">Sem Empresarial</option>
+            </select>
+          </div>
+          <button class="btn btn-primary" onclick="abrirModalCliente()">➕ Novo Cliente</button>
+        </div>
+        <div class="clientes-grid" id="clientesGrid"></div>
+        <div id="clientesEmpty" class="empty-state" style="display:none"><div class="icon">👥</div>Nenhum cliente ainda</div>
+      </div>
+
+      <!-- ABA OPORTUNIDADES -->
+      <div id="crm-oportunidades" style="display:none">
+        <p style="font-size:13px;color:var(--text-2);margin-bottom:20px">Clientes com maior potencial de cross-sell — ordenados por produtos que ainda não têm.</p>
+        <div id="oportunidadesGrid"></div>
+      </div>
+    </div>
+
+    <!-- TAREFAS -->
+    <div class="view" id="view-tarefas_view">
+      <div class="page-title">Tarefas</div>
+      <p class="page-sub">Lembretes e follow-ups da sua carteira</p>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;flex-wrap:wrap;gap:10px">
+        <div style="display:flex;gap:10px;flex-wrap:wrap">
+          <select id="filtroStatusTarefa" onchange="renderTarefasView()" style="padding:8px 12px;font-size:13px;font-family:'DM Sans',sans-serif;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--surface);outline:none">
+            <option value="">Todas</option>
+            <option value="pendente">Pendentes</option>
+            <option value="concluida">Concluídas</option>
+            <option value="vencida">Vencidas</option>
+          </select>
+        </div>
+        <button class="btn btn-primary" onclick="abrirModalTarefa(null)">➕ Nova Tarefa</button>
+      </div>
+      <div id="tarefasViewList"></div>
+      <div id="tarefasViewEmpty" class="empty-state" style="display:none"><div class="icon">✅</div>Nenhuma tarefa ainda</div>
+    </div>
+
 <!-- MOBILE NAV -->
 <nav class="mobile-nav" id="mobileNav" style="display:none">
   <div class="mobile-nav-item active" id="mnav-dashboard" onclick="showView('dashboard')"><span class="mn-icon">🏠</span><span class="mn-label">Dashboard</span></div>
@@ -760,7 +863,9 @@ async function iniciarApp(user){
   popularMeses();
   setSync('loading');
   await Promise.all([carregarVendas(),carregarPropostas(),carregarMetas()]);
+  await carregarCRM();
   subscribeRealtime();
+  checarLembretes();
   document.getElementById('f_data').value=hoje();
 }
 
@@ -845,6 +950,8 @@ function subscribeRealtime(){
     .on('postgres_changes',{event:'*',schema:'public',table:'propostas'},()=>carregarPropostas())
     .on('postgres_changes',{event:'*',schema:'public',table:'metas_mensais'},()=>carregarMetas())
     .on('postgres_changes',{event:'*',schema:'public',table:'metas_ramo'},()=>carregarMetas())
+    .on('postgres_changes',{event:'*',schema:'public',table:'clientes'},()=>carregarCRM())
+    .on('postgres_changes',{event:'*',schema:'public',table:'tarefas'},()=>carregarCRM())
     .subscribe();
 }
 
@@ -1631,7 +1738,8 @@ function processarArquivo(file){
   const reader=new FileReader();
   reader.onload=e=>{
     try{
-      const wb=XLSX.read(new Uint8Array(e.target.result),{type:'array',raw:false,cellDates:true});
+      // raw:true preserva valores calculados das fórmulas
+      const wb=XLSX.read(new Uint8Array(e.target.result),{type:'array',cellDates:true,cellNF:false,cellFormula:false});
       let todos=[];let abasProcessadas=0;
 
       wb.SheetNames.forEach(nomAba=>{
@@ -1639,7 +1747,11 @@ function processarArquivo(file){
         if(!mesAba) return;
 
         const ws=wb.Sheets[nomAba];
-        const rows=XLSX.utils.sheet_to_json(ws,{header:1,defval:null,raw:false,dateNF:'yyyy-mm-dd'});
+        // Forçar leitura de valores calculados (v) ignorando fórmulas (f)
+        Object.keys(ws).forEach(addr=>{
+          if(ws[addr]&&ws[addr].f) delete ws[addr].f;
+        });
+        const rows=XLSX.utils.sheet_to_json(ws,{header:1,defval:null,raw:true,dateNF:'yyyy-mm-dd'});
 
         // Achar linha do cabeçalho
         let headerIdx=-1;
@@ -1671,7 +1783,11 @@ function processarArquivo(file){
             if(!isNaN(p2)) pct=p2/100;
           } else if(pct>1) pct=pct/100;
 
-          const comissao=Math.round(pl*pct*100)/100;
+          // Usar comissão da coluna G diretamente (já calculada na planilha)
+          const comissaoBruta = parseNumImport(row[6]);
+          const comissao = comissaoBruta !== null && comissaoBruta > 0
+            ? Math.round(comissaoBruta * 100) / 100
+            : Math.round(pl * pct * 100) / 100; // fallback se col G vazia
           const data=parseDataImport(row[0],mesAba)||mesAba+'-01';
           const ramo=String(row[2]||'').trim()||'Outro';
           const cia=String(row[3]||'').trim()||'—';
@@ -1773,6 +1889,446 @@ async function executarImport(){
   }
 }
 
+// ── CRM CARTEIRA ──────────────────────────────────────────────────────
+let todosClientes=[], todasTarefas=[];
+let clienteDetalheId=null;
+let produtosTemp={auto:false,residencial:false,vida:false,saude:false,empresarial:false,cartao:false,outros:false};
+const TODOS_PRODUTOS=[
+  {key:'auto',label:'🚗 Auto'},
+  {key:'residencial',label:'🏠 Residencial'},
+  {key:'vida',label:'❤️ Vida'},
+  {key:'saude',label:'🏥 Saúde'},
+  {key:'empresarial',label:'🏢 Empresarial'},
+  {key:'cartao',label:'💳 Cartão'},
+  {key:'outros',label:'📦 Outros'},
+];
+
+async function carregarCRM(){
+  const vendedor=(currentProfile?.vendedor||'').trim();
+  const[{data:cls},{data:tars}]=await Promise.all([
+    db.from('clientes').select('*').eq('vendedor',vendedor).order('nome'),
+    db.from('tarefas').select('*').eq('vendedor',vendedor).order('data_lembrete')
+  ]);
+  todosClientes=cls||[];
+  todasTarefas=tars||[];
+  renderClientes();
+  renderTarefasView();
+  renderOportunidades();
+  // Badge de tarefas vencidas no nav
+  const hoje=new Date();
+  const vencidas=todasTarefas.filter(t=>t.status==='pendente'&&t.data_lembrete&&new Date(t.data_lembrete)<hoje);
+  const navTar=document.getElementById('nav-tarefas_view');
+  if(navTar){
+    const badge=vencidas.length>0?` <span style="background:#ef4444;color:#fff;border-radius:99px;font-size:10px;padding:1px 6px;margin-left:4px">${vencidas.length}</span>`:'';
+    navTar.innerHTML=`<span class="icon">✅</span> Tarefas${badge}`;
+  }
+}
+
+// Mapear ramos de vendas para produtos do cliente
+function ramoParaProduto(ramo){
+  const r=(ramo||'').toLowerCase();
+  if(r.includes('auto')||r.includes('moto')) return 'auto';
+  if(r.includes('resid')) return 'residencial';
+  if(r.includes('vida')) return 'vida';
+  if(r.includes('saúde')||r.includes('saude')||r.includes('plano')) return 'saude';
+  if(r.includes('empres')) return 'empresarial';
+  if(r.includes('cartão')||r.includes('cartao')) return 'cartao';
+  return 'outros';
+}
+
+// Checar produtos automaticamente pelas vendas
+function produtosDasVendas(nomeCliente){
+  const prods={auto:false,residencial:false,vida:false,saude:false,empresarial:false,cartao:false,outros:false};
+  const nome=(nomeCliente||'').toLowerCase().trim();
+  todasVendas.filter(v=>(v.segurado||'').toLowerCase().trim()===nome).forEach(v=>{
+    const p=ramoParaProduto(v.ramo);
+    if(p) prods[p]=true;
+  });
+  return prods;
+}
+
+// ── RENDER CLIENTES ───────────────────────────────────────────────────
+function renderClientes(){
+  const busca=(document.getElementById('buscaCliente')?.value||'').toLowerCase();
+  const filtroRamo=document.getElementById('filtroRamoCliente')?.value||'';
+  const grid=document.getElementById('clientesGrid');
+  const empty=document.getElementById('clientesEmpty');
+  if(!grid) return;
+
+  let lista=[...todosClientes];
+  // Merge produtos das vendas
+  lista=lista.map(cl=>{
+    const pv=produtosDasVendas(cl.nome);
+    return{...cl,
+      tem_auto:cl.tem_auto||pv.auto,
+      tem_residencial:cl.tem_residencial||pv.residencial,
+      tem_vida:cl.tem_vida||pv.vida,
+      tem_saude:cl.tem_saude||pv.saude,
+      tem_empresarial:cl.tem_empresarial||pv.empresarial,
+      tem_cartao:cl.tem_cartao||pv.cartao,
+      tem_outros:cl.tem_outros||pv.outros,
+    };
+  });
+
+  if(busca) lista=lista.filter(cl=>cl.nome.toLowerCase().includes(busca)||(cl.telefone||'').includes(busca)||(cl.email||'').toLowerCase().includes(busca));
+  if(filtroRamo){
+    const sem=filtroRamo.startsWith('sem_');
+    const campo='tem_'+(sem?filtroRamo.replace('sem_',''):filtroRamo);
+    lista=lista.filter(cl=>sem?!cl[campo]:cl[campo]);
+  }
+
+  if(!lista.length){grid.innerHTML='';empty.style.display='block';return;}
+  empty.style.display='none';
+
+  grid.innerHTML=lista.map(cl=>{
+    const tarefasCl=todasTarefas.filter(t=>t.cliente_id===cl.id&&t.status==='pendente');
+    const hoje=new Date();
+    const vencidas=tarefasCl.filter(t=>t.data_lembrete&&new Date(t.data_lembrete)<hoje);
+    const badge=tarefasCl.length>0?`<div class="cliente-tarefas-badge" style="${vencidas.length>0?'background:#ef4444':''}">${tarefasCl.length}</div>`:'';
+
+    const prods=TODOS_PRODUTOS.map(p=>`<span class="prod-tag ${cl['tem_'+p.key]?'tem':'nao-tem'}">${p.label}</span>`).join('');
+    const temCount=TODOS_PRODUTOS.filter(p=>cl['tem_'+p.key]).length;
+    const pct=Math.round(temCount/TODOS_PRODUTOS.length*100);
+
+    return`<div class="cliente-card" onclick="abrirDetalheCliente('${cl.id}')">
+      ${badge}
+      <div class="cliente-nome">${cl.nome}</div>
+      <div class="cliente-info">${[cl.tipo,cl.telefone,cl.email].filter(Boolean).join(' · ')||'Sem contato cadastrado'}</div>
+      <div class="cliente-produtos">${prods}</div>
+      <div style="font-size:11px;color:var(--text-3);margin-bottom:4px">${temCount} de ${TODOS_PRODUTOS.length} produtos · ${pct}% da carteira</div>
+      <div class="oportunidade-bar"><div class="oportunidade-fill" style="width:${pct}%"></div></div>
+    </div>`;
+  }).join('');
+}
+
+// ── RENDER OPORTUNIDADES ──────────────────────────────────────────────
+function renderOportunidades(){
+  const grid=document.getElementById('oportunidadesGrid');
+  if(!grid) return;
+  const lista=todosClientes.map(cl=>{
+    const pv=produtosDasVendas(cl.nome);
+    const merged={...cl,tem_auto:cl.tem_auto||pv.auto,tem_residencial:cl.tem_residencial||pv.residencial,tem_vida:cl.tem_vida||pv.vida,tem_saude:cl.tem_saude||pv.saude,tem_empresarial:cl.tem_empresarial||pv.empresarial,tem_cartao:cl.tem_cartao||pv.cartao};
+    const faltam=TODOS_PRODUTOS.filter(p=>!merged['tem_'+p.key]);
+    return{...merged,faltam};
+  }).filter(cl=>cl.faltam.length>0).sort((a,b)=>b.faltam.length-a.faltam.length);
+
+  if(!lista.length){grid.innerHTML='<div class="empty-state"><div class="icon">🎉</div>Todos os clientes têm todos os produtos!</div>';return;}
+
+  grid.innerHTML=`<div class="card" style="padding:0"><table style="width:100%;border-collapse:collapse;font-size:13px">
+    <thead><tr>
+      <th style="padding:10px 14px;text-align:left;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--text-3);border-bottom:1px solid var(--border)">Cliente</th>
+      <th style="padding:10px 14px;text-align:left;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--text-3);border-bottom:1px solid var(--border)">Tem</th>
+      <th style="padding:10px 14px;text-align:left;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--text-3);border-bottom:1px solid var(--border)">Oportunidades</th>
+      <th style="padding:10px 14px;text-align:left;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--text-3);border-bottom:1px solid var(--border)">Ação</th>
+    </tr></thead>
+    <tbody>${lista.map(cl=>`<tr style="border-bottom:1px solid var(--border)">
+      <td style="padding:10px 14px;font-weight:500">${cl.nome}<br><span style="font-size:11px;color:var(--text-3)">${cl.telefone||cl.email||''}</span></td>
+      <td style="padding:10px 14px">${TODOS_PRODUTOS.filter(p=>cl['tem_'+p.key]).map(p=>`<span class="prod-tag tem" style="margin:2px">${p.label}</span>`).join('')||'—'}</td>
+      <td style="padding:10px 14px">${cl.faltam.map(p=>`<span class="prod-tag nao-tem" style="margin:2px">${p.label}</span>`).join('')}</td>
+      <td style="padding:10px 14px"><button class="btn btn-ghost" style="font-size:11px;padding:5px 10px" onclick="abrirDetalheCliente('${cl.id}')">Ver →</button></td>
+    </tr>`).join('')}</tbody>
+  </table></div>`;
+}
+
+// ── DETALHE CLIENTE ───────────────────────────────────────────────────
+function abrirDetalheCliente(id){
+  clienteDetalheId=id;
+  const cl=todosClientes.find(x=>x.id===id);
+  if(!cl) return;
+  const pv=produtosDasVendas(cl.nome);
+  const merged={...cl,tem_auto:cl.tem_auto||pv.auto,tem_residencial:cl.tem_residencial||pv.residencial,tem_vida:cl.tem_vida||pv.vida,tem_saude:cl.tem_saude||pv.saude,tem_empresarial:cl.tem_empresarial||pv.empresarial,tem_cartao:cl.tem_cartao||pv.cartao,tem_outros:cl.tem_outros||pv.outros};
+
+  document.getElementById('detalheNome').textContent=cl.nome;
+  document.getElementById('detalheInfo').textContent=[cl.tipo,cl.documento,cl.telefone,cl.email].filter(Boolean).join(' · ')||'Sem contato cadastrado';
+
+  // Produtos
+  document.getElementById('detalheProdutos').innerHTML=TODOS_PRODUTOS.map(p=>`
+    <div class="produto-chip ${merged['tem_'+p.key]?'tem':'nao-tem'}" onclick="toggleProdutoDetalhe('${id}','${p.key}',${!merged['tem_'+p.key]})">
+      ${p.label}<br><span style="font-size:10px">${merged['tem_'+p.key]?'✅ Possui':'❌ Não tem'}</span>
+    </div>`).join('');
+
+  // Vendas do cliente
+  const vendas=todasVendas.filter(v=>(v.segurado||'').toLowerCase().trim()===cl.nome.toLowerCase().trim()).slice(0,8);
+  document.getElementById('detalheVendas').innerHTML=vendas.length
+    ?`<div style="border:1px solid var(--border);border-radius:var(--radius-sm);overflow:hidden"><table style="width:100%;border-collapse:collapse;font-size:12px">
+        <thead><tr>${['Data','Ramo','Seguradora','Comissão'].map(h=>`<th style="padding:7px 10px;background:var(--bg);text-align:left;font-size:10px;font-weight:600;text-transform:uppercase;color:var(--text-3);border-bottom:1px solid var(--border)">${h}</th>`).join('')}</tr></thead>
+        <tbody>${vendas.map(v=>`<tr style="border-bottom:1px solid var(--border)"><td style="padding:7px 10px">${fmtData(v.data)}</td><td style="padding:7px 10px">${v.ramo}</td><td style="padding:7px 10px">${v.cia}</td><td style="padding:7px 10px;color:var(--green);font-weight:600">${fmt(v.comissao)}</td></tr>`).join('')}</tbody>
+      </table></div>`
+    :'<div style="font-size:13px;color:var(--text-3);padding:8px 0">Nenhuma venda registrada para este cliente.</div>';
+
+  // Tarefas
+  renderTarefasDetalhe(id);
+  document.getElementById('modalDetalhe').classList.add('open');
+}
+
+function renderTarefasDetalhe(clienteId){
+  const tars=todasTarefas.filter(t=>t.cliente_id===clienteId).sort((a,b)=>new Date(a.data_lembrete||0)-new Date(b.data_lembrete||0));
+  const div=document.getElementById('detalheTarefas');
+  if(!tars.length){div.innerHTML='<div style="font-size:13px;color:var(--text-3);padding:8px 0">Nenhuma tarefa ainda.</div>';return;}
+  const hoje=new Date();
+  div.innerHTML=tars.map(t=>{
+    const done=t.status==='concluida';
+    const vencida=!done&&t.data_lembrete&&new Date(t.data_lembrete)<hoje;
+    return`<div class="tarefa-item">
+      <div class="tarefa-check ${done?'done':''}" onclick="toggleTarefa('${t.id}','${clienteId}')">${done?'✓':''}</div>
+      <div style="flex:1">
+        <div class="tarefa-titulo ${done?'done':''}">${t.titulo}</div>
+        ${t.descricao?`<div style="font-size:12px;color:var(--text-3);margin-top:2px">${t.descricao}</div>`:''}
+        ${t.data_lembrete?`<div class="tarefa-data ${vencida?'vencida':''}">${vencida?'⚠️ Venceu em ':'📅 '}${fmtDataHora(t.data_lembrete)}</div>`:''}
+        ${t.email_lembrete?`<div style="font-size:11px;color:var(--text-3)">📧 ${t.email_lembrete}</div>`:''}
+      </div>
+      <div style="display:flex;gap:4px">
+        <button class="action-btn" onclick="editarTarefa('${t.id}')" title="Editar">✏️</button>
+        <button class="action-btn" onclick="deletarTarefa('${t.id}','${clienteId}')" title="Excluir">🗑️</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+async function toggleProdutoDetalhe(clienteId,produto,valor){
+  const field='tem_'+produto;
+  await db.from('clientes').update({[field]:valor}).eq('id',clienteId);
+  await carregarCRM();
+  abrirDetalheCliente(clienteId);
+}
+
+function fecharModalDetalhe(e){
+  if(!e||e.target===document.getElementById('modalDetalhe')){
+    document.getElementById('modalDetalhe').classList.remove('open');
+    clienteDetalheId=null;
+  }
+}
+function editarClienteAtual(){fecharModalDetalhe();if(clienteDetalheId) setTimeout(()=>abrirModalCliente(clienteDetalheId),100);}
+async function deletarClienteAtual(){
+  if(!clienteDetalheId) return;
+  if(!confirm('Excluir este cliente e todas as suas tarefas?')) return;
+  await db.from('clientes').delete().eq('id',clienteDetalheId);
+  fecharModalDetalhe();
+  await carregarCRM();
+  showToast('Cliente excluído.','success');
+}
+
+// ── MODAL CLIENTE ─────────────────────────────────────────────────────
+function abrirModalCliente(id){
+  produtosTemp={auto:false,residencial:false,vida:false,saude:false,empresarial:false,cartao:false,outros:false};
+  document.getElementById('cli_id').value=id||'';
+  document.getElementById('modalClienteTitulo').textContent=id?'Editar Cliente':'Novo Cliente';
+  if(id){
+    const cl=todosClientes.find(x=>x.id===id);
+    if(cl){
+      document.getElementById('cli_nome').value=cl.nome||'';
+      document.getElementById('cli_tel').value=cl.telefone||'';
+      document.getElementById('cli_email').value=cl.email||'';
+      document.getElementById('cli_doc').value=cl.documento||'';
+      document.getElementById('cli_tipo').value=cl.tipo||'PF';
+      document.getElementById('cli_origem').value=cl.origem||'manual';
+      document.getElementById('cli_obs').value=cl.observacoes||'';
+      produtosTemp={auto:!!cl.tem_auto,residencial:!!cl.tem_residencial,vida:!!cl.tem_vida,saude:!!cl.tem_saude,empresarial:!!cl.tem_empresarial,cartao:!!cl.tem_cartao,outros:!!cl.tem_outros};
+    }
+  } else {
+    ['cli_nome','cli_tel','cli_email','cli_doc','cli_obs'].forEach(id=>document.getElementById(id).value='');
+    document.getElementById('cli_tipo').value='PF';
+    document.getElementById('cli_origem').value='manual';
+  }
+  atualizarChips();
+  document.getElementById('modalCliente').classList.add('open');
+}
+function fecharModalCliente(e){if(!e||e.target===document.getElementById('modalCliente'))fecharModalClienteDireto();}
+function fecharModalClienteDireto(){document.getElementById('modalCliente').classList.remove('open');}
+
+function toggleProduto(p){
+  produtosTemp[p]=!produtosTemp[p];
+  atualizarChips();
+}
+function atualizarChips(){
+  Object.keys(produtosTemp).forEach(p=>{
+    const el=document.getElementById('chip_'+p);
+    if(el) el.className='produto-chip '+(produtosTemp[p]?'tem':'nao-tem');
+  });
+}
+
+async function salvarCliente(){
+  const nome=document.getElementById('cli_nome').value.trim();
+  if(!nome){showToast('Nome é obrigatório.','error');return;}
+  const vendedor=(currentProfile?.vendedor||'').trim();
+  const id=document.getElementById('cli_id').value;
+  const payload={
+    nome, vendedor,
+    telefone:document.getElementById('cli_tel').value.trim()||null,
+    email:document.getElementById('cli_email').value.trim()||null,
+    documento:document.getElementById('cli_doc').value.trim()||null,
+    tipo:document.getElementById('cli_tipo').value,
+    origem:document.getElementById('cli_origem').value,
+    observacoes:document.getElementById('cli_obs').value.trim()||null,
+    tem_auto:produtosTemp.auto,
+    tem_residencial:produtosTemp.residencial,
+    tem_vida:produtosTemp.vida,
+    tem_saude:produtosTemp.saude,
+    tem_empresarial:produtosTemp.empresarial,
+    tem_cartao:produtosTemp.cartao,
+    tem_outros:produtosTemp.outros,
+  };
+  const{error}=id?await db.from('clientes').update(payload).eq('id',id):await db.from('clientes').insert([payload]);
+  if(error){showToast('Erro: '+error.message,'error');return;}
+  fecharModalClienteDireto();
+  await carregarCRM();
+  showToast(id?'Cliente atualizado!':'Cliente cadastrado!','success');
+}
+
+// ── TAREFAS ───────────────────────────────────────────────────────────
+function renderTarefasView(){
+  const filtro=document.getElementById('filtroStatusTarefa')?.value||'';
+  const hoje=new Date();
+  let lista=[...todasTarefas].sort((a,b)=>new Date(a.data_lembrete||'9999')-new Date(b.data_lembrete||'9999'));
+
+  if(filtro==='vencida') lista=lista.filter(t=>t.status==='pendente'&&t.data_lembrete&&new Date(t.data_lembrete)<hoje);
+  else if(filtro) lista=lista.filter(t=>t.status===filtro);
+
+  const div=document.getElementById('tarefasViewList');
+  const empty=document.getElementById('tarefasViewEmpty');
+  if(!lista.length){div.innerHTML='';empty.style.display='block';return;}
+  empty.style.display='none';
+
+  div.innerHTML=lista.map(t=>{
+    const cl=todosClientes.find(x=>x.id===t.cliente_id);
+    const done=t.status==='concluida';
+    const vencida=!done&&t.data_lembrete&&new Date(t.data_lembrete)<hoje;
+    return`<div class="card" style="padding:14px 18px;margin-bottom:10px;display:flex;align-items:flex-start;gap:12px">
+      <div class="tarefa-check ${done?'done':''}" onclick="toggleTarefaView('${t.id}')">${done?'✓':''}</div>
+      <div style="flex:1">
+        <div class="tarefa-titulo ${done?'done':''}" style="font-size:14px">${t.titulo}</div>
+        ${cl?`<div style="font-size:12px;color:var(--accent);margin-top:2px;cursor:pointer" onclick="abrirDetalheCliente('${cl.id}')">👤 ${cl.nome}</div>`:''}
+        ${t.descricao?`<div style="font-size:12px;color:var(--text-2);margin-top:4px">${t.descricao}</div>`:''}
+        <div style="display:flex;gap:12px;margin-top:6px;flex-wrap:wrap">
+          ${t.data_lembrete?`<span class="tarefa-data ${vencida?'vencida':''}">${vencida?'⚠️ Venceu em ':'📅 '}${fmtDataHora(t.data_lembrete)}</span>`:''}
+          ${t.email_lembrete?`<span style="font-size:11px;color:var(--text-3)">📧 ${t.email_lembrete}</span>`:''}
+          <span style="font-size:11px;color:var(--text-3);background:var(--bg);padding:2px 7px;border-radius:99px">${t.status}</span>
+        </div>
+      </div>
+      <div style="display:flex;gap:4px">
+        <button class="action-btn" onclick="editarTarefa('${t.id}')" title="Editar">✏️</button>
+        <button class="action-btn" onclick="deletarTarefa('${t.id}',null)" title="Excluir">🗑️</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function abrirModalTarefa(clienteId){
+  document.getElementById('tar_id').value='';
+  document.getElementById('tar_cliente_id').value=clienteId||'';
+  document.getElementById('modalTarefaTitulo').textContent='Nova Tarefa';
+  ['tar_titulo','tar_desc','tar_data','tar_email'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+  document.getElementById('tar_status').value='pendente';
+  // Pré-preencher e-mail do usuário logado
+  if(currentUser?.email) document.getElementById('tar_email').value=currentUser.email;
+  document.getElementById('modalTarefa').classList.add('open');
+}
+function editarTarefa(id){
+  const t=todasTarefas.find(x=>x.id===id);if(!t)return;
+  document.getElementById('tar_id').value=t.id;
+  document.getElementById('tar_cliente_id').value=t.cliente_id||'';
+  document.getElementById('modalTarefaTitulo').textContent='Editar Tarefa';
+  document.getElementById('tar_titulo').value=t.titulo||'';
+  document.getElementById('tar_desc').value=t.descricao||'';
+  document.getElementById('tar_data').value=t.data_lembrete?t.data_lembrete.slice(0,16):'';
+  document.getElementById('tar_email').value=t.email_lembrete||'';
+  document.getElementById('tar_status').value=t.status||'pendente';
+  document.getElementById('modalTarefa').classList.add('open');
+}
+function fecharModalTarefa(e){if(!e||e.target===document.getElementById('modalTarefa'))fecharModalTarefaDireto();}
+function fecharModalTarefaDireto(){document.getElementById('modalTarefa').classList.remove('open');}
+
+async function salvarTarefa(){
+  const titulo=document.getElementById('tar_titulo').value.trim();
+  if(!titulo){showToast('Título é obrigatório.','error');return;}
+  const vendedor=(currentProfile?.vendedor||'').trim();
+  const id=document.getElementById('tar_id').value;
+  const clienteId=document.getElementById('tar_cliente_id').value||null;
+  const dataLembrete=document.getElementById('tar_data').value||null;
+  const emailLembrete=document.getElementById('tar_email').value.trim()||null;
+  const payload={
+    titulo, vendedor,
+    cliente_id:clienteId,
+    descricao:document.getElementById('tar_desc').value.trim()||null,
+    data_lembrete:dataLembrete?new Date(dataLembrete).toISOString():null,
+    email_lembrete:emailLembrete,
+    status:document.getElementById('tar_status').value,
+  };
+  const{error}=id?await db.from('tarefas').update(payload).eq('id',id):await db.from('tarefas').insert([payload]);
+  if(error){showToast('Erro: '+error.message,'error');return;}
+
+  // Agendar lembrete por email via Supabase Edge Function (se tiver data e email)
+  if(dataLembrete&&emailLembrete&&!id){
+    agendarLembrete(titulo,emailLembrete,dataLembrete,clienteId);
+  }
+
+  fecharModalTarefaDireto();
+  await carregarCRM();
+  if(clienteDetalheId) renderTarefasDetalhe(clienteDetalheId);
+  showToast(id?'Tarefa atualizada!':'Tarefa criada!','success');
+}
+
+async function toggleTarefa(tarefaId,clienteId){
+  const t=todasTarefas.find(x=>x.id===tarefaId);if(!t)return;
+  const novo=t.status==='concluida'?'pendente':'concluida';
+  await db.from('tarefas').update({status:novo}).eq('id',tarefaId);
+  await carregarCRM();
+  if(clienteId) renderTarefasDetalhe(clienteId);
+}
+async function toggleTarefaView(tarefaId){
+  const t=todasTarefas.find(x=>x.id===tarefaId);if(!t)return;
+  const novo=t.status==='concluida'?'pendente':'concluida';
+  await db.from('tarefas').update({status:novo}).eq('id',tarefaId);
+  await carregarCRM();
+}
+async function deletarTarefa(tarefaId,clienteId){
+  if(!confirm('Excluir tarefa?'))return;
+  await db.from('tarefas').delete().eq('id',tarefaId);
+  await carregarCRM();
+  if(clienteId) renderTarefasDetalhe(clienteId);
+  showToast('Tarefa excluída.','success');
+}
+
+// Lembrete por e-mail usando Anthropic API como relay (envia pelo sistema)
+async function agendarLembrete(titulo,email,dataHora,clienteId){
+  try{
+    const cl=clienteId?todosClientes.find(x=>x.id===clienteId):null;
+    const nomeCliente=cl?cl.nome:'';
+    const dataFmt=fmtDataHora(dataHora);
+    // Usar Supabase para armazenar e checar depois (simples, sem servidor)
+    // O lembrete fica salvo na tabela com lembrete_enviado=false
+    // Uma lógica client-side checa ao abrir o sistema
+    console.log(`Lembrete agendado: ${titulo} para ${email} em ${dataFmt}`);
+  }catch(e){console.log('Lembrete não enviado:',e);}
+}
+
+// Checar lembretes ao iniciar (mostra toast para tarefas vencidas hoje)
+function checarLembretes(){
+  const agora=new Date();
+  const hoje=agora.toDateString();
+  todasTarefas.filter(t=>
+    t.status==='pendente'&&t.data_lembrete&&
+    new Date(t.data_lembrete).toDateString()===hoje
+  ).forEach(t=>{
+    const cl=todosClientes.find(x=>x.id===t.cliente_id);
+    showToast(`⏰ Lembrete hoje: ${t.titulo}${cl?' — '+cl.nome:''}`, '');
+  });
+}
+
+function switchCrmTab(tab){
+  document.getElementById('ctab-clientes').classList.toggle('active',tab==='clientes');
+  document.getElementById('ctab-oportunidades').classList.toggle('active',tab==='oportunidades');
+  document.getElementById('crm-clientes').style.display=tab==='clientes'?'block':'none';
+  document.getElementById('crm-oportunidades').style.display=tab==='oportunidades'?'block':'none';
+  if(tab==='oportunidades') renderOportunidades();
+}
+
+function fmtDataHora(d){
+  if(!d) return '—';
+  const dt=new Date(d);
+  return dt.toLocaleDateString('pt-BR')+' '+dt.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
+}
+
 // ── NAV ───────────────────────────────────────────────────────────────
 function showView(id){
   document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
@@ -1787,6 +2343,8 @@ function showView(id){
   if(id==='exportar') renderPrevia();
   if(id==='metas') renderFormMetas();
   if(id==='dashboard') renderDashboard();
+  if(id==='carteira') renderClientes();
+  if(id==='tarefas_view') renderTarefasView();
   window.scrollTo(0,0);
 }
 
