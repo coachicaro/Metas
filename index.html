@@ -1564,57 +1564,66 @@ function renderDashboard(){
 }
 
 // ── IMPORTAÇÃO ────────────────────────────────────────────────────────
-let importRows=[];
-let importColunas=[];
-let importRawHeaders=[];
+let importRowsFinal = [];
 
-const CAMPOS_DESTINO=[
-  {key:'data',       label:'Data',          obrig:true},
-  {key:'segurado',   label:'Segurado',      obrig:true},
-  {key:'ramo',       label:'Ramo',          obrig:true},
-  {key:'cia',        label:'Seguradora',    obrig:true},
-  {key:'pl',         label:'Prêmio Líq. (PL)',obrig:true},
-  {key:'pct',        label:'% Comissão',    obrig:true},
-  {key:'vendedor',   label:'Vendedor',      obrig:true},
-  {key:'sdr',        label:'SDR/Indicação', obrig:false},
-];
-
-// Tenta adivinhar qual coluna do arquivo corresponde a cada campo
-const SINONIMOS={
-  data:       ['data','date','dt','data venda','data emissão','data emissao'],
-  segurado:   ['segurado','cliente','nome','name','segurado/cliente','nome cliente'],
-  ramo:       ['ramo','produto','tipo','ramo produto','tipo produto','produto/ramo'],
-  cia:        ['cia','seguradora','companhia','empresa','cia:','seguradora:','cia seguradora'],
-  pl:         ['pl','premio','prêmio','prize','premium','valor','pl:','prêmio líquido','premio liquido','valor pl','prem'],
-  pct:        ['%','pct','comissao','comissão','% comissão','% comissao','percentual','taxa','comis'],
-  vendedor:   ['vendedor','broker','corretor','agente','seller','vendedor:'],
-  sdr:        ['sdr','indicacao','indicação','origem','fonte','sdr/indicação','sdr indicação'],
+const MESES_IMPORT = {
+  'jan':'01','fev':'02','mar':'03','abr':'04','mai':'05','jun':'06',
+  'jul':'07','ago':'08','set':'09','out':'10','nov':'11','dez':'12','abril':'04'
 };
 
 function abrirModalImport(){
-  importRows=[];importColunas=[];importRawHeaders=[];
+  importRowsFinal = [];
   document.getElementById('importFile').value='';
   document.getElementById('importMapWrap').style.display='none';
   document.getElementById('importPreviewWrap').style.display='none';
   document.getElementById('importProgressWrap').style.display='none';
   document.getElementById('importResult').style.display='none';
   document.getElementById('btnImportar').style.display='none';
-  document.getElementById('importDropzone').innerHTML=`<div style="font-size:36px;margin-bottom:8px">📂</div><div style="font-weight:500;color:var(--text-2)">Clique para selecionar ou arraste o arquivo aqui</div><div style="font-size:12px;color:var(--text-3);margin-top:4px">.xlsx, .xls ou .csv</div>`;
+  document.getElementById('importDropzone').innerHTML=`<div style="font-size:36px;margin-bottom:8px">📂</div><div style="font-weight:500;color:var(--text-2)">Clique para selecionar ou arraste o arquivo aqui</div><div style="font-size:12px;color:var(--text-3);margin-top:4px">.xlsx — formato Syros/Creta</div>`;
   document.getElementById('modalImport').classList.add('open');
-
-  // Drag and drop
   const dz=document.getElementById('importDropzone');
-  dz.ondragover=e=>{e.preventDefault();dz.classList.add('drag');};
+  dz.ondragover=e=>{e.preventDefault();dz.classList.add('drag')};
   dz.ondragleave=()=>dz.classList.remove('drag');
-  dz.ondrop=e=>{e.preventDefault();dz.classList.remove('drag');const f=e.dataTransfer.files[0];if(f)processarArquivo(f);};
+  dz.ondrop=e=>{e.preventDefault();dz.classList.remove('drag');const f=e.dataTransfer.files[0];if(f)processarArquivo(f)};
 }
-
 function fecharModalImport(e){if(e.target===document.getElementById('modalImport'))fecharModalImportDireto();}
 function fecharModalImportDireto(){document.getElementById('modalImport').classList.remove('open');}
+function lerArquivoImport(input){const f=input.files[0];if(f)processarArquivo(f);}
 
-function lerArquivoImport(input){
-  const file=input.files[0];if(!file)return;
-  processarArquivo(file);
+function abaParaMes(nome){
+  const n=nome.toLowerCase().trim().replace(/\./g,'');
+  for(const[m,num] of Object.entries(MESES_IMPORT)){
+    if(n.startsWith(m)){
+      const ano=n.match(/(\d{2,4})/);
+      if(ano){let y=parseInt(ano[1]);if(y<100)y+=2000;return`${y}-${num}`;}
+    }
+  }
+  return null;
+}
+
+function parseNumImport(val){
+  if(val===null||val===undefined) return null;
+  if(typeof val==='number') return val;
+  const s=String(val).trim();
+  if(s.startsWith('=')||s===''||s==='None') return null;
+  let clean=s.replace(/R\$\s*/g,'').trim();
+  if(clean.includes(',')&&clean.includes('.')) clean=clean.replace(/\./g,'').replace(',','.');
+  else if(clean.includes(',')) clean=clean.replace(',','.');
+  const n=parseFloat(clean);
+  return isNaN(n)?null:n;
+}
+
+function parseDataImport(val, mesAba){
+  if(val instanceof Date){
+    const y=val.getFullYear(),m=String(val.getMonth()+1).padStart(2,'0'),d=String(val.getDate()).padStart(2,'0');
+    return `${y}-${m}-${d}`;
+  }
+  if(val&&typeof val==='string'){
+    const s=val.trim();
+    const m=s.match(/^(\d{1,2})[\/-](\d{1,2})[\/-](\d{2,4})$/);
+    if(m){let y=parseInt(m[3]);if(y<100)y+=2000;return`${y}-${m[2].padStart(2,'0')}-${m[1].padStart(2,'0')}`;}
+  }
+  return mesAba?mesAba+'-01':null;
 }
 
 function processarArquivo(file){
@@ -1622,195 +1631,144 @@ function processarArquivo(file){
   const reader=new FileReader();
   reader.onload=e=>{
     try{
-      let data;
-      if(file.name.endsWith('.csv')){
-        data=XLSX.read(e.target.result,{type:'string',raw:false});
-      } else {
-        data=XLSX.read(new Uint8Array(e.target.result),{type:'array',raw:false,cellDates:true});
-      }
-      const sheet=data.Sheets[data.SheetNames[0]];
-      const rows=XLSX.utils.sheet_to_json(sheet,{defval:'',raw:false});
-      if(!rows.length){showToast('Planilha vazia ou formato inválido.','error');return;}
-      importRawHeaders=Object.keys(rows[0]);
-      importRows=rows;
-      document.getElementById('importDropzone').innerHTML=`<div style="font-size:36px;margin-bottom:8px">✅</div><div style="font-weight:500;color:var(--green)">${file.name}</div><div style="font-size:12px;color:var(--text-3);margin-top:4px">${rows.length} linhas encontradas</div>`;
-      construirMapeamento();
+      const wb=XLSX.read(new Uint8Array(e.target.result),{type:'array',raw:false,cellDates:true});
+      let todos=[];let abasProcessadas=0;
+
+      wb.SheetNames.forEach(nomAba=>{
+        const mesAba=abaParaMes(nomAba);
+        if(!mesAba) return;
+
+        const ws=wb.Sheets[nomAba];
+        const rows=XLSX.utils.sheet_to_json(ws,{header:1,defval:null,raw:false,dateNF:'yyyy-mm-dd'});
+
+        // Achar linha do cabeçalho
+        let headerIdx=-1;
+        for(let i=0;i<Math.min(5,rows.length);i++){
+          if(rows[i].some(v=>String(v||'').toLowerCase().includes('segurado'))){headerIdx=i;break;}
+        }
+        if(headerIdx<0) return;
+        abasProcessadas++;
+
+        for(let i=headerIdx+1;i<rows.length;i++){
+          const row=rows[i];
+          if(!row||row.length<8) continue;
+          const segurado=String(row[1]||'').trim();
+          const vendedor=String(row[7]||'').trim();
+          if(!segurado||['-','None','Segurado:',''].includes(segurado)) continue;
+          if(!vendedor||['Vendedor:','None',''].includes(vendedor)) continue;
+          if(segurado.startsWith('=')||vendedor.startsWith('=')) continue;
+          // Ignorar linhas de resumo/metas
+          if(['varejo','vida mensal','extras','meta','executivos','sdr','total','comissão'].some(k=>segurado.toLowerCase().includes(k))) continue;
+
+          const pl=parseNumImport(row[4]);
+          if(pl===null||pl<=0) continue;
+
+          let pct=parseNumImport(row[5])||0;
+          // Percentuais como "100/25%" — pegar o segundo valor
+          if(String(row[5]||'').includes('/')){
+            const parts=String(row[5]).split('/');
+            const p2=parseFloat(parts[1]);
+            if(!isNaN(p2)) pct=p2/100;
+          } else if(pct>1) pct=pct/100;
+
+          const comissao=Math.round(pl*pct*100)/100;
+          const data=parseDataImport(row[0],mesAba)||mesAba+'-01';
+          const ramo=String(row[2]||'').trim()||'Outro';
+          const cia=String(row[3]||'').trim()||'—';
+          const sdr=row[8]?String(row[8]).trim():null;
+
+          todos.push({
+            data, segurado, ramo, cia,
+            premio_liquido: pl,
+            percentual_comissao: Math.round(pct*10000)/100,
+            comissao, vendedor,
+            sdr_indicacao: sdr&&!['None','EMITIDA','PROP RECUSADA','Cancelada'].includes(sdr)?sdr:null,
+            _aba: nomAba
+          });
+        }
+      });
+
+      importRowsFinal=todos;
+      document.getElementById('importDropzone').innerHTML=`<div style="font-size:36px;margin-bottom:8px">✅</div><div style="font-weight:500;color:var(--green)">${file.name}</div><div style="font-size:12px;color:var(--text-3);margin-top:4px">${abasProcessadas} abas · ${todos.length} registros encontrados</div>`;
+      renderPreviewImport(todos);
     }catch(err){
-      showToast('Erro ao ler arquivo: '+err.message,'error');
+      showToast('Erro ao ler: '+err.message,'error');
       document.getElementById('importDropzone').innerHTML=`<div style="font-size:36px;margin-bottom:8px">❌</div><div style="font-weight:500;color:var(--danger)">Erro ao ler arquivo</div>`;
     }
   };
-  if(file.name.endsWith('.csv')) reader.readAsText(file,'UTF-8');
-  else reader.readAsArrayBuffer(file);
+  reader.readAsArrayBuffer(file);
 }
 
-function adivinharColuna(campo){
-  const sins=SINONIMOS[campo]||[];
-  for(const h of importRawHeaders){
-    const hn=h.toLowerCase().trim();
-    if(sins.some(s=>hn.includes(s)||s.includes(hn))) return h;
-  }
-  return '';
-}
+function renderPreviewImport(todos){
+  document.getElementById('importMapWrap').style.display='none';
+  document.getElementById('importPreviewCount').textContent=todos.length;
+  document.getElementById('importErrosCount').style.display='none';
 
-function construirMapeamento(){
-  const grid=document.getElementById('importMapGrid');
-  grid.innerHTML=CAMPOS_DESTINO.map(f=>`
-    <div class="field" style="margin-bottom:0">
-      <label style="font-size:11px">${f.label}${f.obrig?' *':''}</label>
-      <select id="map_${f.key}" onchange="gerarPreview()">
-        <option value="">— ignorar —</option>
-        ${importRawHeaders.map(h=>`<option value="${h}" ${adivinharColuna(f.key)===h?'selected':''}>${h}</option>`).join('')}
-      </select>
-    </div>`).join('');
-  document.getElementById('importMapWrap').style.display='block';
-  gerarPreview();
-}
+  // Agrupar por aba para mostrar resumo
+  const porAba={};
+  todos.forEach(r=>{porAba[r._aba]=(porAba[r._aba]||0)+1;});
 
-function getMapValues(){
-  const map={};
-  CAMPOS_DESTINO.forEach(f=>{map[f.key]=document.getElementById('map_'+f.key)?.value||'';});
-  return map;
-}
+  document.getElementById('importPreviewHead').innerHTML=`<tr style="background:var(--bg)">
+    ${['Data','Segurado','Ramo','Seguradora','PL','%','Comissão','Vendedor','SDR'].map(h=>`<th style="padding:8px 10px;font-size:11px;font-weight:600;text-transform:uppercase;color:var(--text-3);border-bottom:1px solid var(--border);white-space:nowrap">${h}</th>`).join('')}
+  </tr>`;
 
-function parsearData(val){
-  if(!val) return null;
-  const s=String(val).trim();
-  // DD/MM/YYYY ou DD/MM/YY
-  const m1=s.match(/^(\d{1,2})[\/\-\.](\d{1,2})[\/\-\.](\d{2,4})$/);
-  if(m1){
-    let y=parseInt(m1[3]);
-    if(y<100) y+=y<30?2000:1900;
-    const mo=m1[2].padStart(2,'0');
-    const d=m1[1].padStart(2,'0');
-    return `${y}-${mo}-${d}`;
-  }
-  // YYYY-MM-DD
-  const m2=s.match(/^(\d{4})-(\d{2})-(\d{2})/);
-  if(m2) return `${m2[1]}-${m2[2]}-${m2[3]}`;
-  // Número serial Excel
-  const n=parseFloat(s);
-  if(!isNaN(n)&&n>10000){
-    const d=new Date((n-25569)*86400*1000);
-    return d.toISOString().split('T')[0];
-  }
-  // Tentar Date parse
-  const d=new Date(s);
-  if(!isNaN(d)) return d.toISOString().split('T')[0];
-  return null;
-}
-
-function parsearNum(val){
-  if(val===null||val===undefined||val==='') return 0;
-  const s=String(val).replace(/[R$\s]/g,'').replace(/\./g,'').replace(',','.');
-  const n=parseFloat(s);
-  return isNaN(n)?0:n;
-}
-
-function processarLinha(row,map){
-  const data=parsearData(row[map.data]);
-  const segurado=String(row[map.segurado]||'').trim();
-  const ramo=String(row[map.ramo]||'').trim();
-  const cia=String(row[map.cia]||'').trim();
-  const pl=parsearNum(row[map.pl]);
-  const pct=parsearNum(row[map.pct]);
-  const vendedor=String(row[map.vendedor]||'').trim();
-  const sdr=map.sdr?String(row[map.sdr]||'').trim():null;
-  const erros=[];
-  if(!data) erros.push('data inválida');
-  if(!segurado) erros.push('segurado vazio');
-  if(!vendedor) erros.push('vendedor vazio');
-  if(!cia) erros.push('seguradora vazia');
-  return{data,segurado,ramo,cia,pl,pct,vendedor,sdr:sdr||null,erros};
-}
-
-function gerarPreview(){
-  const map=getMapValues();
-  const obrigFaltando=CAMPOS_DESTINO.filter(f=>f.obrig&&!map[f.key]);
-  if(obrigFaltando.length){
-    document.getElementById('importPreviewWrap').style.display='none';
-    document.getElementById('btnImportar').style.display='none';
-    return;
-  }
-  const processadas=importRows.map(r=>processarLinha(r,map));
-  const validas=processadas.filter(r=>r.erros.length===0);
-  const invalidas=processadas.filter(r=>r.erros.length>0);
-
-  document.getElementById('importPreviewCount').textContent=processadas.length;
-  const errEl=document.getElementById('importErrosCount');
-  if(invalidas.length){errEl.style.display='block';errEl.textContent=`⚠️ ${invalidas.length} linha${invalidas.length!==1?'s':''} com problema serão ignoradas`;}
-  else{errEl.style.display='none';}
-
-  document.getElementById('importPreviewHead').innerHTML=`<tr style="background:var(--bg)">${['Data','Segurado','Ramo','Cia','PL','%','Comissão','Vendedor','Status'].map(h=>`<th style="padding:8px 10px;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--text-3);border-bottom:1px solid var(--border);white-space:nowrap">${h}</th>`).join('')}</tr>`;
-
-  const preview=processadas.slice(0,30);
-  document.getElementById('importPreviewBody').innerHTML=preview.map(r=>{
-    const ok=r.erros.length===0;
-    const com=(r.pl*r.pct/100).toFixed(2);
-    return `<tr class="${ok?'import-row-ok':'import-row-err'}">
-      <td style="padding:6px 10px;font-size:12px;border-bottom:1px solid var(--border);white-space:nowrap">${r.data||'❌'}</td>
-      <td style="padding:6px 10px;font-size:12px;border-bottom:1px solid var(--border);max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${r.segurado||'❌'}</td>
-      <td style="padding:6px 10px;font-size:12px;border-bottom:1px solid var(--border)">${r.ramo||'—'}</td>
-      <td style="padding:6px 10px;font-size:12px;border-bottom:1px solid var(--border)">${r.cia||'❌'}</td>
-      <td style="padding:6px 10px;font-size:12px;border-bottom:1px solid var(--border)">${fmt(r.pl)}</td>
-      <td style="padding:6px 10px;font-size:12px;border-bottom:1px solid var(--border)">${r.pct}%</td>
-      <td style="padding:6px 10px;font-size:12px;border-bottom:1px solid var(--border);color:var(--green);font-weight:600">${fmt(com)}</td>
-      <td style="padding:6px 10px;font-size:12px;border-bottom:1px solid var(--border)">${r.vendedor||'❌'}</td>
-      <td style="padding:6px 10px;font-size:12px;border-bottom:1px solid var(--border)">${ok?'✅':'⚠️ '+r.erros.join(', ')}</td>
-    </tr>`;
-  }).join('');
+  document.getElementById('importPreviewBody').innerHTML=todos.slice(0,20).map(r=>`
+    <tr>
+      <td style="padding:6px 10px;font-size:12px;border-bottom:1px solid var(--border);white-space:nowrap">${r.data}</td>
+      <td style="padding:6px 10px;font-size:12px;border-bottom:1px solid var(--border);max-width:130px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${r.segurado}</td>
+      <td style="padding:6px 10px;font-size:12px;border-bottom:1px solid var(--border)">${r.ramo}</td>
+      <td style="padding:6px 10px;font-size:12px;border-bottom:1px solid var(--border)">${r.cia}</td>
+      <td style="padding:6px 10px;font-size:12px;border-bottom:1px solid var(--border)">${fmt(r.premio_liquido)}</td>
+      <td style="padding:6px 10px;font-size:12px;border-bottom:1px solid var(--border)">${r.percentual_comissao}%</td>
+      <td style="padding:6px 10px;font-size:12px;border-bottom:1px solid var(--border);color:var(--green);font-weight:600">${fmt(r.comissao)}</td>
+      <td style="padding:6px 10px;font-size:12px;border-bottom:1px solid var(--border)">${r.vendedor}</td>
+      <td style="padding:6px 10px;font-size:12px;border-bottom:1px solid var(--border);color:var(--text-3)">${r.sdr_indicacao||'—'}</td>
+    </tr>`).join('');
 
   document.getElementById('importPreviewWrap').style.display='block';
   const btn=document.getElementById('btnImportar');
-  if(validas.length>0){
-    btn.style.display='inline-flex';
-    document.getElementById('btnImportarCount').textContent=validas.length;
-  } else {btn.style.display='none';}
+  btn.style.display='inline-flex';
+  document.getElementById('btnImportarCount').textContent=todos.length;
 }
 
 async function executarImport(){
-  const map=getMapValues();
-  const validas=importRows.map(r=>processarLinha(r,map)).filter(r=>r.erros.length===0);
-  if(!validas.length){showToast('Nenhum registro válido para importar.','error');return;}
-
+  if(!importRowsFinal.length){showToast('Nenhum registro para importar.','error');return;}
   const btn=document.getElementById('btnImportar');
   btn.disabled=true;
   document.getElementById('importProgressWrap').style.display='block';
   document.getElementById('importResult').style.display='none';
 
-  const BATCH=50;
-  let importados=0;let erros=0;
-  for(let i=0;i<validas.length;i+=BATCH){
-    const lote=validas.slice(i,i+BATCH).map(r=>({
-      data:r.data,
-      segurado:r.segurado,
-      ramo:r.ramo,
-      cia:r.cia,
-      premio_liquido:r.pl,
-      percentual_comissao:r.pct,
-      vendedor:r.vendedor,
-      sdr_indicacao:r.sdr||null,
-    }));
+  const payload=importRowsFinal.map(r=>({
+    data:r.data, segurado:r.segurado, ramo:r.ramo, cia:r.cia,
+    premio_liquido:r.premio_liquido,
+    percentual_comissao:r.percentual_comissao,
+    vendedor:r.vendedor,
+    sdr_indicacao:r.sdr_indicacao||null,
+  }));
+
+  const BATCH=100;
+  let importados=0,erros=0;
+  for(let i=0;i<payload.length;i+=BATCH){
+    const lote=payload.slice(i,i+BATCH);
     const{error}=await db.from('vendas').insert(lote);
-    if(error) erros+=lote.length;
-    else importados+=lote.length;
-    const pct=Math.round(((i+BATCH)/validas.length)*100);
-    document.getElementById('importProgressBar').style.width=Math.min(100,pct)+'%';
-    document.getElementById('importProgressLabel').textContent=`Importando... ${Math.min(i+BATCH,validas.length)} de ${validas.length}`;
-    await new Promise(r=>setTimeout(r,50));
+    if(error) erros+=lote.length; else importados+=lote.length;
+    const pct=Math.min(100,Math.round(((i+BATCH)/payload.length)*100));
+    document.getElementById('importProgressBar').style.width=pct+'%';
+    document.getElementById('importProgressLabel').textContent=`Importando... ${Math.min(i+BATCH,payload.length)} de ${payload.length}`;
+    await new Promise(r=>setTimeout(r,30));
   }
 
   btn.disabled=false;
   const res=document.getElementById('importResult');
   res.style.display='block';
   if(erros===0){
-    res.style.background='var(--green-light)';res.style.color='var(--green)';res.style.border='1px solid #bbf7d0';
+    res.style.cssText='background:var(--green-light);color:var(--green);border:1px solid #bbf7d0;border-radius:var(--radius-sm);padding:12px 16px;font-size:13px;margin-bottom:16px';
     res.textContent=`✅ ${importados} registros importados com sucesso!`;
     showToast(`${importados} vendas importadas!`,'success');
     await carregarVendas();
-    setTimeout(fecharModalImportDireto,2000);
-  } else {
-    res.style.background='var(--danger-light)';res.style.color='var(--danger)';res.style.border='1px solid #f5c6c2';
+    setTimeout(fecharModalImportDireto,2500);
+  }else{
+    res.style.cssText='background:var(--danger-light);color:var(--danger);border:1px solid #f5c6c2;border-radius:var(--radius-sm);padding:12px 16px;font-size:13px;margin-bottom:16px';
     res.textContent=`⚠️ ${importados} importados, ${erros} com erro.`;
   }
 }
