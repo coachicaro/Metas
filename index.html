@@ -1719,7 +1719,11 @@ function parseNumImport(val){
   if(typeof val==='number') return val;
   const s=String(val).trim();
   if(s.startsWith('=')||s===''||s==='None') return null;
-  let clean=s.replace(/R\$\s*/g,'').trim();
+  // Tratar formatos especiais de percentual: "100/25%", "100 e 35%", "120/40%"
+  // → pegar o último número como percentual real pago
+  const multSlash=s.match(/[\d.]+[\s\/e]+([\d.]+)%?$/i);
+  if(multSlash) return parseFloat(multSlash[1]);
+  let clean=s.replace(/R\$\s*/g,'').replace(/%/g,'').trim();
   if(clean.includes(',')&&clean.includes('.')) clean=clean.replace(/\./g,'').replace(',','.');
   else if(clean.includes(',')) clean=clean.replace(',','.');
   const n=parseFloat(clean);
@@ -1780,6 +1784,7 @@ function processarArquivo(file){
 
           const pl=parseNumImport(row[4]);
           if(pl===null||pl<=0) continue;
+          // Data pode ser None em algumas linhas — usar data da aba como fallback
 
           let pct=parseNumImport(row[5])||0;
           // Percentuais como "100/25%" — pegar o segundo valor
@@ -1789,11 +1794,9 @@ function processarArquivo(file){
             if(!isNaN(p2)) pct=p2/100;
           } else if(pct>1) pct=pct/100;
 
-          // Usar comissão da coluna G diretamente (já calculada na planilha)
+          // Usar comissão SEMPRE da coluna G (valor já calculado na planilha)
           const comissaoBruta = parseNumImport(row[6]);
-          const comissao = comissaoBruta !== null && comissaoBruta > 0
-            ? Math.round(comissaoBruta * 100) / 100
-            : Math.round(pl * pct * 100) / 100; // fallback se col G vazia
+          const comissao = comissaoBruta !== null ? Math.round(comissaoBruta * 100) / 100 : 0;
           const data=parseDataImport(row[0],mesAba)||mesAba+'-01';
           const ramo=String(row[2]||'').trim()||'Outro';
           const cia=String(row[3]||'').trim()||'—';
@@ -1802,7 +1805,7 @@ function processarArquivo(file){
           todos.push({
             data, segurado, ramo, cia,
             premio_liquido: pl,
-            percentual_comissao: Math.round(pct*10000)/100,
+            percentual_comissao: pct, // já está em % (ex: 20, 200, 25)
             comissao, vendedor,
             sdr_indicacao: sdr&&!['None','EMITIDA','PROP RECUSADA','Cancelada'].includes(sdr)?sdr:null,
             _aba: nomAba
