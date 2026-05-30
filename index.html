@@ -1716,7 +1716,7 @@ function abaParaMes(nome){
 
 function parseNumImport(val){
   if(val===null||val===undefined) return null;
-  if(typeof val==='number') return val;
+  if(typeof val==='number') return isNaN(val)?null:val;
   const s=String(val).trim();
   if(s.startsWith('=')||s===''||s==='None') return null;
   // Tratar formatos especiais de percentual: "100/25%", "100 e 35%", "120/40%"
@@ -1748,8 +1748,8 @@ function processarArquivo(file){
   const reader=new FileReader();
   reader.onload=e=>{
     try{
-      // raw:true preserva valores calculados das fórmulas
-      const wb=XLSX.read(new Uint8Array(e.target.result),{type:'array',cellDates:true,cellNF:false,cellFormula:false});
+      // Ler com raw:true para preservar valores numéricos exatos das células
+      const wb=XLSX.read(new Uint8Array(e.target.result),{type:'array',cellDates:true,cellNF:false,cellFormula:false,cellText:false});
       let todos=[];let abasProcessadas=0;
 
       wb.SheetNames.forEach(nomAba=>{
@@ -1757,11 +1757,13 @@ function processarArquivo(file){
         if(!mesAba) return;
 
         const ws=wb.Sheets[nomAba];
-        // Forçar leitura de valores calculados (v) ignorando fórmulas (f)
+        // Remover fórmulas para forçar leitura do valor calculado (campo v)
         Object.keys(ws).forEach(addr=>{
-          if(ws[addr]&&ws[addr].f) delete ws[addr].f;
+          if(ws[addr]&&ws[addr].f){
+            ws[addr]={v:ws[addr].v, t:ws[addr].t}; // manter só value e type
+          }
         });
-        const rows=XLSX.utils.sheet_to_json(ws,{header:1,defval:null,raw:true,dateNF:'yyyy-mm-dd'});
+        const rows=XLSX.utils.sheet_to_json(ws,{header:1,defval:null,raw:true});
 
         // Achar linha do cabeçalho
         let headerIdx=-1;
@@ -1795,8 +1797,11 @@ function processarArquivo(file){
           } else if(pct>1) pct=pct/100;
 
           // Usar comissão SEMPRE da coluna G (valor já calculado na planilha)
-          const comissaoBruta = parseNumImport(row[6]);
-          const comissao = comissaoBruta !== null ? Math.round(comissaoBruta * 100) / 100 : 0;
+          const rawG = row[6];
+          const comissaoBruta = parseNumImport(rawG);
+          const comissao = (comissaoBruta !== null && !isNaN(comissaoBruta))
+            ? Math.round(comissaoBruta * 100) / 100
+            : 0;
           const data=parseDataImport(row[0],mesAba)||mesAba+'-01';
           const ramo=String(row[2]||'').trim()||'Outro';
           const cia=String(row[3]||'').trim()||'—';
