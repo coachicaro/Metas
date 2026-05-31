@@ -1127,7 +1127,7 @@ function renderRanking(){
         <div class="meta-bar"><div class="meta-bar-fill ${pct>=100?'done':''}" style="width:${pct}%"></div></div>
         ${ramoBarras}
       </div>`:(ramoBarras?`<div class="meta-bar-wrap">${ramoBarras}</div>`:'');
-    return `<div class="rank-card ${classes[i]}">
+    return `<div class="rank-card ${classes[i]}" onclick="verVendasVendedor('${nome}','${mes}')" style="cursor:pointer">
       <div class="rank-badge">${medals[i]}</div>
       ${fotoHtml}
       <div class="rank-name">${nome}</div>
@@ -1135,6 +1135,7 @@ function renderRanking(){
       <div class="rank-vendas">${s.count} venda${s.count!==1?'s':''} · PL ${fmt(s.pl)}</div>
       ${deltaStr?`<div class="rank-delta ${s.comissao>=antCom?'up':'down'}">${deltaStr} vs mês anterior</div>`:''}
       ${metaHtml}
+      <div style="margin-top:10px;font-size:11px;color:var(--text-3)">👆 Toque para ver vendas</div>
     </div>`;
   }).join('');
 }
@@ -1547,6 +1548,7 @@ async function salvarVenda(e){
     btn.disabled=false;btn.textContent='💾 Salvar Venda';
     if(error){showToast('Erro: '+error.message,'error');return;}
     showToast('Venda registrada!','success');
+    await carregarVendas(); // forçar reload imediato
     resetForm();showView('ranking');
   }catch(err){
     btn.disabled=false;btn.textContent='💾 Salvar Venda';
@@ -1587,12 +1589,14 @@ async function salvarEdicao(){
   try{
     const{error}=await db.from('vendas').update(payload).eq('id',id);
     if(error){showToast('Erro: '+error.message,'error');return;}
+    await carregarVendas();
     fecharModalDireto();showToast('Venda atualizada!','success');
   }catch(err){showToast('Erro: '+err.message,'error');}
 }
 async function deletarVenda(id){
   if(!confirm('Excluir esta venda?'))return;
   await db.from('vendas').delete().eq('id',id);
+  await carregarVendas();
   showToast('Venda excluída.','success');
 }
 function fecharModal(e){if(e.target===document.getElementById('modalOverlay'))fecharModalDireto();}
@@ -2406,6 +2410,38 @@ function fmtDataHora(d){
   return dt.toLocaleDateString('pt-BR')+' '+dt.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
 }
 
+function verVendasVendedor(vendedor, mes){
+  // Setar filtros no histórico
+  document.getElementById('mesFiltroHist').value = mes;
+  document.getElementById('buscaHist').value = '';
+  // Ir para histórico
+  showView('historico');
+  // Filtrar por vendedor — adicionar filtro temporário
+  const tbody = document.getElementById('tbodyHist');
+  const empty = document.getElementById('emptyHist');
+  let vendas = vendasDoMes(mes).filter(v => v.vendedor === vendedor);
+  if(!vendas.length){ tbody.innerHTML=''; empty.style.display='block'; return; }
+  empty.style.display='none';
+  // Atualizar título
+  document.getElementById('view-historico').querySelector('.page-title').textContent = `Vendas de ${vendedor}`;
+  document.getElementById('view-historico').querySelector('.page-sub').textContent = `${vendas.length} venda${vendas.length!==1?'s':''} em ${document.getElementById('mesFiltro').options[document.getElementById('mesFiltro').selectedIndex].text}`;
+  tbody.innerHTML = vendas.map(v=>`
+    <tr>
+      <td>${fmtData(v.data)}</td>
+      <td style="max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${v.segurado}">${v.segurado}</td>
+      <td><span class="ramo-badge ${ramoClass(v.ramo)}">${v.ramo}</span></td>
+      <td>${v.cia}</td><td>${fmt(v.premio_liquido)}</td>
+      <td>${(+v.percentual_comissao).toFixed(0)}%</td>
+      <td class="val-green">${fmt(v.comissao)}</td>
+      <td><span class="vendedor-chip">${v.vendedor}</span></td>
+      <td style="color:var(--text-3);font-size:12px">${v.sdr_indicacao||'—'}</td>
+      <td>
+        <button class="action-btn" onclick="abrirEdicao('${v.id}')" title="Editar">✏️</button>
+        <button class="action-btn" onclick="deletarVenda('${v.id}')" title="Excluir">🗑️</button>
+      </td>
+    </tr>`).join('');
+}
+
 // ── NAV ───────────────────────────────────────────────────────────────
 function showView(id){
   document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
@@ -2414,7 +2450,11 @@ function showView(id){
   document.getElementById('view-'+id).classList.add('active');
   document.getElementById('nav-'+id).classList.add('active');
   const mnav=document.getElementById('mnav-'+id);if(mnav)mnav.classList.add('active');
-  if(id==='historico') renderHistorico();
+  if(id==='historico'){
+    document.getElementById('view-historico').querySelector('.page-title').textContent='Histórico de Vendas';
+    document.getElementById('view-historico').querySelector('.page-sub').textContent='Todas as vendas registradas';
+    renderHistorico();
+  }
   if(id==='analises') renderAnalises();
   if(id==='indicacoes') renderIndicacoes();
   if(id==='exportar') renderPrevia();
