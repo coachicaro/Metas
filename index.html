@@ -57,6 +57,15 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
 .sync-dot.loading{background:#fbbf24;animation:pulse 1s infinite}
 .sync-dot.err{background:#f87171}
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+
+.btn-periodo{padding:5px 12px;font-size:12px;font-weight:500;font-family:'DM Sans',sans-serif;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--surface);color:var(--text-2);cursor:pointer;transition:all .15s}
+.btn-periodo.active{background:var(--accent);color:#fff;border-color:var(--accent)}
+.perf-card{background:var(--bg);border-radius:var(--radius-sm);padding:14px;text-align:center}
+.perf-nome{font-weight:600;font-size:13px;margin-bottom:8px}
+.perf-val{font-family:'DM Serif Display',serif;font-size:18px;color:var(--accent);margin-bottom:4px}
+.perf-sub{font-size:11px;color:var(--text-3)}
+.perf-melhor{font-size:11px;font-weight:600;color:var(--green);margin-top:4px}
+
 .btn-logout{display:flex;align-items:center;gap:7px;padding:8px 0;font-size:12.5px;color:rgba(255,255,255,.45);cursor:pointer;background:none;border:none;font-family:'DM Sans',sans-serif;margin-top:10px;transition:color .15s}
 .btn-logout:hover{color:#fff}
 
@@ -473,14 +482,71 @@ input[type=range]{width:100%;accent-color:var(--accent)}
     <!-- ANÁLISES -->
     <div class="view" id="view-analises">
       <div class="page-title">Análises</div>
-      <p class="page-sub">Evolução mensal, ramos e seguradoras</p>
-      <div class="chart-grid">
-        <div class="chart-card chart-full"><div class="chart-title">Evolução de Comissão — Últimos 6 Meses</div><canvas id="chartEvolucao"></canvas></div>
-        <div class="chart-card"><div class="chart-title">Comissão por Ramo</div><canvas id="chartRamo"></canvas></div>
-        <div class="chart-card"><div class="chart-title">Comissão por Seguradora (Top 8)</div><canvas id="chartCia"></canvas></div>
-        <div class="chart-card"><div class="chart-title">Vendas por Vendedor — Mês Atual</div><canvas id="chartVendedor"></canvas></div>
-        <div class="chart-card"><div class="chart-title">PL por Ramo</div><canvas id="chartRamoPL"></canvas></div>
+      <p class="page-sub">Inteligência comercial do time</p>
+
+      <!-- CARDS DE DESTAQUE -->
+      <div class="summary-grid" style="margin-bottom:24px" id="analiseCards"></div>
+
+      <!-- EVOLUÇÃO COM SELETOR -->
+      <div class="chart-card chart-full" style="margin-bottom:20px">
+        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:16px">
+          <div class="chart-title" style="margin-bottom:0">Evolução de Comissão por Vendedor</div>
+          <div style="display:flex;gap:6px">
+            <button class="btn-periodo active" id="per3" onclick="setPeriodo(3)">3 meses</button>
+            <button class="btn-periodo" id="per6" onclick="setPeriodo(6)">6 meses</button>
+            <button class="btn-periodo" id="per12" onclick="setPeriodo(12)">12 meses</button>
+          </div>
+        </div>
+        <canvas id="chartEvolucao" style="max-height:280px"></canvas>
       </div>
+
+      <!-- TENDÊNCIA DO MÊS + ANO ANTERIOR -->
+      <div class="chart-grid" style="margin-bottom:20px">
+        <div class="chart-card">
+          <div class="chart-title">Tendência — Projeção do Mês Atual</div>
+          <canvas id="chartTendencia" style="max-height:220px"></canvas>
+          <div id="tendenciaInfo" style="margin-top:12px;font-size:12px;color:var(--text-2)"></div>
+        </div>
+        <div class="chart-card">
+          <div class="chart-title">Mesmo Mês — Ano Anterior</div>
+          <canvas id="chartAnoAnterior" style="max-height:220px"></canvas>
+          <div id="anoAnteriorInfo" style="margin-top:12px;font-size:12px;color:var(--text-2)"></div>
+        </div>
+      </div>
+
+      <!-- RAMO + CIA -->
+      <div class="chart-grid" style="margin-bottom:20px">
+        <div class="chart-card"><div class="chart-title">Comissão por Ramo</div><canvas id="chartRamo" style="max-height:240px"></canvas></div>
+        <div class="chart-card"><div class="chart-title">Top 8 Seguradoras</div><canvas id="chartCia" style="max-height:240px"></canvas></div>
+      </div>
+
+      <!-- PERFORMANCE INDIVIDUAL -->
+      <div class="chart-card" style="margin-bottom:20px">
+        <div class="chart-title">Performance Individual — Evolução Pessoal</div>
+        <div id="performanceGrid" style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:4px"></div>
+      </div>
+
+      <!-- TICKET MÉDIO + FAIXAS -->
+      <div class="chart-grid" style="margin-bottom:20px">
+        <div class="chart-card"><div class="chart-title">Ticket Médio de Comissão por Mês</div><canvas id="chartTicket" style="max-height:220px"></canvas></div>
+        <div class="chart-card"><div class="chart-title">Distribuição por Faixa de Comissão</div><canvas id="chartFaixa" style="max-height:220px"></canvas></div>
+      </div>
+
+      <!-- HEATMAP + SAZONALIDADE -->
+      <div class="chart-grid" style="margin-bottom:20px">
+        <div class="chart-card"><div class="chart-title">🔥 Dias da Semana com Mais Vendas</div><canvas id="chartHeatmap" style="max-height:220px"></canvas></div>
+        <div class="chart-card"><div class="chart-title">Sazonalidade por Ramo (últimos 12 meses)</div><canvas id="chartSazon" style="max-height:220px"></canvas></div>
+      </div>
+
+      <!-- PL POR RAMO + FUNIL -->
+      <div class="chart-grid" style="margin-bottom:20px">
+        <div class="chart-card"><div class="chart-title">PL por Ramo</div><canvas id="chartRamoPL" style="max-height:220px"></canvas></div>
+        <div class="chart-card">
+          <div class="chart-title">Funil de Propostas</div>
+          <div id="funnelChart" style="margin-top:8px"></div>
+        </div>
+      </div>
+
     </div>
 
     <!-- INDICAÇÕES -->
@@ -567,7 +633,13 @@ input[type=range]{width:100%;accent-color:var(--accent)}
         <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
           <label style="font-size:12px;font-weight:500;color:var(--text-2)">Período:</label>
           <select id="mesFiltroHist" onchange="renderHistorico()"></select>
-          <input type="text" id="buscaHist" placeholder="🔍 Buscar..." style="width:200px" oninput="renderHistorico()">
+          <select id="filtroVendedorHist" onchange="renderHistorico()" style="padding:8px 12px;font-size:13px;font-family:'DM Sans',sans-serif;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--surface);color:var(--text);outline:none">
+            <option value="">Todos os vendedores</option>
+            <option>Silvia</option>
+            <option>Paulo</option>
+            <option>Ícaro</option>
+          </select>
+          <input type="text" id="buscaHist" placeholder="🔍 Buscar..." style="width:160px" oninput="renderHistorico()">
         </div>
         <button class="btn btn-primary" onclick="abrirModalImport()" style="gap:6px">
           📥 Importar Planilha
@@ -1162,35 +1234,171 @@ function dispararCelebracao(nome,comissao,meta){
 }
 
 // ── ANÁLISES ──────────────────────────────────────────────────────────
-function renderAnalises(){
+let periodoEvolucao=3;
+
+function setPeriodo(n){
+  periodoEvolucao=n;
+  [3,6,12].forEach(x=>{
+    const el=document.getElementById('per'+x);
+    if(el) el.classList.toggle('active',x===n);
+  });
   renderChartEvolucao();
+}
+
+function getMeses(n){
+  const agora=new Date();
+  const meses=[];
+  for(let i=n-1;i>=0;i--){
+    const d=new Date(agora.getFullYear(),agora.getMonth()-i,1);
+    meses.push(`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`);
+  }
+  return meses;
+}
+
+function renderAnalises(){
+  renderAnaliseCards();
+  renderChartEvolucao();
+  renderChartTendencia();
+  renderChartAnoAnterior();
   renderChartRamo();
   renderChartCia();
-  renderChartVendedor();
+  renderPerformanceIndividual();
+  renderChartTicket();
+  renderChartFaixa();
+  renderChartHeatmap();
+  renderChartSazonalidade();
   renderChartRamoPL();
+  renderFunil();
 }
 
 function destroyChart(id){if(charts[id]){charts[id].destroy();delete charts[id];}}
 
+// ── CARDS DE DESTAQUE ────────────────────────────────────────────────
+function renderAnaliseCards(){
+  const agora=new Date();
+  const mes=`${agora.getFullYear()}-${String(agora.getMonth()+1).padStart(2,'0')}`;
+  const mesAnt=mesAnteriorDe(mes);
+  const vendas12=getMeses(12).flatMap(m=>vendasDoMes(m));
+  const vendasMes=vendasDoMes(mes);
+  const vendasAnt=vendasDoMes(mesAnt);
+
+  // Melhor mês histórico
+  const porMes={};
+  todasVendas.forEach(v=>{
+    const m=v.data?.slice(0,7);
+    if(m) porMes[m]=(porMes[m]||0)+(+v.comissao||0);
+  });
+  const melhorMes=Object.entries(porMes).sort((a,b)=>b[1]-a[1])[0];
+
+  // Média diária do mês atual
+  const diasUteis=Math.max(1,agora.getDate());
+  const mediaDiaria=soma(vendasMes,'comissao')/diasUteis;
+
+  // Crescimento mês
+  const comMes=soma(vendasMes,'comissao');
+  const comAnt=soma(vendasAnt,'comissao');
+  const cresc=comAnt>0?((comMes-comAnt)/comAnt*100):0;
+
+  document.getElementById('analiseCards').innerHTML=`
+    <div class="summary-card">
+      <div class="label">Melhor Mês Histórico</div>
+      <div class="value">${melhorMes?fmt(melhorMes[1]):'—'}</div>
+      <div class="sub">${melhorMes?fmtMesLabel(melhorMes[0]):'—'}</div>
+    </div>
+    <div class="summary-card">
+      <div class="label">Média Diária (mês atual)</div>
+      <div class="value">${fmt(mediaDiaria)}</div>
+      <div class="sub">por dia útil</div>
+    </div>
+    <div class="summary-card">
+      <div class="label">Crescimento Mês</div>
+      <div class="value" style="color:${cresc>=0?'var(--green)':'var(--danger)'}">
+        ${cresc>=0?'▲':'▼'} ${Math.abs(cresc).toFixed(1)}%
+      </div>
+      <div class="sub">vs mês anterior</div>
+    </div>
+    <div class="summary-card">
+      <div class="label">Total 12 Meses</div>
+      <div class="value">${fmt(soma(vendas12,'comissao'))}</div>
+      <div class="sub">${vendas12.length} vendas</div>
+    </div>`;
+}
+
+// ── EVOLUÇÃO COM SELETOR ─────────────────────────────────────────────
 function renderChartEvolucao(){
   destroyChart('evolucao');
-  const agora=new Date();
-  const meses=[];
-  for(let i=5;i>=0;i--){
-    const d=new Date(agora.getFullYear(),agora.getMonth()-i,1);
-    meses.push(`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`);
-  }
-  const labels=meses.map(m=>{const[y,mo]=m.split('-');return capitalize(new Date(+y,+mo-1,1).toLocaleDateString('pt-BR',{month:'short',year:'2-digit'}));});
+  const meses=getMeses(periodoEvolucao);
+  const labels=meses.map(m=>fmtMesLabel(m));
   const datasets=VENDEDORES.map(v=>({
     label:v,
     data:meses.map(m=>soma(vendasDoMes(m).filter(x=>x.vendedor===v),'comissao')),
-    borderColor:CORES_VENDEDOR[v],
-    backgroundColor:CORES_VENDEDOR[v]+'33',
-    tension:.4,fill:true,borderWidth:2,pointRadius:4
+    borderColor:CORES_VENDEDOR[v],backgroundColor:CORES_VENDEDOR[v]+'22',
+    tension:.4,fill:true,borderWidth:2.5,pointRadius:5,pointHoverRadius:7
   }));
-  charts['evolucao']=new Chart(document.getElementById('chartEvolucao'),{type:'line',data:{labels,datasets},options:{responsive:true,plugins:{legend:{position:'top'}},scales:{y:{ticks:{callback:v=>fmt(v)}}}}});
+  charts['evolucao']=new Chart(document.getElementById('chartEvolucao'),{
+    type:'line',data:{labels,datasets},
+    options:{responsive:true,interaction:{mode:'index',intersect:false},
+      plugins:{legend:{position:'top'},tooltip:{callbacks:{label:c=>`${c.dataset.label}: ${fmt(c.raw)}`}}},
+      scales:{y:{ticks:{callback:v=>fmt(v)},grid:{color:'#f0f0f0'}}}}
+  });
 }
 
+// ── TENDÊNCIA DO MÊS ATUAL ───────────────────────────────────────────
+function renderChartTendencia(){
+  destroyChart('tend');
+  const agora=new Date();
+  const mes=`${agora.getFullYear()}-${String(agora.getMonth()+1).padStart(2,'0')}`;
+  const diasNoMes=new Date(agora.getFullYear(),agora.getMonth()+1,0).getDate();
+  const diaAtual=agora.getDate();
+  const vendasMes=vendasDoMes(mes);
+  const comAtual=soma(vendasMes,'comissao');
+  const projecao=diaAtual>0?(comAtual/diaAtual)*diasNoMes:0;
+  const labels=VENDEDORES;
+  const comissoes=VENDEDORES.map(v=>soma(vendasMes.filter(x=>x.vendedor===v),'comissao'));
+  const projecoes=VENDEDORES.map(v=>{
+    const c=soma(vendasMes.filter(x=>x.vendedor===v),'comissao');
+    return Math.round((c/diaAtual)*diasNoMes*100)/100;
+  });
+  charts['tend']=new Chart(document.getElementById('chartTendencia'),{
+    type:'bar',
+    data:{labels,datasets:[
+      {label:'Realizado',data:comissoes,backgroundColor:VENDEDORES.map(v=>CORES_VENDEDOR[v]+'bb'),borderRadius:6},
+      {label:'Projeção',data:projecoes,backgroundColor:VENDEDORES.map(v=>CORES_VENDEDOR[v]+'33'),borderRadius:6,borderWidth:2,borderColor:VENDEDORES.map(v=>CORES_VENDEDOR[v])}
+    ]},
+    options:{responsive:true,plugins:{legend:{position:'top'},tooltip:{callbacks:{label:c=>`${c.dataset.label}: ${fmt(c.raw)}`}}},
+      scales:{y:{ticks:{callback:v=>fmt(v)}}}}
+  });
+  document.getElementById('tendenciaInfo').innerHTML=
+    `Dia ${diaAtual}/${diasNoMes} · Projeção total do time: <strong>${fmt(projecao)}</strong>`;
+}
+
+// ── MESMO MÊS ANO ANTERIOR ───────────────────────────────────────────
+function renderChartAnoAnterior(){
+  destroyChart('anoant');
+  const agora=new Date();
+  const mesAtual=`${agora.getFullYear()}-${String(agora.getMonth()+1).padStart(2,'0')}`;
+  const mesAnteriorAno=`${agora.getFullYear()-1}-${String(agora.getMonth()+1).padStart(2,'0')}`;
+  const vAtual=vendasDoMes(mesAtual);
+  const vAnterior=vendasDoMes(mesAnteriorAno);
+  const comAtual=soma(vAtual,'comissao');
+  const comAnterior=soma(vAnterior,'comissao');
+  const diff=comAnterior>0?((comAtual-comAnterior)/comAnterior*100):0;
+  charts['anoant']=new Chart(document.getElementById('chartAnoAnterior'),{
+    type:'bar',
+    data:{labels:VENDEDORES,datasets:[
+      {label:String(agora.getFullYear()-1),data:VENDEDORES.map(v=>soma(vAnterior.filter(x=>x.vendedor===v),'comissao')),backgroundColor:'#94a3b8bb',borderRadius:6},
+      {label:String(agora.getFullYear()),data:VENDEDORES.map(v=>soma(vAtual.filter(x=>x.vendedor===v),'comissao')),backgroundColor:VENDEDORES.map(v=>CORES_VENDEDOR[v]+'cc'),borderRadius:6}
+    ]},
+    options:{responsive:true,plugins:{legend:{position:'top'},tooltip:{callbacks:{label:c=>`${c.dataset.label}: ${fmt(c.raw)}`}}},
+      scales:{y:{ticks:{callback:v=>fmt(v)}}}}
+  });
+  const sinal=diff>=0?'▲':'▼';
+  const cor=diff>=0?'var(--green)':'var(--danger)';
+  document.getElementById('anoAnteriorInfo').innerHTML=
+    `${fmtMesLabel(mesAnteriorAno)} vs ${fmtMesLabel(mesAtual)} · Variação: <strong style="color:${cor}">${sinal} ${Math.abs(diff).toFixed(1)}%</strong>`;
+}
+
+// ── RAMO ─────────────────────────────────────────────────────────────
 function renderChartRamo(){
   destroyChart('ramo');
   const mes=mesSelecionado('mesFiltro');
@@ -1198,9 +1406,14 @@ function renderChartRamo(){
   const map={};
   vendas.forEach(v=>{map[v.ramo]=(map[v.ramo]||0)+(+v.comissao||0);});
   const sorted=Object.entries(map).sort((a,b)=>b[1]-a[1]);
-  charts['ramo']=new Chart(document.getElementById('chartRamo'),{type:'doughnut',data:{labels:sorted.map(x=>x[0]),datasets:[{data:sorted.map(x=>x[1]),backgroundColor:['#6366f1','#f59e0b','#10b981','#ef4444','#3b82f6','#8b5cf6','#ec4899']}]},options:{responsive:true,plugins:{legend:{position:'right'},tooltip:{callbacks:{label:c=>`${c.label}: ${fmt(c.raw)}`}}}}});
+  if(!sorted.length) return;
+  charts['ramo']=new Chart(document.getElementById('chartRamo'),{type:'doughnut',
+    data:{labels:sorted.map(x=>x[0]),datasets:[{data:sorted.map(x=>x[1]),backgroundColor:['#6366f1','#f59e0b','#10b981','#ef4444','#3b82f6','#8b5cf6','#ec4899','#14b8a6','#f97316']}]},
+    options:{responsive:true,plugins:{legend:{position:'right'},tooltip:{callbacks:{label:c=>`${c.label}: ${fmt(c.raw)}`}}}}
+  });
 }
 
+// ── CIA ───────────────────────────────────────────────────────────────
 function renderChartCia(){
   destroyChart('cia');
   const mes=mesSelecionado('mesFiltro');
@@ -1208,17 +1421,125 @@ function renderChartCia(){
   const map={};
   vendas.forEach(v=>{map[v.cia]=(map[v.cia]||0)+(+v.comissao||0);});
   const sorted=Object.entries(map).sort((a,b)=>b[1]-a[1]).slice(0,8);
-  charts['cia']=new Chart(document.getElementById('chartCia'),{type:'bar',data:{labels:sorted.map(x=>x[0]),datasets:[{label:'Comissão',data:sorted.map(x=>x[1]),backgroundColor:'#2A3568cc',borderRadius:6}]},options:{responsive:true,plugins:{legend:{display:false}},scales:{y:{ticks:{callback:v=>fmt(v)}},x:{ticks:{maxRotation:35,font:{size:11}}}}}});
+  if(!sorted.length) return;
+  charts['cia']=new Chart(document.getElementById('chartCia'),{type:'bar',
+    data:{labels:sorted.map(x=>x[0]),datasets:[{label:'Comissão',data:sorted.map(x=>x[1]),backgroundColor:'#2A3568cc',borderRadius:6}]},
+    options:{responsive:true,plugins:{legend:{display:false}},
+      scales:{y:{ticks:{callback:v=>fmt(v)}},x:{ticks:{maxRotation:35,font:{size:11}}}}}
+  });
 }
 
-function renderChartVendedor(){
-  destroyChart('vendedor');
+// ── PERFORMANCE INDIVIDUAL ────────────────────────────────────────────
+function renderPerformanceIndividual(){
+  const meses=getMeses(6);
+  const grid=document.getElementById('performanceGrid');
+  if(!grid) return;
+  grid.innerHTML=VENDEDORES.map(v=>{
+    const dados=meses.map(m=>soma(vendasDoMes(m).filter(x=>x.vendedor===v),'comissao'));
+    const melhor=Math.max(...dados);
+    const atual=dados[dados.length-1];
+    const anterior=dados[dados.length-2]||0;
+    const cresc=anterior>0?((atual-anterior)/anterior*100):0;
+    const sinal=cresc>=0?'▲':'▼';
+    const cor=cresc>=0?'var(--green)':'var(--danger)';
+    const melhorMesIdx=dados.indexOf(melhor);
+    return `<div class="perf-card">
+      <div class="perf-nome">${EMOJIS[v]||'🧑'} ${v}</div>
+      <div class="perf-val">${fmt(atual)}</div>
+      <div class="perf-sub">este mês</div>
+      <div style="font-size:11px;font-weight:600;color:${cor};margin-top:4px">${sinal} ${Math.abs(cresc).toFixed(1)}% vs anterior</div>
+      <div class="perf-melhor">🏆 Melhor: ${fmt(melhor)} (${fmtMesLabel(meses[melhorMesIdx])})</div>
+    </div>`;
+  }).join('');
+}
+
+// ── TICKET MÉDIO ──────────────────────────────────────────────────────
+function renderChartTicket(){
+  destroyChart('ticket');
+  const meses=getMeses(6);
+  const labels=meses.map(m=>fmtMesLabel(m));
+  const datasets=VENDEDORES.map(v=>({
+    label:v,
+    data:meses.map(m=>{
+      const vends=vendasDoMes(m).filter(x=>x.vendedor===v);
+      return vends.length?Math.round(soma(vends,'comissao')/vends.length*100)/100:0;
+    }),
+    borderColor:CORES_VENDEDOR[v],backgroundColor:'transparent',
+    tension:.4,borderWidth:2,pointRadius:4
+  }));
+  charts['ticket']=new Chart(document.getElementById('chartTicket'),{type:'line',
+    data:{labels,datasets},
+    options:{responsive:true,interaction:{mode:'index',intersect:false},
+      plugins:{legend:{position:'top'},tooltip:{callbacks:{label:c=>`${c.dataset.label}: ${fmt(c.raw)}`}}},
+      scales:{y:{ticks:{callback:v=>fmt(v)}}}}
+  });
+}
+
+// ── FAIXAS DE COMISSÃO ────────────────────────────────────────────────
+function renderChartFaixa(){
+  destroyChart('faixa');
   const mes=mesSelecionado('mesFiltro');
   const vendas=vendasDoMes(mes);
-  const counts=VENDEDORES.map(v=>vendas.filter(x=>x.vendedor===v).length);
-  charts['vendedor']=new Chart(document.getElementById('chartVendedor'),{type:'bar',data:{labels:VENDEDORES,datasets:[{label:'Vendas',data:counts,backgroundColor:VENDEDORES.map(v=>CORES_VENDEDOR[v]+'cc'),borderRadius:8}]},options:{responsive:true,plugins:{legend:{display:false}},scales:{y:{ticks:{stepSize:1}}}}});
+  const faixas={'Até R$100':0,'R$100–500':0,'R$500–1k':0,'R$1k–5k':0,'Acima R$5k':0};
+  vendas.forEach(v=>{
+    const c=+v.comissao||0;
+    if(c<=100) faixas['Até R$100']++;
+    else if(c<=500) faixas['R$100–500']++;
+    else if(c<=1000) faixas['R$500–1k']++;
+    else if(c<=5000) faixas['R$1k–5k']++;
+    else faixas['Acima R$5k']++;
+  });
+  charts['faixa']=new Chart(document.getElementById('chartFaixa'),{type:'bar',
+    data:{labels:Object.keys(faixas),datasets:[{label:'Vendas',data:Object.values(faixas),backgroundColor:['#94a3b8cc','#6366f1cc','#f59e0bcc','#10b981cc','#2A3568cc'],borderRadius:6}]},
+    options:{responsive:true,plugins:{legend:{display:false}},scales:{y:{ticks:{stepSize:1}}}}
+  });
 }
 
+// ── HEATMAP DIAS DA SEMANA ────────────────────────────────────────────
+function renderChartHeatmap(){
+  destroyChart('heat');
+  const dias=['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
+  const counts=[0,0,0,0,0,0,0];
+  todasVendas.forEach(v=>{
+    if(v.data){
+      const d=new Date(v.data+'T12:00:00');
+      counts[d.getDay()]++;
+    }
+  });
+  const max=Math.max(...counts);
+  charts['heat']=new Chart(document.getElementById('chartHeatmap'),{type:'bar',
+    data:{labels:dias,datasets:[{label:'Vendas',data:counts,
+      backgroundColor:counts.map(n=>{
+        const intensity=max>0?n/max:0;
+        return `rgba(42,53,104,${0.15+intensity*0.85})`;
+      }),borderRadius:6}]},
+    options:{responsive:true,plugins:{legend:{display:false}},scales:{y:{ticks:{stepSize:1}}}}
+  });
+}
+
+// ── SAZONALIDADE POR RAMO ─────────────────────────────────────────────
+function renderChartSazonalidade(){
+  destroyChart('sazon');
+  const meses=getMeses(12);
+  const labels=meses.map(m=>fmtMesLabel(m));
+  // Top 4 ramos historicamente
+  const mapRamo={};
+  todasVendas.forEach(v=>{mapRamo[v.ramo]=(mapRamo[v.ramo]||0)+(+v.comissao||0);});
+  const top4=Object.entries(mapRamo).sort((a,b)=>b[1]-a[1]).slice(0,4).map(x=>x[0]);
+  const cores=['#6366f1','#f59e0b','#10b981','#ef4444'];
+  const datasets=top4.map((ramo,i)=>({
+    label:ramo,
+    data:meses.map(m=>soma(vendasDoMes(m).filter(v=>v.ramo===ramo),'comissao')),
+    borderColor:cores[i],backgroundColor:'transparent',tension:.4,borderWidth:2,pointRadius:3
+  }));
+  charts['sazon']=new Chart(document.getElementById('chartSazon'),{type:'line',
+    data:{labels,datasets},
+    options:{responsive:true,interaction:{mode:'index',intersect:false},
+      plugins:{legend:{position:'top'}},scales:{y:{ticks:{callback:v=>fmt(v)}}}}
+  });
+}
+
+// ── PL POR RAMO ───────────────────────────────────────────────────────
 function renderChartRamoPL(){
   destroyChart('ramoPL');
   const mes=mesSelecionado('mesFiltro');
@@ -1226,7 +1547,50 @@ function renderChartRamoPL(){
   const map={};
   vendas.forEach(v=>{map[v.ramo]=(map[v.ramo]||0)+(+v.premio_liquido||0);});
   const sorted=Object.entries(map).sort((a,b)=>b[1]-a[1]);
-  charts['ramoPL']=new Chart(document.getElementById('chartRamoPL'),{type:'bar',data:{labels:sorted.map(x=>x[0]),datasets:[{label:'PL',data:sorted.map(x=>x[1]),backgroundColor:'#10b981cc',borderRadius:6}]},options:{responsive:true,plugins:{legend:{display:false}},scales:{y:{ticks:{callback:v=>fmt(v)}}}}});
+  if(!sorted.length) return;
+  charts['ramoPL']=new Chart(document.getElementById('chartRamoPL'),{type:'bar',
+    data:{labels:sorted.map(x=>x[0]),datasets:[{label:'PL',data:sorted.map(x=>x[1]),backgroundColor:'#10b981cc',borderRadius:6}]},
+    options:{responsive:true,plugins:{legend:{display:false}},scales:{y:{ticks:{callback:v=>fmt(v)}}}}
+  });
+}
+
+// ── FUNIL DE PROPOSTAS ────────────────────────────────────────────────
+function renderFunil(){
+  const total=todasPropostas.length;
+  const abertas=todasPropostas.filter(p=>p.status==='aberta').length;
+  const fechadas=todasPropostas.filter(p=>p.status==='fechada').length;
+  const perdidas=todasPropostas.filter(p=>p.status==='perdida').length;
+  const taxa=total>0?Math.round(fechadas/total*100):0;
+  const el=document.getElementById('funnelChart');
+  if(!el) return;
+  el.innerHTML=`
+    <div style="margin-bottom:10px">
+      <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px"><span>📋 Total</span><span><strong>${total}</strong></span></div>
+      <div style="height:8px;background:var(--border);border-radius:99px"><div style="height:100%;width:100%;background:#6366f1;border-radius:99px"></div></div>
+    </div>
+    <div style="margin-bottom:10px">
+      <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px"><span>⏳ Em aberto</span><span><strong>${abertas}</strong></span></div>
+      <div style="height:8px;background:var(--border);border-radius:99px"><div style="height:100%;width:${total?abertas/total*100:0}%;background:#f59e0b;border-radius:99px"></div></div>
+    </div>
+    <div style="margin-bottom:10px">
+      <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px"><span>✅ Fechadas</span><span><strong>${fechadas}</strong></span></div>
+      <div style="height:8px;background:var(--border);border-radius:99px"><div style="height:100%;width:${total?fechadas/total*100:0}%;background:var(--green);border-radius:99px"></div></div>
+    </div>
+    <div style="margin-bottom:16px">
+      <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px"><span>❌ Perdidas</span><span><strong>${perdidas}</strong></span></div>
+      <div style="height:8px;background:var(--border);border-radius:99px"><div style="height:100%;width:${total?perdidas/total*100:0}%;background:var(--danger);border-radius:99px"></div></div>
+    </div>
+    <div style="text-align:center;padding:12px;background:var(--accent-light);border-radius:var(--radius-sm)">
+      <div style="font-size:11px;color:var(--text-3);margin-bottom:4px">TAXA DE CONVERSÃO</div>
+      <div style="font-family:'DM Serif Display',serif;font-size:28px;color:var(--accent)">${taxa}%</div>
+    </div>`;
+}
+
+// ── UTILS ANÁLISES ────────────────────────────────────────────────────
+function fmtMesLabel(m){
+  if(!m) return '—';
+  const[y,mo]=m.split('-');
+  return capitalize(new Date(+y,+mo-1,1).toLocaleDateString('pt-BR',{month:'short',year:'2-digit'}));
 }
 
 // ── INDICAÇÕES ────────────────────────────────────────────────────────
@@ -1269,7 +1633,9 @@ function renderIndicacoes(){
 function renderHistorico(){
   const mes=mesSelecionado('mesFiltroHist');
   const busca=(document.getElementById('buscaHist').value||'').toLowerCase();
+  const filtroVend=(document.getElementById('filtroVendedorHist')?.value||'');
   let vendas=vendasDoMes(mes);
+  if(filtroVend) vendas=vendas.filter(v=>v.vendedor===filtroVend);
   if(busca) vendas=vendas.filter(v=>(v.segurado||'').toLowerCase().includes(busca)||(v.cia||'').toLowerCase().includes(busca));
   const tbody=document.getElementById('tbodyHist');
   const empty=document.getElementById('emptyHist');
@@ -2411,35 +2777,10 @@ function fmtDataHora(d){
 }
 
 function verVendasVendedor(vendedor, mes){
-  // Setar filtros no histórico
   document.getElementById('mesFiltroHist').value = mes;
+  document.getElementById('filtroVendedorHist').value = vendedor;
   document.getElementById('buscaHist').value = '';
-  // Ir para histórico
   showView('historico');
-  // Filtrar por vendedor — adicionar filtro temporário
-  const tbody = document.getElementById('tbodyHist');
-  const empty = document.getElementById('emptyHist');
-  let vendas = vendasDoMes(mes).filter(v => v.vendedor === vendedor);
-  if(!vendas.length){ tbody.innerHTML=''; empty.style.display='block'; return; }
-  empty.style.display='none';
-  // Atualizar título
-  document.getElementById('view-historico').querySelector('.page-title').textContent = `Vendas de ${vendedor}`;
-  document.getElementById('view-historico').querySelector('.page-sub').textContent = `${vendas.length} venda${vendas.length!==1?'s':''} em ${document.getElementById('mesFiltro').options[document.getElementById('mesFiltro').selectedIndex].text}`;
-  tbody.innerHTML = vendas.map(v=>`
-    <tr>
-      <td>${fmtData(v.data)}</td>
-      <td style="max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${v.segurado}">${v.segurado}</td>
-      <td><span class="ramo-badge ${ramoClass(v.ramo)}">${v.ramo}</span></td>
-      <td>${v.cia}</td><td>${fmt(v.premio_liquido)}</td>
-      <td>${(+v.percentual_comissao).toFixed(0)}%</td>
-      <td class="val-green">${fmt(v.comissao)}</td>
-      <td><span class="vendedor-chip">${v.vendedor}</span></td>
-      <td style="color:var(--text-3);font-size:12px">${v.sdr_indicacao||'—'}</td>
-      <td>
-        <button class="action-btn" onclick="abrirEdicao('${v.id}')" title="Editar">✏️</button>
-        <button class="action-btn" onclick="deletarVenda('${v.id}')" title="Excluir">🗑️</button>
-      </td>
-    </tr>`).join('');
 }
 
 // ── NAV ───────────────────────────────────────────────────────────────
