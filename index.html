@@ -1076,8 +1076,8 @@ function subscribeRealtime(){
     .on('postgres_changes',{event:'*',schema:'public',table:'propostas'},()=>carregarPropostas())
     .on('postgres_changes',{event:'*',schema:'public',table:'metas_mensais'},()=>carregarMetas())
     .on('postgres_changes',{event:'*',schema:'public',table:'metas_ramo'},()=>carregarMetas())
-    .on('postgres_changes',{event:'*',schema:'public',table:'clientes'},()=>carregarCRM())
-    .on('postgres_changes',{event:'*',schema:'public',table:'tarefas'},()=>carregarCRM())
+    .on('postgres_changes',{event:'*',schema:'public',table:'carteira'},()=>carregarCRM())
+    .on('postgres_changes',{event:'*',schema:'public',table:'lembretes'},()=>carregarCRM())
     .subscribe();
 }
 
@@ -2352,10 +2352,15 @@ const TODOS_PRODUTOS=[
 
 async function carregarCRM(){
   const vendedor=(currentProfile?.vendedor||'').trim();
-  if(!vendedor){ todosClientes=[]; todasTarefas=[]; renderClientes(); renderTarefasView(); return; }
+  let queryClientes=db.from('carteira').select('*').order('nome');
+  let queryTarefas=db.from('lembretes').select('*').order('data_lembrete');
+  // Filtrar por vendedor se tiver perfil
+  if(vendedor){
+    queryClientes=queryClientes.eq('vendedor',vendedor);
+    queryTarefas=queryTarefas.eq('vendedor',vendedor);
+  }
   const[{data:cls,error:e1},{data:tars,error:e2}]=await Promise.all([
-    db.from('clientes').select('*').eq('vendedor',vendedor).order('nome'),
-    db.from('tarefas').select('*').eq('vendedor',vendedor).order('data_lembrete')
+    queryClientes, queryTarefas
   ]);
   if(e1) console.error('Erro clientes:',e1.message);
   if(e2) console.error('Erro tarefas:',e2.message);
@@ -2404,11 +2409,7 @@ function renderClientes(){
   const grid=document.getElementById('clientesGrid');
   const empty=document.getElementById('clientesEmpty');
   if(!grid) return;
-  if(!currentProfile?.vendedor){
-    grid.innerHTML='';
-    if(empty) empty.style.display='block';
-    return;
-  }
+  // Continua mesmo sem vendedor definido
 
   let lista=[...todosClientes];
   // Merge produtos das vendas
@@ -2542,7 +2543,7 @@ function renderTarefasDetalhe(clienteId){
 
 async function toggleProdutoDetalhe(clienteId,produto,valor){
   const field='tem_'+produto;
-  await db.from('clientes').update({[field]:valor}).eq('id',clienteId);
+  await db.from('carteira').update({[field]:valor}).eq('id',clienteId);
   await carregarCRM();
   abrirDetalheCliente(clienteId);
 }
@@ -2557,7 +2558,7 @@ function editarClienteAtual(){fecharModalDetalhe();if(clienteDetalheId) setTimeo
 async function deletarClienteAtual(){
   if(!clienteDetalheId) return;
   if(!confirm('Excluir este cliente e todas as suas tarefas?')) return;
-  await db.from('clientes').delete().eq('id',clienteDetalheId);
+  await db.from('carteira').delete().eq('id',clienteDetalheId);
   fecharModalDetalhe();
   await carregarCRM();
   showToast('Cliente excluído.','success');
@@ -2623,7 +2624,7 @@ async function salvarCliente(){
     tem_cartao:produtosTemp.cartao,
     tem_outros:produtosTemp.outros,
   };
-  const{error}=id?await db.from('clientes').update(payload).eq('id',id):await db.from('clientes').insert([payload]);
+  const{error}=id?await db.from('carteira').update(payload).eq('id',id):await db.from('carteira').insert([payload]);
   if(error){showToast('Erro: '+error.message,'error');return;}
   fecharModalClienteDireto();
   await carregarCRM();
@@ -2637,11 +2638,7 @@ function renderTarefasView(){
   let lista=[...todasTarefas].sort((a,b)=>new Date(a.data_lembrete||'9999')-new Date(b.data_lembrete||'9999'));
   const div=document.getElementById('tarefasViewList');
   const empty=document.getElementById('tarefasViewEmpty');
-  if(!currentProfile?.vendedor){
-    if(div) div.innerHTML='';
-    if(empty) empty.style.display='block';
-    return;
-  }
+  // Continua mesmo sem vendedor definido
 
   if(filtro==='vencida') lista=lista.filter(t=>t.status==='pendente'&&t.data_lembrete&&new Date(t.data_lembrete)<hoje);
   else if(filtro) lista=lista.filter(t=>t.status===filtro);
@@ -2714,7 +2711,7 @@ async function salvarTarefa(){
     email_lembrete:emailLembrete,
     status:document.getElementById('tar_status').value,
   };
-  const{error}=id?await db.from('tarefas').update(payload).eq('id',id):await db.from('tarefas').insert([payload]);
+  const{error}=id?await db.from('lembretes').update(payload).eq('id',id):await db.from('lembretes').insert([payload]);
   if(error){showToast('Erro: '+error.message,'error');return;}
 
   // Agendar lembrete por email via Supabase Edge Function (se tiver data e email)
@@ -2731,19 +2728,19 @@ async function salvarTarefa(){
 async function toggleTarefa(tarefaId,clienteId){
   const t=todasTarefas.find(x=>x.id===tarefaId);if(!t)return;
   const novo=t.status==='concluida'?'pendente':'concluida';
-  await db.from('tarefas').update({status:novo}).eq('id',tarefaId);
+  await db.from('lembretes').update({status:novo}).eq('id',tarefaId);
   await carregarCRM();
   if(clienteId) renderTarefasDetalhe(clienteId);
 }
 async function toggleTarefaView(tarefaId){
   const t=todasTarefas.find(x=>x.id===tarefaId);if(!t)return;
   const novo=t.status==='concluida'?'pendente':'concluida';
-  await db.from('tarefas').update({status:novo}).eq('id',tarefaId);
+  await db.from('lembretes').update({status:novo}).eq('id',tarefaId);
   await carregarCRM();
 }
 async function deletarTarefa(tarefaId,clienteId){
   if(!confirm('Excluir tarefa?'))return;
-  await db.from('tarefas').delete().eq('id',tarefaId);
+  await db.from('lembretes').delete().eq('id',tarefaId);
   await carregarCRM();
   if(clienteId) renderTarefasDetalhe(clienteId);
   showToast('Tarefa excluída.','success');
@@ -2814,8 +2811,18 @@ function showView(id){
   if(id==='exportar') renderPrevia();
   if(id==='metas') renderFormMetas();
   if(id==='dashboard') renderDashboard();
-  if(id==='carteira'){ if(currentProfile?.vendedor) carregarCRM(); else renderClientes(); }
-  if(id==='tarefas_view'){ if(currentProfile?.vendedor) carregarCRM(); else renderTarefasView(); }
+  if(id==='carteira'||id==='tarefas_view'){
+    // Sempre recarregar ao entrar nessas abas
+    if(currentProfile?.vendedor){
+      carregarCRM();
+    } else {
+      // Tentar buscar perfil novamente
+      db.from('profiles').select('*').eq('id',currentUser.id).single().then(({data})=>{
+        if(data){ currentProfile=data; carregarCRM(); }
+        else renderClientes();
+      });
+    }
+  }
   window.scrollTo(0,0);
 }
 
