@@ -784,6 +784,95 @@ input[type=range]{width:100%;accent-color:var(--accent)}
   </div>
 </nav>
 
+<!-- MODAL CLIENTE -->
+<div class="modal-overlay" id="modalCliente" onclick="fecharModalCliente(event)">
+  <div class="modal" style="max-width:680px">
+    <div class="modal-title" id="modalClienteTitulo">Novo Cliente</div>
+    <input type="hidden" id="cli_id">
+    <div class="form-grid" style="margin-bottom:14px">
+      <div class="field"><label>Nome *</label><input type="text" id="cli_nome" placeholder="Nome completo"></div>
+      <div class="field"><label>Telefone</label><input type="text" id="cli_tel" placeholder="(51) 99999-9999"></div>
+      <div class="field"><label>E-mail</label><input type="email" id="cli_email" placeholder="email@email.com"></div>
+    </div>
+    <div class="form-grid" style="margin-bottom:14px">
+      <div class="field"><label>CPF / CNPJ</label><input type="text" id="cli_doc" placeholder="000.000.000-00"></div>
+      <div class="field"><label>Tipo</label>
+        <select id="cli_tipo"><option value="PF">Pessoa Física</option><option value="PJ">Pessoa Jurídica</option></select>
+      </div>
+      <div class="field"><label>Origem</label>
+        <select id="cli_origem"><option value="manual">Cadastro manual</option><option value="venda">Venda no sistema</option><option value="indicacao">Indicação</option><option value="prospect">Prospect</option></select>
+      </div>
+    </div>
+    <div class="field" style="margin-bottom:16px"><label>Observações</label>
+      <textarea id="cli_obs" rows="2" placeholder="Anotações..." style="resize:vertical"></textarea>
+    </div>
+    <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:var(--text-3);margin-bottom:10px">Produtos que possui</div>
+    <div class="produto-grid" style="margin-bottom:20px">
+      <div class="produto-chip" id="chip_auto" onclick="toggleProduto('auto')">🚗 Auto</div>
+      <div class="produto-chip" id="chip_residencial" onclick="toggleProduto('residencial')">🏠 Residencial</div>
+      <div class="produto-chip" id="chip_vida" onclick="toggleProduto('vida')">❤️ Vida</div>
+      <div class="produto-chip" id="chip_saude" onclick="toggleProduto('saude')">🏥 Saúde</div>
+      <div class="produto-chip" id="chip_empresarial" onclick="toggleProduto('empresarial')">🏢 Empresarial</div>
+      <div class="produto-chip" id="chip_cartao" onclick="toggleProduto('cartao')">💳 Cartão</div>
+      <div class="produto-chip" id="chip_outros" onclick="toggleProduto('outros')">📦 Outros</div>
+    </div>
+    <div class="form-actions">
+      <button class="btn btn-ghost" onclick="fecharModalClienteDireto()">Cancelar</button>
+      <button class="btn btn-primary" onclick="salvarCliente()">💾 Salvar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL DETALHE CLIENTE -->
+<div class="modal-overlay" id="modalDetalhe" onclick="fecharModalDetalhe(event)">
+  <div class="modal" style="max-width:700px">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:20px">
+      <div>
+        <div class="modal-title" id="detalheNome" style="margin-bottom:4px"></div>
+        <div id="detalheInfo" style="font-size:13px;color:var(--text-2)"></div>
+      </div>
+      <div style="display:flex;gap:8px">
+        <button class="btn btn-ghost" style="padding:6px 12px;font-size:12px" onclick="editarClienteAtual()">✏️ Editar</button>
+        <button class="btn btn-ghost" style="padding:6px 12px;font-size:12px" onclick="fecharModalDetalhe()">✕</button>
+      </div>
+    </div>
+    <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:var(--text-3);margin-bottom:10px">Produtos</div>
+    <div class="produto-grid" id="detalheProdutos" style="margin-bottom:20px"></div>
+    <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:var(--text-3);margin-bottom:10px">Histórico de Vendas</div>
+    <div id="detalheVendas" style="margin-bottom:20px;max-height:160px;overflow-y:auto"></div>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+      <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:var(--text-3)">Tarefas / Lembretes</div>
+      <button class="btn btn-primary" style="padding:5px 12px;font-size:12px" onclick="abrirModalTarefa(clienteDetalheId)">+ Tarefa</button>
+    </div>
+    <div id="detalheTarefas"></div>
+    <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:20px;padding-top:16px;border-top:1px solid var(--border)">
+      <button class="btn btn-danger" style="font-size:12px;padding:7px 14px" onclick="deletarClienteAtual()">🗑️ Excluir cliente</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL TAREFA -->
+<div class="modal-overlay" id="modalTarefa" onclick="fecharModalTarefa(event)">
+  <div class="modal" style="max-width:500px">
+    <div class="modal-title" id="modalTarefaTitulo">Nova Tarefa</div>
+    <input type="hidden" id="tar_id">
+    <input type="hidden" id="tar_cliente_id">
+    <div class="field"><label>Título *</label><input type="text" id="tar_titulo" placeholder="Ex: Ligar para oferecer residencial"></div>
+    <div class="field"><label>Descrição</label><textarea id="tar_desc" rows="2" placeholder="Detalhes..." style="resize:vertical"></textarea></div>
+    <div class="form-grid-2" style="margin-bottom:14px">
+      <div class="field"><label>Data / Hora do lembrete</label><input type="datetime-local" id="tar_data"></div>
+      <div class="field"><label>E-mail para lembrete</label><input type="email" id="tar_email" placeholder="seu@email.com"></div>
+    </div>
+    <div class="field"><label>Status</label>
+      <select id="tar_status"><option value="pendente">Pendente</option><option value="concluida">Concluída</option><option value="cancelada">Cancelada</option></select>
+    </div>
+    <div class="form-actions">
+      <button class="btn btn-ghost" onclick="fecharModalTarefaDireto()">Cancelar</button>
+      <button class="btn btn-primary" onclick="salvarTarefa()">💾 Salvar</button>
+    </div>
+  </div>
+</div>
+
 <!-- MODAL EDITAR VENDA -->
 <div class="modal-overlay" id="modalOverlay" onclick="fecharModal(event)">
   <div class="modal">
