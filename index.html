@@ -1528,21 +1528,30 @@ async function salvarVenda(e){
   e.preventDefault();
   const btn=document.getElementById('btnSalvar');
   btn.disabled=true;btn.textContent='Salvando...';
+  const pl=parseFloat(document.getElementById('f_pl').value)||0;
+  const pct=parseFloat(document.getElementById('f_pct').value)||0;
+  const comissao=Math.round(pl*pct/100*100)/100;
   const payload={
     data:document.getElementById('f_data').value,
     segurado:document.getElementById('f_segurado').value.trim(),
     ramo:document.getElementById('f_ramo').value,
     cia:document.getElementById('f_cia').value,
-    premio_liquido:parseFloat(document.getElementById('f_pl').value)||0,
-    percentual_comissao:parseFloat(document.getElementById('f_pct').value)||0,
+    premio_liquido:pl,
+    percentual_comissao:pct,
+    comissao:comissao,
     vendedor:document.getElementById('f_vendedor').value,
     sdr_indicacao:document.getElementById('f_sdr').value.trim()||null,
   };
-  const{error}=await db.from('vendas').insert([payload]);
-  btn.disabled=false;btn.textContent='💾 Salvar Venda';
-  if(error){showToast('Erro: '+error.message,'error');return;}
-  showToast('Venda registrada!','success');
-  resetForm();showView('ranking');
+  try{
+    const{error}=await db.from('vendas').insert([payload]);
+    btn.disabled=false;btn.textContent='💾 Salvar Venda';
+    if(error){showToast('Erro: '+error.message,'error');return;}
+    showToast('Venda registrada!','success');
+    resetForm();showView('ranking');
+  }catch(err){
+    btn.disabled=false;btn.textContent='💾 Salvar Venda';
+    showToast('Erro inesperado: '+err.message,'error');
+  }
 }
 
 // ── EDITAR VENDA ──────────────────────────────────────────────────────
@@ -1562,19 +1571,24 @@ function calcComissaoEdit(){
 }
 async function salvarEdicao(){
   const id=document.getElementById('edit_id').value;
+  const editPl=parseFloat(document.getElementById('edit_pl').value)||0;
+  const editPct=parseFloat(document.getElementById('edit_pct').value)||0;
   const payload={
     data:document.getElementById('edit_data').value,
     segurado:document.getElementById('edit_segurado').value.trim(),
     ramo:document.getElementById('edit_ramo').value,
     cia:document.getElementById('edit_cia').value,
-    premio_liquido:parseFloat(document.getElementById('edit_pl').value)||0,
-    percentual_comissao:parseFloat(document.getElementById('edit_pct').value)||0,
+    premio_liquido:editPl,
+    percentual_comissao:editPct,
+    comissao:Math.round(editPl*editPct/100*100)/100,
     vendedor:document.getElementById('edit_vendedor').value,
     sdr_indicacao:document.getElementById('edit_sdr').value.trim()||null,
   };
-  const{error}=await db.from('vendas').update(payload).eq('id',id);
-  if(error){showToast('Erro: '+error.message,'error');return;}
-  fecharModalDireto();showToast('Venda atualizada!','success');
+  try{
+    const{error}=await db.from('vendas').update(payload).eq('id',id);
+    if(error){showToast('Erro: '+error.message,'error');return;}
+    fecharModalDireto();showToast('Venda atualizada!','success');
+  }catch(err){showToast('Erro: '+err.message,'error');}
 }
 async function deletarVenda(id){
   if(!confirm('Excluir esta venda?'))return;
