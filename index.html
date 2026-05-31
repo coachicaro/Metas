@@ -789,36 +789,59 @@ input[type=range]{width:100%;accent-color:var(--accent)}
   <div class="modal" style="max-width:680px">
     <div class="modal-title" id="modalClienteTitulo">Novo Cliente</div>
     <input type="hidden" id="cli_id">
-    <div class="form-grid" style="margin-bottom:14px">
-      <div class="field"><label>Nome *</label><input type="text" id="cli_nome" placeholder="Nome completo"></div>
-      <div class="field"><label>Telefone</label><input type="text" id="cli_tel" placeholder="(51) 99999-9999"></div>
-      <div class="field"><label>E-mail</label><input type="email" id="cli_email" placeholder="email@email.com"></div>
+
+    <!-- Abas -->
+    <div class="auth-tabs" id="cliTabsWrap" style="margin-bottom:20px">
+      <div class="auth-tab active" id="cliTabManual" onclick="switchCliTab('manual')">✏️ Cadastro manual</div>
+      <div class="auth-tab" id="cliTabVendas" onclick="switchCliTab('vendas')">📋 Importar das vendas</div>
     </div>
-    <div class="form-grid" style="margin-bottom:14px">
-      <div class="field"><label>CPF / CNPJ</label><input type="text" id="cli_doc" placeholder="000.000.000-00"></div>
-      <div class="field"><label>Tipo</label>
-        <select id="cli_tipo"><option value="PF">Pessoa Física</option><option value="PJ">Pessoa Jurídica</option></select>
+
+    <!-- ABA MANUAL -->
+    <div id="cliPanelManual">
+      <div class="form-grid" style="margin-bottom:14px">
+        <div class="field"><label>Nome *</label><input type="text" id="cli_nome" placeholder="Nome completo"></div>
+        <div class="field"><label>Telefone</label><input type="text" id="cli_tel" placeholder="(51) 99999-9999"></div>
+        <div class="field"><label>E-mail</label><input type="email" id="cli_email" placeholder="email@email.com"></div>
       </div>
-      <div class="field"><label>Origem</label>
-        <select id="cli_origem"><option value="manual">Cadastro manual</option><option value="venda">Venda no sistema</option><option value="indicacao">Indicação</option><option value="prospect">Prospect</option></select>
+      <div class="form-grid" style="margin-bottom:14px">
+        <div class="field"><label>CPF / CNPJ</label><input type="text" id="cli_doc" placeholder="000.000.000-00"></div>
+        <div class="field"><label>Tipo</label>
+          <select id="cli_tipo"><option value="PF">Pessoa Física</option><option value="PJ">Pessoa Jurídica</option></select>
+        </div>
+        <div class="field"><label>Origem</label>
+          <select id="cli_origem"><option value="manual">Cadastro manual</option><option value="venda">Venda no sistema</option><option value="indicacao">Indicação</option><option value="prospect">Prospect</option></select>
+        </div>
+      </div>
+      <div class="field" style="margin-bottom:16px"><label>Observações</label>
+        <textarea id="cli_obs" rows="2" placeholder="Anotações..." style="resize:vertical"></textarea>
+      </div>
+      <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:var(--text-3);margin-bottom:10px">Produtos que possui</div>
+      <div class="produto-grid" style="margin-bottom:20px">
+        <div class="produto-chip" id="chip_auto" onclick="toggleProduto('auto')">🚗 Auto</div>
+        <div class="produto-chip" id="chip_residencial" onclick="toggleProduto('residencial')">🏠 Residencial</div>
+        <div class="produto-chip" id="chip_vida" onclick="toggleProduto('vida')">❤️ Vida</div>
+        <div class="produto-chip" id="chip_saude" onclick="toggleProduto('saude')">🏥 Saúde</div>
+        <div class="produto-chip" id="chip_empresarial" onclick="toggleProduto('empresarial')">🏢 Empresarial</div>
+        <div class="produto-chip" id="chip_cartao" onclick="toggleProduto('cartao')">💳 Cartão</div>
+        <div class="produto-chip" id="chip_outros" onclick="toggleProduto('outros')">📦 Outros</div>
+      </div>
+      <div class="form-actions">
+        <button class="btn btn-ghost" onclick="fecharModalClienteDireto()">Cancelar</button>
+        <button class="btn btn-primary" onclick="salvarCliente()">💾 Salvar</button>
       </div>
     </div>
-    <div class="field" style="margin-bottom:16px"><label>Observações</label>
-      <textarea id="cli_obs" rows="2" placeholder="Anotações..." style="resize:vertical"></textarea>
-    </div>
-    <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:var(--text-3);margin-bottom:10px">Produtos que possui</div>
-    <div class="produto-grid" style="margin-bottom:20px">
-      <div class="produto-chip" id="chip_auto" onclick="toggleProduto('auto')">🚗 Auto</div>
-      <div class="produto-chip" id="chip_residencial" onclick="toggleProduto('residencial')">🏠 Residencial</div>
-      <div class="produto-chip" id="chip_vida" onclick="toggleProduto('vida')">❤️ Vida</div>
-      <div class="produto-chip" id="chip_saude" onclick="toggleProduto('saude')">🏥 Saúde</div>
-      <div class="produto-chip" id="chip_empresarial" onclick="toggleProduto('empresarial')">🏢 Empresarial</div>
-      <div class="produto-chip" id="chip_cartao" onclick="toggleProduto('cartao')">💳 Cartão</div>
-      <div class="produto-chip" id="chip_outros" onclick="toggleProduto('outros')">📦 Outros</div>
-    </div>
-    <div class="form-actions">
-      <button class="btn btn-ghost" onclick="fecharModalClienteDireto()">Cancelar</button>
-      <button class="btn btn-primary" onclick="salvarCliente()">💾 Salvar</button>
+
+    <!-- ABA IMPORTAR DAS VENDAS -->
+    <div id="cliPanelVendas" style="display:none">
+      <p style="font-size:13px;color:var(--text-2);margin-bottom:14px">
+        Clientes que você já vendeu e ainda não estão na sua carteira.
+      </p>
+      <input type="text" id="buscaCliVenda" placeholder="🔍 Buscar cliente..." oninput="renderClientesDasVendas()"
+        style="width:100%;padding:9px 12px;font-size:13px;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--bg);outline:none;margin-bottom:14px;font-family:'DM Sans',sans-serif">
+      <div id="listaCliVendas" style="max-height:360px;overflow-y:auto;display:flex;flex-direction:column;gap:8px"></div>
+      <div class="form-actions" style="margin-top:16px">
+        <button class="btn btn-ghost" onclick="fecharModalClienteDireto()">Cancelar</button>
+      </div>
     </div>
   </div>
 </div>
@@ -2660,10 +2683,100 @@ async function deletarClienteAtual(){
 }
 
 // ── MODAL CLIENTE ─────────────────────────────────────────────────────
+
+function switchCliTab(tab){
+  document.getElementById('cliTabManual').classList.toggle('active', tab==='manual');
+  document.getElementById('cliTabVendas').classList.toggle('active', tab==='vendas');
+  document.getElementById('cliPanelManual').style.display = tab==='manual'?'block':'none';
+  document.getElementById('cliPanelVendas').style.display = tab==='vendas'?'block':'none';
+  if(tab==='vendas') renderClientesDasVendas();
+}
+
+function renderClientesDasVendas(){
+  const vendedor=(currentProfile?.vendedor||'').trim();
+  const busca=(document.getElementById('buscaCliVenda')?.value||'').toLowerCase();
+
+  // Nomes já na carteira
+  const jaAdicionados=new Set(todosClientes.map(c=>c.nome.toLowerCase().trim()));
+
+  // Clientes únicos das vendas deste vendedor que ainda não estão na carteira
+  const mapaClientes={};
+  todasVendas
+    .filter(v=>!vendedor||v.vendedor===vendedor)
+    .forEach(v=>{
+      const nome=(v.segurado||'').trim();
+      if(!nome) return;
+      if(jaAdicionados.has(nome.toLowerCase())) return;
+      if(!mapaClientes[nome]){
+        mapaClientes[nome]={nome, vendas:[], ramos:new Set()};
+      }
+      mapaClientes[nome].vendas.push(v);
+      mapaClientes[nome].ramos.add(v.ramo);
+    });
+
+  let lista=Object.values(mapaClientes).sort((a,b)=>a.nome.localeCompare(b.nome));
+  if(busca) lista=lista.filter(x=>x.nome.toLowerCase().includes(busca));
+
+  const div=document.getElementById('listaCliVendas');
+  if(!lista.length){
+    div.innerHTML=`<div style="text-align:center;padding:24px;color:var(--text-3);font-size:13px">
+      ${busca?'Nenhum cliente encontrado':'Todos os seus clientes já estão na carteira! 🎉'}
+    </div>`;
+    return;
+  }
+
+  div.innerHTML=lista.map(x=>{
+    const ramos=[...x.ramos].map(r=>`<span class="ramo-badge ${ramoClass(r)}" style="font-size:10.5px">${r}</span>`).join(' ');
+    const totalCom=x.vendas.reduce((a,v)=>a+(+v.comissao||0),0);
+    return `<div style="display:flex;align-items:center;justify-content:space-between;padding:12px 14px;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--bg);gap:10px">
+      <div style="flex:1;min-width:0">
+        <div style="font-weight:600;font-size:13px;margin-bottom:4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${x.nome}</div>
+        <div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:4px">${ramos}</div>
+        <div style="font-size:11.5px;color:var(--text-3)">${x.vendas.length} venda${x.vendas.length!==1?'s':''} · Comissão total: ${fmt(totalCom)}</div>
+      </div>
+      <button class="btn btn-primary" style="padding:7px 14px;font-size:12px;flex-shrink:0"
+        onclick="adicionarClienteDasVendas('${x.nome.replace(/'/g,"\\'")}')">
+        + Adicionar
+      </button>
+    </div>`;
+  }).join('');
+}
+
+async function adicionarClienteDasVendas(nome){
+  const vendedor=(currentProfile?.vendedor||'').trim();
+
+  // Detectar produtos automaticamente das vendas
+  const pv=produtosDasVendas(nome);
+
+  const payload={
+    nome, vendedor,
+    origem:'venda',
+    tipo:'PF',
+    tem_auto:pv.auto,
+    tem_residencial:pv.residencial,
+    tem_vida:pv.vida,
+    tem_saude:pv.saude,
+    tem_empresarial:pv.empresarial,
+    tem_cartao:pv.cartao,
+    tem_outros:pv.outros,
+  };
+
+  const{error}=await db.from('carteira').insert([payload]);
+  if(error){showToast('Erro: '+error.message,'error');return;}
+
+  showToast(`${nome} adicionado à carteira!`,'success');
+  await carregarCRM();
+  renderClientesDasVendas(); // atualiza lista removendo quem foi adicionado
+}
+
 function abrirModalCliente(id){
   produtosTemp={auto:false,residencial:false,vida:false,saude:false,empresarial:false,cartao:false,outros:false};
   document.getElementById('cli_id').value=id||'';
   document.getElementById('modalClienteTitulo').textContent=id?'Editar Cliente':'Novo Cliente';
+  // Resetar para aba manual; esconder abas ao editar
+  const tabsWrap=document.getElementById('cliTabsWrap');
+  if(tabsWrap) tabsWrap.style.display=id?'none':'flex';
+  switchCliTab('manual');
   if(id){
     const cl=todosClientes.find(x=>x.id===id);
     if(cl){
