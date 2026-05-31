@@ -988,8 +988,7 @@ async function iniciarApp(user){
 
   popularMeses();
   setSync('loading');
-  await Promise.all([carregarVendas(),carregarPropostas(),carregarMetas()]);
-  await carregarCRM();
+  await Promise.all([carregarVendas(),carregarPropostas(),carregarMetas(),carregarCRM()]);
   subscribeRealtime();
   checarLembretes();
   document.getElementById('f_data').value=hoje();
@@ -2433,8 +2432,15 @@ function renderClientes(){
     lista=lista.filter(cl=>sem?!cl[campo]:cl[campo]);
   }
 
-  if(!lista.length){grid.innerHTML='';empty.style.display='block';return;}
-  empty.style.display='none';
+  if(!lista.length){
+    grid.innerHTML='';
+    if(empty){
+      empty.style.display='block';
+      empty.innerHTML='<div style="font-size:36px;margin-bottom:10px">👥</div>Nenhum cliente ainda<br><button class="btn btn-primary" style="margin-top:16px" onclick="abrirModalCliente()">➕ Adicionar primeiro cliente</button>';
+    }
+    return;
+  }
+  if(empty) empty.style.display='none';
 
   grid.innerHTML=lista.map(cl=>{
     const tarefasCl=todasTarefas.filter(t=>t.cliente_id===cl.id&&t.status==='pendente');
@@ -2811,18 +2817,8 @@ function showView(id){
   if(id==='exportar') renderPrevia();
   if(id==='metas') renderFormMetas();
   if(id==='dashboard') renderDashboard();
-  if(id==='carteira'||id==='tarefas_view'){
-    // Sempre recarregar ao entrar nessas abas
-    if(currentProfile?.vendedor){
-      carregarCRM();
-    } else {
-      // Tentar buscar perfil novamente
-      db.from('profiles').select('*').eq('id',currentUser.id).single().then(({data})=>{
-        if(data){ currentProfile=data; carregarCRM(); }
-        else renderClientes();
-      });
-    }
-  }
+  if(id==='carteira'){ carregarCRM().then(()=>renderClientes()); }
+  if(id==='tarefas_view'){ carregarCRM().then(()=>renderTarefasView()); }
   window.scrollTo(0,0);
 }
 
