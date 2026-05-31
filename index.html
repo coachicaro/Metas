@@ -2352,10 +2352,13 @@ const TODOS_PRODUTOS=[
 
 async function carregarCRM(){
   const vendedor=(currentProfile?.vendedor||'').trim();
-  const[{data:cls},{data:tars}]=await Promise.all([
+  if(!vendedor){ todosClientes=[]; todasTarefas=[]; renderClientes(); renderTarefasView(); return; }
+  const[{data:cls,error:e1},{data:tars,error:e2}]=await Promise.all([
     db.from('clientes').select('*').eq('vendedor',vendedor).order('nome'),
     db.from('tarefas').select('*').eq('vendedor',vendedor).order('data_lembrete')
   ]);
+  if(e1) console.error('Erro clientes:',e1.message);
+  if(e2) console.error('Erro tarefas:',e2.message);
   todosClientes=cls||[];
   todasTarefas=tars||[];
   renderClientes();
@@ -2401,6 +2404,11 @@ function renderClientes(){
   const grid=document.getElementById('clientesGrid');
   const empty=document.getElementById('clientesEmpty');
   if(!grid) return;
+  if(!currentProfile?.vendedor){
+    grid.innerHTML='';
+    if(empty) empty.style.display='block';
+    return;
+  }
 
   let lista=[...todosClientes];
   // Merge produtos das vendas
@@ -2627,12 +2635,17 @@ function renderTarefasView(){
   const filtro=document.getElementById('filtroStatusTarefa')?.value||'';
   const hoje=new Date();
   let lista=[...todasTarefas].sort((a,b)=>new Date(a.data_lembrete||'9999')-new Date(b.data_lembrete||'9999'));
+  const div=document.getElementById('tarefasViewList');
+  const empty=document.getElementById('tarefasViewEmpty');
+  if(!currentProfile?.vendedor){
+    if(div) div.innerHTML='';
+    if(empty) empty.style.display='block';
+    return;
+  }
 
   if(filtro==='vencida') lista=lista.filter(t=>t.status==='pendente'&&t.data_lembrete&&new Date(t.data_lembrete)<hoje);
   else if(filtro) lista=lista.filter(t=>t.status===filtro);
 
-  const div=document.getElementById('tarefasViewList');
-  const empty=document.getElementById('tarefasViewEmpty');
   if(!lista.length){div.innerHTML='';empty.style.display='block';return;}
   empty.style.display='none';
 
@@ -2801,8 +2814,8 @@ function showView(id){
   if(id==='exportar') renderPrevia();
   if(id==='metas') renderFormMetas();
   if(id==='dashboard') renderDashboard();
-  if(id==='carteira') renderClientes();
-  if(id==='tarefas_view') renderTarefasView();
+  if(id==='carteira'){ if(currentProfile?.vendedor) carregarCRM(); else renderClientes(); }
+  if(id==='tarefas_view'){ if(currentProfile?.vendedor) carregarCRM(); else renderTarefasView(); }
   window.scrollTo(0,0);
 }
 
