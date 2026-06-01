@@ -722,8 +722,8 @@ input[type=range]{width:100%;accent-color:var(--accent)}
       <!-- Conteúdo dinâmico renderizado pelo JS -->
       <div id="crm-clientes">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:10px">
-          <div class="crm-filtros" style="margin-bottom:0">
-            <input type="text" id="buscaCliente" placeholder="🔍 Buscar cliente..." style="width:200px" oninput="renderClientes()">
+          <div class="crm-filtros" style="margin-bottom:0;flex-wrap:wrap">
+            <input type="text" id="buscaCliente" placeholder="🔍 Buscar..." style="width:160px" oninput="renderClientes()">
             <select id="filtroRamoCliente" onchange="renderClientes()">
               <option value="">Todos os produtos</option>
               <option value="auto">Tem Auto</option>
@@ -736,6 +736,15 @@ input[type=range]{width:100%;accent-color:var(--accent)}
               <option value="sem_vida">Sem Vida</option>
               <option value="sem_saude">Sem Saúde</option>
               <option value="sem_empresarial">Sem Empresarial</option>
+            </select>
+            <select id="ordenacaoCliente" onchange="renderClientes()">
+              <option value="ltv_desc">💰 Maior LTV</option>
+              <option value="ltv_asc">💰 Menor LTV</option>
+              <option value="produtos_desc">📦 Mais produtos</option>
+              <option value="produtos_asc">📦 Menos produtos</option>
+              <option value="nome_asc">🔤 A–Z</option>
+              <option value="nome_desc">🔤 Z–A</option>
+              <option value="recente">🕐 Mais recente</option>
             </select>
           </div>
           <button class="btn btn-primary" onclick="abrirModalCliente()">➕ Novo Cliente</button>
@@ -2519,9 +2528,14 @@ function renderClientes(){
   const container=document.getElementById('clientesContainer');
   if(!container) return;
 
+  const ordenacao=document.getElementById('ordenacaoCliente')?.value||'ltv_desc';
+
   let lista=[...todosClientes];
   lista=lista.map(cl=>{
     const pv=produtosDasVendas(cl.nome);
+    const vendasCl=todasVendas.filter(v=>(v.segurado||'').toLowerCase().trim()===cl.nome.toLowerCase().trim());
+    const ltv=vendasCl.reduce((a,v)=>a+(+v.comissao||0),0);
+    const numProdutos=TODOS_PRODUTOS.filter(p=>(cl['tem_'+p.key]||pv[p.key])).length;
     return{...cl,
       tem_auto:cl.tem_auto||pv.auto,
       tem_residencial:cl.tem_residencial||pv.residencial,
@@ -2530,6 +2544,9 @@ function renderClientes(){
       tem_empresarial:cl.tem_empresarial||pv.empresarial,
       tem_cartao:cl.tem_cartao||pv.cartao,
       tem_outros:cl.tem_outros||pv.outros,
+      _ltv:ltv,
+      _numProdutos:numProdutos,
+      _ultimaVenda:vendasCl[0]?.data||'',
     };
   });
 
@@ -2539,6 +2556,20 @@ function renderClientes(){
     const campo='tem_'+(sem?filtroRamo.replace('sem_',''):filtroRamo);
     lista=lista.filter(cl=>sem?!cl[campo]:cl[campo]);
   }
+
+  // Ordenação
+  lista.sort((a,b)=>{
+    switch(ordenacao){
+      case 'ltv_desc':    return b._ltv-a._ltv;
+      case 'ltv_asc':     return a._ltv-b._ltv;
+      case 'produtos_desc': return b._numProdutos-a._numProdutos;
+      case 'produtos_asc':  return a._numProdutos-b._numProdutos;
+      case 'nome_asc':    return a.nome.localeCompare(b.nome);
+      case 'nome_desc':   return b.nome.localeCompare(a.nome);
+      case 'recente':     return (b._ultimaVenda||'').localeCompare(a._ultimaVenda||'');
+      default:            return b._ltv-a._ltv;
+    }
+  });
 
   if(!lista.length){
     container.innerHTML=`<div style="text-align:center;padding:48px 0;color:var(--text-3)">
@@ -2556,12 +2587,16 @@ function renderClientes(){
     const badge=tarefasCl.length>0?`<div class="cliente-tarefas-badge" style="${vencidas.length>0?'background:#ef4444':''}">${tarefasCl.length}</div>`:'';
 
     const prods=TODOS_PRODUTOS.map(p=>`<span class="prod-tag ${cl['tem_'+p.key]?'tem':'nao-tem'}">${p.label}</span>`).join('');
-    const temCount=TODOS_PRODUTOS.filter(p=>cl['tem_'+p.key]).length;
+    const temCount=cl._numProdutos||TODOS_PRODUTOS.filter(p=>cl['tem_'+p.key]).length;
     const pct=Math.round(temCount/TODOS_PRODUTOS.length*100);
+    const ltvStr=cl._ltv>0?`<span style="font-size:12px;font-weight:600;color:var(--accent)">LTV ${fmt(cl._ltv)}</span>`:'';
 
     return`<div class="cliente-card" onclick="abrirDetalheCliente('${cl.id}')">
       ${badge}
-      <div class="cliente-nome">${cl.nome}</div>
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:4px">
+        <div class="cliente-nome" style="margin-bottom:0">${cl.nome}</div>
+        ${ltvStr}
+      </div>
       <div class="cliente-info">${[cl.tipo,cl.telefone,cl.email].filter(Boolean).join(' · ')||'Sem contato cadastrado'}</div>
       <div class="cliente-produtos">${prods}</div>
       <div style="font-size:11px;color:var(--text-3);margin-bottom:4px">${temCount} de ${TODOS_PRODUTOS.length} produtos · ${pct}% da carteira</div>
