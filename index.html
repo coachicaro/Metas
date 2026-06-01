@@ -2049,6 +2049,7 @@ async function salvarVenda(e){
 // ── EDITAR VENDA ──────────────────────────────────────────────────────
 function abrirEdicao(id){
   const v=todasVendas.find(x=>x.id===id);if(!v)return;
+  document.getElementById('edit_id').value=v.id; // preencher o id!
   ['edit_data','edit_segurado','edit_vendedor','edit_ramo','edit_cia','edit_sdr'].forEach(f=>{
     const key=f.replace('edit_','');
     document.getElementById(f).value=v[key==='sdr'?'sdr_indicacao':key]||'';
