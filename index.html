@@ -2027,17 +2027,12 @@ async function salvarVenda(e){
     vendedor:document.getElementById('f_vendedor').value,
     sdr_indicacao:document.getElementById('f_sdr').value.trim()||null,
   };
-  try{
-    const{error}=await db.from('vendas').insert([payload]);
-    btn.disabled=false;btn.textContent='💾 Salvar Venda';
-    if(error){showToast('Erro: '+error.message,'error');return;}
-    showToast('Venda registrada!','success');
-    await carregarVendas(); // forçar reload imediato
-    resetForm();showView('ranking');
-  }catch(err){
-    btn.disabled=false;btn.textContent='💾 Salvar Venda';
-    showToast('Erro inesperado: '+err.message,'error');
-  }
+  const{error}=await db.from('vendas').insert([payload]);
+  btn.disabled=false;btn.textContent='💾 Salvar Venda';
+  if(error){showToast('Erro: '+error.message,'error');return;}
+  showToast('Venda registrada!','success');
+  resetForm();showView('ranking');
+  carregarVendas(); // recarregar sem await para não bloquear
 }
 
 // ── EDITAR VENDA ──────────────────────────────────────────────────────
@@ -2470,28 +2465,28 @@ const TODOS_PRODUTOS=[
 ];
 
 async function carregarCRM(){
-  // Se perfil não carregou ainda, tentar buscar de novo
+  const el=document.getElementById('clientesContainer');
+  if(el) el.innerHTML='<div style="padding:20px;font-size:13px;color:var(--text-2)">Carregando carteira...</div>';
+
+  // Garantir perfil
   if(!currentProfile?.vendedor && currentUser){
     const{data}=await db.from('profiles').select('*').eq('id',currentUser.id).single();
     if(data) currentProfile=data;
   }
   const vendedor=(currentProfile?.vendedor||'').trim();
-  if(!vendedor){ renderClientes(); renderTarefasView(); return; }
-  // Buscar todos e filtrar no JS para evitar problema de encoding/acentos
-  const[r1,r2]=await Promise.all([
-    db.from('carteira').select('*').order('nome'),
-    db.from('lembretes').select('*').order('data_lembrete')
-  ]);
-  // Filtrar por vendedor com normalização de caracteres
-  const vNorm=vendedor.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
-  todosClientes=(r1.data||[]).filter(x=>{
-    const xNorm=(x.vendedor||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
-    return xNorm===vNorm;
-  });
-  todasTarefas=(r2.data||[]).filter(x=>{
-    const xNorm=(x.vendedor||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
-    return xNorm===vNorm;
-  });
+
+  // Buscar TUDO sem filtro
+  const{data:d1,error:e1}=await db.from('carteira').select('*').order('nome');
+  const{data:d2,error:e2}=await db.from('lembretes').select('*').order('data_lembrete');
+
+  if(el) el.innerHTML=`<div style="padding:16px;font-size:12px;background:#f0f4ff;border-radius:8px;margin-bottom:16px">
+    <b>Debug:</b> perfil=${JSON.stringify(currentProfile?.vendedor)} |
+    carteira total=${(d1||[]).length} | erro=${e1?.message||'nenhum'} |
+    vendedores=${[...new Set((d1||[]).map(x=>x.vendedor))].join(', ')}
+  </div>`;
+
+  todosClientes=d1||[];
+  todasTarefas=d2||[];
   renderClientes();
   renderTarefasView();
   renderOportunidades();
