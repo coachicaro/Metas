@@ -2523,85 +2523,69 @@ function produtosDasVendas(nomeCliente){
 
 // ── RENDER CLIENTES ───────────────────────────────────────────────────
 function renderClientes(){
-  const busca=(document.getElementById('buscaCliente')?.value||'').toLowerCase();
-  const filtroRamo=document.getElementById('filtroRamoCliente')?.value||'';
   const container=document.getElementById('clientesContainer');
   if(!container) return;
 
+  if(!currentProfile){
+    container.innerHTML='<div style="text-align:center;padding:32px;color:var(--text-3)">Carregando...</div>';
+    return;
+  }
+
+  const busca=(document.getElementById('buscaCliente')?.value||'').toLowerCase();
+  const filtroRamo=(document.getElementById('filtroRamoCliente')?.value)||'';
   const ordenacao=(document.getElementById('ordenacaoCliente')?.value)||'ltv_desc';
 
   let lista=todosClientes.map(cl=>{
-    try{
-      const pv=produtosDasVendas(cl.nome);
-      const vendasCl=todasVendas.filter(v=>(v.segurado||'').toLowerCase().trim()===(cl.nome||'').toLowerCase().trim());
-      const ltv=vendasCl.reduce((a,v)=>a+(+v.comissao||0),0);
-      const merged={
-        ...cl,
-        tem_auto:!!(cl.tem_auto||pv.auto),
-        tem_residencial:!!(cl.tem_residencial||pv.residencial),
-        tem_vida:!!(cl.tem_vida||pv.vida),
-        tem_saude:!!(cl.tem_saude||pv.saude),
-        tem_empresarial:!!(cl.tem_empresarial||pv.empresarial),
-        tem_cartao:!!(cl.tem_cartao||pv.cartao),
-        tem_outros:!!(cl.tem_outros||pv.outros),
-      };
-      merged._ltv=ltv;
-      merged._numProdutos=TODOS_PRODUTOS.filter(p=>merged['tem_'+p.key]).length;
-      merged._ultimaVenda=vendasCl[0]?.data||'';
-      return merged;
-    }catch(e){return{...cl,_ltv:0,_numProdutos:0,_ultimaVenda:''};}
+    const pv=produtosDasVendas(cl.nome);
+    const vendasCl=todasVendas.filter(v=>(v.segurado||'').trim().toLowerCase()===(cl.nome||'').trim().toLowerCase());
+    const ltv=vendasCl.reduce((s,v)=>s+(+v.comissao||0),0);
+    const r={...cl,
+      tem_auto:!!(cl.tem_auto||pv.auto),tem_residencial:!!(cl.tem_residencial||pv.residencial),
+      tem_vida:!!(cl.tem_vida||pv.vida),tem_saude:!!(cl.tem_saude||pv.saude),
+      tem_empresarial:!!(cl.tem_empresarial||pv.empresarial),tem_cartao:!!(cl.tem_cartao||pv.cartao),
+      tem_outros:!!(cl.tem_outros||pv.outros),
+    };
+    r._ltv=ltv;
+    r._nProd=TODOS_PRODUTOS.filter(p=>r['tem_'+p.key]).length;
+    r._ultima=vendasCl[0]?.data||'';
+    return r;
   });
 
-  if(busca) lista=lista.filter(cl=>cl.nome.toLowerCase().includes(busca)||(cl.telefone||'').includes(busca)||(cl.email||'').toLowerCase().includes(busca));
+  if(busca) lista=lista.filter(c=>(c.nome||'').toLowerCase().includes(busca)||(c.telefone||'').includes(busca)||(c.email||'').toLowerCase().includes(busca));
   if(filtroRamo){
     const sem=filtroRamo.startsWith('sem_');
-    const campo='tem_'+(sem?filtroRamo.replace('sem_',''):filtroRamo);
-    lista=lista.filter(cl=>sem?!cl[campo]:cl[campo]);
+    const campo='tem_'+(sem?filtroRamo.slice(4):filtroRamo);
+    lista=lista.filter(c=>sem?!c[campo]:!!c[campo]);
   }
 
-  // Ordenação
   lista.sort((a,b)=>{
-    switch(ordenacao){
-      case 'ltv_desc':    return b._ltv-a._ltv;
-      case 'ltv_asc':     return a._ltv-b._ltv;
-      case 'produtos_desc': return b._numProdutos-a._numProdutos;
-      case 'produtos_asc':  return a._numProdutos-b._numProdutos;
-      case 'nome_asc':    return a.nome.localeCompare(b.nome);
-      case 'nome_desc':   return b.nome.localeCompare(a.nome);
-      case 'recente':     return (b._ultimaVenda||'').localeCompare(a._ultimaVenda||'');
-      default:            return b._ltv-a._ltv;
-    }
+    if(ordenacao==='ltv_asc') return a._ltv-b._ltv;
+    if(ordenacao==='produtos_desc') return b._nProd-a._nProd;
+    if(ordenacao==='produtos_asc') return a._nProd-b._nProd;
+    if(ordenacao==='nome_asc') return a.nome.localeCompare(b.nome);
+    if(ordenacao==='nome_desc') return b.nome.localeCompare(a.nome);
+    if(ordenacao==='recente') return b._ultima.localeCompare(a._ultima);
+    return b._ltv-a._ltv;
   });
 
   if(!lista.length){
-    container.innerHTML=`<div style="text-align:center;padding:48px 0;color:var(--text-3)">
-      <div style="font-size:36px;margin-bottom:10px">👥</div>
-      <div style="margin-bottom:16px">Nenhum cliente ainda</div>
-      <button class="btn btn-primary" onclick="abrirModalCliente()">➕ Adicionar primeiro cliente</button>
-    </div>`;
+    container.innerHTML=`<div style="text-align:center;padding:48px 0;color:var(--text-3)"><div style="font-size:36px;margin-bottom:10px">👥</div><div style="margin-bottom:16px">${todosClientes.length?'Nenhum encontrado':'Nenhum cliente ainda'}</div><button class="btn btn-primary" onclick="abrirModalCliente()">➕ Adicionar primeiro cliente</button></div>`;
     return;
   }
 
   container.innerHTML='<div class="clientes-grid">'+lista.map(cl=>{
-    const tarefasCl=todasTarefas.filter(t=>t.cliente_id===cl.id&&t.status==='pendente');
-    const hoje=new Date();
-    const vencidas=tarefasCl.filter(t=>t.data_lembrete&&new Date(t.data_lembrete)<hoje);
-    const badge=tarefasCl.length>0?`<div class="cliente-tarefas-badge" style="${vencidas.length>0?'background:#ef4444':''}">${tarefasCl.length}</div>`:'';
-
+    const tarefasCl=(todasTarefas||[]).filter(t=>t.cliente_id===cl.id&&t.status==='pendente');
+    const vencidas=tarefasCl.filter(t=>t.data_lembrete&&new Date(t.data_lembrete)<new Date());
+    const badge=tarefasCl.length?`<div class="cliente-tarefas-badge" style="${vencidas.length?'background:#ef4444':''}">${tarefasCl.length}</div>`:'';
     const prods=TODOS_PRODUTOS.map(p=>`<span class="prod-tag ${cl['tem_'+p.key]?'tem':'nao-tem'}">${p.label}</span>`).join('');
-    const temCount=cl._numProdutos||TODOS_PRODUTOS.filter(p=>cl['tem_'+p.key]).length;
-    const pct=Math.round(temCount/TODOS_PRODUTOS.length*100);
-    const ltvStr=cl._ltv>0?`<span style="font-size:12px;font-weight:600;color:var(--accent)">LTV ${fmt(cl._ltv)}</span>`:'';
-
+    const pct=Math.round(cl._nProd/TODOS_PRODUTOS.length*100);
+    const ltvStr=cl._ltv>0?`<span style="font-size:11.5px;font-weight:600;color:var(--accent)">LTV ${fmt(cl._ltv)}</span>`:'';
     return`<div class="cliente-card" onclick="abrirDetalheCliente('${cl.id}')">
       ${badge}
-      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:4px">
-        <div class="cliente-nome" style="margin-bottom:0">${cl.nome}</div>
-        ${ltvStr}
-      </div>
-      <div class="cliente-info">${[cl.tipo,cl.telefone,cl.email].filter(Boolean).join(' · ')||'Sem contato cadastrado'}</div>
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:4px"><div class="cliente-nome" style="margin-bottom:0">${cl.nome}</div>${ltvStr}</div>
+      <div class="cliente-info">${[cl.tipo,cl.telefone,cl.email].filter(Boolean).join(' · ')||'Sem contato'}</div>
       <div class="cliente-produtos">${prods}</div>
-      <div style="font-size:11px;color:var(--text-3);margin-bottom:4px">${temCount} de ${TODOS_PRODUTOS.length} produtos · ${pct}% da carteira</div>
+      <div style="font-size:11px;color:var(--text-3);margin-bottom:4px">${cl._nProd} de ${TODOS_PRODUTOS.length} produtos · ${pct}%</div>
       <div class="oportunidade-bar"><div class="oportunidade-fill" style="width:${pct}%"></div></div>
     </div>`;
   }).join('')+'</div>';
