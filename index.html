@@ -712,32 +712,31 @@ input[type=range]{width:100%;accent-color:var(--accent)}
     <!-- CARTEIRA -->
     <div class="view" id="view-carteira">
       <div class="page-title">Minha Carteira</div>
-      <p class="page-sub" id="carteiraSubtitulo">Clientes premium — visão exclusiva sua</p>
+      <p class="page-sub">Clientes premium — visão exclusiva sua</p>
 
       <div class="crm-tabs">
         <div class="crm-tab active" id="ctab-clientes" onclick="switchCrmTab('clientes')">👥 Clientes</div>
         <div class="crm-tab" id="ctab-oportunidades" onclick="switchCrmTab('oportunidades')">💡 Oportunidades</div>
       </div>
 
-      <!-- Conteúdo dinâmico renderizado pelo JS -->
       <div id="crm-clientes">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:10px">
-          <div class="crm-filtros" style="margin-bottom:0;flex-wrap:wrap">
-            <input type="text" id="buscaCliente" placeholder="🔍 Buscar..." style="width:160px" oninput="renderClientes()">
-            <select id="filtroRamoCliente" onchange="renderClientes()">
-              <option value="">Todos os produtos</option>
-              <option value="auto">Tem Auto</option>
-              <option value="residencial">Tem Residencial</option>
-              <option value="vida">Tem Vida</option>
-              <option value="saude">Tem Saúde</option>
-              <option value="empresarial">Tem Empresarial</option>
-              <option value="sem_auto">Sem Auto</option>
-              <option value="sem_residencial">Sem Residencial</option>
-              <option value="sem_vida">Sem Vida</option>
-              <option value="sem_saude">Sem Saúde</option>
-              <option value="sem_empresarial">Sem Empresarial</option>
+          <div style="display:flex;gap:8px;flex-wrap:wrap">
+            <input type="text" id="buscaCliente" placeholder="🔍 Buscar..." style="padding:8px 12px;font-size:13px;font-family:'DM Sans',sans-serif;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--surface);outline:none;width:150px" oninput="renderClientes()">
+            <select id="filtroRamoCliente" onchange="renderClientes()" style="padding:8px 10px;font-size:12px;font-family:'DM Sans',sans-serif;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--surface);outline:none">
+              <option value="">Todos produtos</option>
+              <option value="auto">✅ Tem Auto</option>
+              <option value="residencial">✅ Tem Residencial</option>
+              <option value="vida">✅ Tem Vida</option>
+              <option value="saude">✅ Tem Saúde</option>
+              <option value="empresarial">✅ Tem Empresarial</option>
+              <option value="sem_auto">❌ Sem Auto</option>
+              <option value="sem_residencial">❌ Sem Residencial</option>
+              <option value="sem_vida">❌ Sem Vida</option>
+              <option value="sem_saude">❌ Sem Saúde</option>
+              <option value="sem_empresarial">❌ Sem Empresarial</option>
             </select>
-            <select id="ordenacaoCliente" onchange="renderClientes()">
+            <select id="ordenacaoCliente" onchange="renderClientes()" style="padding:8px 10px;font-size:12px;font-family:'DM Sans',sans-serif;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--surface);outline:none">
               <option value="ltv_desc">💰 Maior LTV</option>
               <option value="ltv_asc">💰 Menor LTV</option>
               <option value="produtos_desc">📦 Mais produtos</option>
@@ -2459,6 +2458,7 @@ async function executarImport(){
 let todosClientes=[], todasTarefas=[];
 let clienteDetalheId=null;
 let produtosTemp={auto:false,residencial:false,vida:false,saude:false,empresarial:false,cartao:false,outros:false};
+
 const TODOS_PRODUTOS=[
   {key:'auto',label:'🚗 Auto'},
   {key:'residencial',label:'🏠 Residencial'},
@@ -2471,50 +2471,38 @@ const TODOS_PRODUTOS=[
 
 async function carregarCRM(){
   const vendedor=(currentProfile?.vendedor||'').trim();
-  let queryClientes=db.from('carteira').select('*').order('nome');
-  let queryTarefas=db.from('lembretes').select('*').order('data_lembrete');
-  // Filtrar por vendedor se tiver perfil
-  if(vendedor){
-    queryClientes=queryClientes.eq('vendedor',vendedor);
-    queryTarefas=queryTarefas.eq('vendedor',vendedor);
-  }
-  const[{data:cls,error:e1},{data:tars,error:e2}]=await Promise.all([
-    queryClientes, queryTarefas
+  if(!vendedor){ renderClientes(); renderTarefasView(); return; }
+  const[r1,r2]=await Promise.all([
+    db.from('carteira').select('*').eq('vendedor',vendedor).order('nome'),
+    db.from('lembretes').select('*').eq('vendedor',vendedor).order('data_lembrete')
   ]);
-  if(e1) console.error('Erro clientes:',e1.message);
-  if(e2) console.error('Erro tarefas:',e2.message);
-  todosClientes=cls||[];
-  todasTarefas=tars||[];
+  todosClientes=r1.data||[];
+  todasTarefas=r2.data||[];
   renderClientes();
   renderTarefasView();
   renderOportunidades();
-  // Badge de tarefas vencidas no nav
+  // Badge tarefas vencidas
   const hoje=new Date();
-  const vencidas=todasTarefas.filter(t=>t.status==='pendente'&&t.data_lembrete&&new Date(t.data_lembrete)<hoje);
-  const navTar=document.getElementById('nav-tarefas_view');
-  if(navTar){
-    const badge=vencidas.length>0?` <span style="background:#ef4444;color:#fff;border-radius:99px;font-size:10px;padding:1px 6px;margin-left:4px">${vencidas.length}</span>`:'';
-    navTar.innerHTML=`<span class="icon">✅</span> Tarefas${badge}`;
-  }
+  const venc=(todasTarefas||[]).filter(t=>t.status==='pendente'&&t.data_lembrete&&new Date(t.data_lembrete)<hoje);
+  const nav=document.getElementById('nav-tarefas_view');
+  if(nav) nav.innerHTML=`<span class="icon">✅</span> Tarefas${venc.length?` <span style="background:#ef4444;color:#fff;border-radius:99px;font-size:10px;padding:1px 6px">${venc.length}</span>`:''}`;
 }
 
-// Mapear ramos de vendas para produtos do cliente
 function ramoParaProduto(ramo){
   const r=(ramo||'').toLowerCase();
   if(r.includes('auto')||r.includes('moto')) return 'auto';
   if(r.includes('resid')) return 'residencial';
   if(r.includes('vida')) return 'vida';
-  if(r.includes('saúde')||r.includes('saude')||r.includes('plano')) return 'saude';
-  if(r.includes('empres')) return 'empresarial';
+  if(r.includes('saúde')||r.includes('saude')||r.includes('plano')||r.includes('dental')) return 'saude';
+  if(r.includes('empres')||r.includes('rc ')||r.includes('rco')||r.includes('condom')) return 'empresarial';
   if(r.includes('cartão')||r.includes('cartao')) return 'cartao';
   return 'outros';
 }
 
-// Checar produtos automaticamente pelas vendas
-function produtosDasVendas(nomeCliente){
+function produtosDasVendas(nome){
   const prods={auto:false,residencial:false,vida:false,saude:false,empresarial:false,cartao:false,outros:false};
-  const nome=(nomeCliente||'').toLowerCase().trim();
-  todasVendas.filter(v=>(v.segurado||'').toLowerCase().trim()===nome).forEach(v=>{
+  const n=(nome||'').toLowerCase().trim();
+  todasVendas.filter(v=>(v.segurado||'').toLowerCase().trim()===n).forEach(v=>{
     const p=ramoParaProduto(v.ramo);
     if(p) prods[p]=true;
   });
@@ -2523,69 +2511,75 @@ function produtosDasVendas(nomeCliente){
 
 // ── RENDER CLIENTES ───────────────────────────────────────────────────
 function renderClientes(){
-  const container=document.getElementById('clientesContainer');
-  if(!container) return;
-
-  if(!currentProfile){
-    container.innerHTML='<div style="text-align:center;padding:32px;color:var(--text-3)">Carregando...</div>';
-    return;
-  }
+  const el=document.getElementById('clientesContainer');
+  if(!el) return;
 
   const busca=(document.getElementById('buscaCliente')?.value||'').toLowerCase();
-  const filtroRamo=(document.getElementById('filtroRamoCliente')?.value)||'';
-  const ordenacao=(document.getElementById('ordenacaoCliente')?.value)||'ltv_desc';
+  const filtro=(document.getElementById('filtroRamoCliente')?.value)||'';
+  const ordem=(document.getElementById('ordenacaoCliente')?.value)||'ltv_desc';
 
+  // Enriquecer
   let lista=todosClientes.map(cl=>{
     const pv=produtosDasVendas(cl.nome);
-    const vendasCl=todasVendas.filter(v=>(v.segurado||'').trim().toLowerCase()===(cl.nome||'').trim().toLowerCase());
-    const ltv=vendasCl.reduce((s,v)=>s+(+v.comissao||0),0);
+    const vc=todasVendas.filter(v=>(v.segurado||'').toLowerCase().trim()===(cl.nome||'').toLowerCase().trim());
+    const ltv=vc.reduce((s,v)=>s+(+v.comissao||0),0);
     const r={...cl,
-      tem_auto:!!(cl.tem_auto||pv.auto),tem_residencial:!!(cl.tem_residencial||pv.residencial),
-      tem_vida:!!(cl.tem_vida||pv.vida),tem_saude:!!(cl.tem_saude||pv.saude),
-      tem_empresarial:!!(cl.tem_empresarial||pv.empresarial),tem_cartao:!!(cl.tem_cartao||pv.cartao),
+      tem_auto:!!(cl.tem_auto||pv.auto),
+      tem_residencial:!!(cl.tem_residencial||pv.residencial),
+      tem_vida:!!(cl.tem_vida||pv.vida),
+      tem_saude:!!(cl.tem_saude||pv.saude),
+      tem_empresarial:!!(cl.tem_empresarial||pv.empresarial),
+      tem_cartao:!!(cl.tem_cartao||pv.cartao),
       tem_outros:!!(cl.tem_outros||pv.outros),
     };
     r._ltv=ltv;
-    r._nProd=TODOS_PRODUTOS.filter(p=>r['tem_'+p.key]).length;
-    r._ultima=vendasCl[0]?.data||'';
+    r._np=TODOS_PRODUTOS.filter(p=>r['tem_'+p.key]).length;
+    r._ult=vc[0]?.data||'';
     return r;
   });
 
-  if(busca) lista=lista.filter(c=>(c.nome||'').toLowerCase().includes(busca)||(c.telefone||'').includes(busca)||(c.email||'').toLowerCase().includes(busca));
-  if(filtroRamo){
-    const sem=filtroRamo.startsWith('sem_');
-    const campo='tem_'+(sem?filtroRamo.slice(4):filtroRamo);
-    lista=lista.filter(c=>sem?!c[campo]:!!c[campo]);
+  // Filtrar
+  if(busca) lista=lista.filter(x=>(x.nome||'').toLowerCase().includes(busca)||(x.telefone||'').includes(busca));
+  if(filtro){
+    const sem=filtro.startsWith('sem_');
+    const campo='tem_'+(sem?filtro.slice(4):filtro);
+    lista=lista.filter(x=>sem?!x[campo]:!!x[campo]);
   }
 
+  // Ordenar
   lista.sort((a,b)=>{
-    if(ordenacao==='ltv_asc') return a._ltv-b._ltv;
-    if(ordenacao==='produtos_desc') return b._nProd-a._nProd;
-    if(ordenacao==='produtos_asc') return a._nProd-b._nProd;
-    if(ordenacao==='nome_asc') return a.nome.localeCompare(b.nome);
-    if(ordenacao==='nome_desc') return b.nome.localeCompare(a.nome);
-    if(ordenacao==='recente') return b._ultima.localeCompare(a._ultima);
+    if(ordem==='ltv_asc') return a._ltv-b._ltv;
+    if(ordem==='produtos_desc') return b._np-a._np;
+    if(ordem==='produtos_asc') return a._np-b._np;
+    if(ordem==='nome_asc') return(a.nome||'').localeCompare(b.nome||'');
+    if(ordem==='nome_desc') return(b.nome||'').localeCompare(a.nome||'');
+    if(ordem==='recente') return(b._ult||'').localeCompare(a._ult||'');
     return b._ltv-a._ltv;
   });
 
   if(!lista.length){
-    container.innerHTML=`<div style="text-align:center;padding:48px 0;color:var(--text-3)"><div style="font-size:36px;margin-bottom:10px">👥</div><div style="margin-bottom:16px">${todosClientes.length?'Nenhum encontrado':'Nenhum cliente ainda'}</div><button class="btn btn-primary" onclick="abrirModalCliente()">➕ Adicionar primeiro cliente</button></div>`;
+    el.innerHTML=`<div style="text-align:center;padding:48px 0;color:var(--text-3)">
+      <div style="font-size:36px;margin-bottom:10px">👥</div>
+      <div style="margin-bottom:16px">${todosClientes.length?'Nenhum encontrado':'Nenhum cliente ainda'}</div>
+      <button class="btn btn-primary" onclick="abrirModalCliente()">➕ Adicionar primeiro cliente</button>
+    </div>`;
     return;
   }
 
-  container.innerHTML='<div class="clientes-grid">'+lista.map(cl=>{
-    const tarefasCl=(todasTarefas||[]).filter(t=>t.cliente_id===cl.id&&t.status==='pendente');
-    const vencidas=tarefasCl.filter(t=>t.data_lembrete&&new Date(t.data_lembrete)<new Date());
-    const badge=tarefasCl.length?`<div class="cliente-tarefas-badge" style="${vencidas.length?'background:#ef4444':''}">${tarefasCl.length}</div>`:'';
+  el.innerHTML='<div class="clientes-grid">'+lista.map(cl=>{
+    const tars=(todasTarefas||[]).filter(t=>t.cliente_id===cl.id&&t.status==='pendente');
+    const venc=tars.filter(t=>t.data_lembrete&&new Date(t.data_lembrete)<new Date());
+    const badge=tars.length?`<div class="cliente-tarefas-badge" style="${venc.length?'background:#ef4444':''}">${tars.length}</div>`:'';
     const prods=TODOS_PRODUTOS.map(p=>`<span class="prod-tag ${cl['tem_'+p.key]?'tem':'nao-tem'}">${p.label}</span>`).join('');
-    const pct=Math.round(cl._nProd/TODOS_PRODUTOS.length*100);
-    const ltvStr=cl._ltv>0?`<span style="font-size:11.5px;font-weight:600;color:var(--accent)">LTV ${fmt(cl._ltv)}</span>`:'';
-    return`<div class="cliente-card" onclick="abrirDetalheCliente('${cl.id}')">
-      ${badge}
-      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:4px"><div class="cliente-nome" style="margin-bottom:0">${cl.nome}</div>${ltvStr}</div>
+    const pct=Math.round(cl._np/TODOS_PRODUTOS.length*100);
+    const ltv=cl._ltv>0?`<span style="font-size:11px;font-weight:700;color:var(--accent)">LTV ${fmt(cl._ltv)}</span>`:'';
+    return`<div class="cliente-card" onclick="abrirDetalheCliente('${cl.id}')">${badge}
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:4px;margin-bottom:4px">
+        <div class="cliente-nome" style="margin-bottom:0">${cl.nome}</div>${ltv}
+      </div>
       <div class="cliente-info">${[cl.tipo,cl.telefone,cl.email].filter(Boolean).join(' · ')||'Sem contato'}</div>
       <div class="cliente-produtos">${prods}</div>
-      <div style="font-size:11px;color:var(--text-3);margin-bottom:4px">${cl._nProd} de ${TODOS_PRODUTOS.length} produtos · ${pct}%</div>
+      <div style="font-size:11px;color:var(--text-3);margin-bottom:4px">${cl._np} de ${TODOS_PRODUTOS.length} produtos · ${pct}%</div>
       <div class="oportunidade-bar"><div class="oportunidade-fill" style="width:${pct}%"></div></div>
     </div>`;
   }).join('')+'</div>';
@@ -2593,31 +2587,23 @@ function renderClientes(){
 
 // ── RENDER OPORTUNIDADES ──────────────────────────────────────────────
 function renderOportunidades(){
-  const grid=document.getElementById('oportunidadesGrid');
-  if(!grid) return;
+  const el=document.getElementById('oportunidadesGrid');
+  if(!el) return;
   const lista=todosClientes.map(cl=>{
     const pv=produtosDasVendas(cl.nome);
-    const merged={...cl,tem_auto:cl.tem_auto||pv.auto,tem_residencial:cl.tem_residencial||pv.residencial,tem_vida:cl.tem_vida||pv.vida,tem_saude:cl.tem_saude||pv.saude,tem_empresarial:cl.tem_empresarial||pv.empresarial,tem_cartao:cl.tem_cartao||pv.cartao};
-    const faltam=TODOS_PRODUTOS.filter(p=>!merged['tem_'+p.key]);
-    return{...merged,faltam};
-  }).filter(cl=>cl.faltam.length>0).sort((a,b)=>b.faltam.length-a.faltam.length);
-
-  if(!lista.length){grid.innerHTML='<div class="empty-state"><div class="icon">🎉</div>Todos os clientes têm todos os produtos!</div>';return;}
-
-  grid.innerHTML=`<div class="card" style="padding:0"><table style="width:100%;border-collapse:collapse;font-size:13px">
-    <thead><tr>
-      <th style="padding:10px 14px;text-align:left;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--text-3);border-bottom:1px solid var(--border)">Cliente</th>
-      <th style="padding:10px 14px;text-align:left;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--text-3);border-bottom:1px solid var(--border)">Tem</th>
-      <th style="padding:10px 14px;text-align:left;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--text-3);border-bottom:1px solid var(--border)">Oportunidades</th>
-      <th style="padding:10px 14px;text-align:left;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--text-3);border-bottom:1px solid var(--border)">Ação</th>
-    </tr></thead>
+    const m={...cl,tem_auto:!!(cl.tem_auto||pv.auto),tem_residencial:!!(cl.tem_residencial||pv.residencial),tem_vida:!!(cl.tem_vida||pv.vida),tem_saude:!!(cl.tem_saude||pv.saude),tem_empresarial:!!(cl.tem_empresarial||pv.empresarial),tem_cartao:!!(cl.tem_cartao||pv.cartao)};
+    return{...m,faltam:TODOS_PRODUTOS.filter(p=>!m['tem_'+p.key])};
+  }).filter(x=>x.faltam.length>0).sort((a,b)=>b.faltam.length-a.faltam.length);
+  if(!lista.length){el.innerHTML='<div class="empty-state"><div class="icon">🎉</div>Todos os clientes têm todos os produtos!</div>';return;}
+  el.innerHTML=`<div class="card" style="padding:0"><div class="table-wrap"><table style="width:100%;border-collapse:collapse;font-size:13px">
+    <thead><tr>${['Cliente','Tem','Oportunidades',''].map(h=>`<th style="padding:10px 14px;text-align:left;font-size:11px;font-weight:600;text-transform:uppercase;color:var(--text-3);border-bottom:1px solid var(--border)">${h}</th>`).join('')}</tr></thead>
     <tbody>${lista.map(cl=>`<tr style="border-bottom:1px solid var(--border)">
-      <td style="padding:10px 14px;font-weight:500">${cl.nome}<br><span style="font-size:11px;color:var(--text-3)">${cl.telefone||cl.email||''}</span></td>
+      <td style="padding:10px 14px;font-weight:500">${cl.nome}<br><span style="font-size:11px;color:var(--text-3)">${cl.telefone||''}</span></td>
       <td style="padding:10px 14px">${TODOS_PRODUTOS.filter(p=>cl['tem_'+p.key]).map(p=>`<span class="prod-tag tem" style="margin:2px">${p.label}</span>`).join('')||'—'}</td>
       <td style="padding:10px 14px">${cl.faltam.map(p=>`<span class="prod-tag nao-tem" style="margin:2px">${p.label}</span>`).join('')}</td>
       <td style="padding:10px 14px"><button class="btn btn-ghost" style="font-size:11px;padding:5px 10px" onclick="abrirDetalheCliente('${cl.id}')">Ver →</button></td>
     </tr>`).join('')}</tbody>
-  </table></div>`;
+  </table></div></div>`;
 }
 
 // ── DETALHE CLIENTE ───────────────────────────────────────────────────
@@ -2626,72 +2612,61 @@ function abrirDetalheCliente(id){
   const cl=todosClientes.find(x=>x.id===id);
   if(!cl) return;
   const pv=produtosDasVendas(cl.nome);
-  const merged={...cl,tem_auto:cl.tem_auto||pv.auto,tem_residencial:cl.tem_residencial||pv.residencial,tem_vida:cl.tem_vida||pv.vida,tem_saude:cl.tem_saude||pv.saude,tem_empresarial:cl.tem_empresarial||pv.empresarial,tem_cartao:cl.tem_cartao||pv.cartao,tem_outros:cl.tem_outros||pv.outros};
-
+  const mg={...cl,tem_auto:!!(cl.tem_auto||pv.auto),tem_residencial:!!(cl.tem_residencial||pv.residencial),tem_vida:!!(cl.tem_vida||pv.vida),tem_saude:!!(cl.tem_saude||pv.saude),tem_empresarial:!!(cl.tem_empresarial||pv.empresarial),tem_cartao:!!(cl.tem_cartao||pv.cartao),tem_outros:!!(cl.tem_outros||pv.outros)};
   document.getElementById('detalheNome').textContent=cl.nome;
-  document.getElementById('detalheInfo').textContent=[cl.tipo,cl.documento,cl.telefone,cl.email].filter(Boolean).join(' · ')||'Sem contato cadastrado';
-
-  // Produtos
+  document.getElementById('detalheInfo').textContent=[cl.tipo,cl.documento,cl.telefone,cl.email].filter(Boolean).join(' · ')||'Sem contato';
   document.getElementById('detalheProdutos').innerHTML=TODOS_PRODUTOS.map(p=>`
-    <div class="produto-chip ${merged['tem_'+p.key]?'tem':'nao-tem'}" onclick="toggleProdutoDetalhe('${id}','${p.key}',${!merged['tem_'+p.key]})">
-      ${p.label}<br><span style="font-size:10px">${merged['tem_'+p.key]?'✅ Possui':'❌ Não tem'}</span>
+    <div class="produto-chip ${mg['tem_'+p.key]?'tem':'nao-tem'}" onclick="toggleProdutoDetalhe('${id}','${p.key}',${!mg['tem_'+p.key]})">
+      ${p.label}<br><span style="font-size:10px">${mg['tem_'+p.key]?'✅ Possui':'❌ Não tem'}</span>
     </div>`).join('');
-
-  // Vendas do cliente
-  const vendas=todasVendas.filter(v=>(v.segurado||'').toLowerCase().trim()===cl.nome.toLowerCase().trim()).slice(0,8);
-  document.getElementById('detalheVendas').innerHTML=vendas.length
+  const vc=todasVendas.filter(v=>(v.segurado||'').toLowerCase().trim()===cl.nome.toLowerCase().trim()).slice(0,8);
+  document.getElementById('detalheVendas').innerHTML=vc.length
     ?`<div style="border:1px solid var(--border);border-radius:var(--radius-sm);overflow:hidden"><table style="width:100%;border-collapse:collapse;font-size:12px">
         <thead><tr>${['Data','Ramo','Seguradora','Comissão'].map(h=>`<th style="padding:7px 10px;background:var(--bg);text-align:left;font-size:10px;font-weight:600;text-transform:uppercase;color:var(--text-3);border-bottom:1px solid var(--border)">${h}</th>`).join('')}</tr></thead>
-        <tbody>${vendas.map(v=>`<tr style="border-bottom:1px solid var(--border)"><td style="padding:7px 10px">${fmtData(v.data)}</td><td style="padding:7px 10px">${v.ramo}</td><td style="padding:7px 10px">${v.cia}</td><td style="padding:7px 10px;color:var(--green);font-weight:600">${fmt(v.comissao)}</td></tr>`).join('')}</tbody>
+        <tbody>${vc.map(v=>`<tr style="border-bottom:1px solid var(--border)"><td style="padding:7px 10px">${fmtData(v.data)}</td><td style="padding:7px 10px">${v.ramo}</td><td style="padding:7px 10px">${v.cia}</td><td style="padding:7px 10px;color:var(--green);font-weight:600">${fmt(v.comissao)}</td></tr>`).join('')}</tbody>
       </table></div>`
-    :'<div style="font-size:13px;color:var(--text-3);padding:8px 0">Nenhuma venda registrada para este cliente.</div>';
-
-  // Tarefas
+    :'<div style="font-size:13px;color:var(--text-3);padding:8px 0">Nenhuma venda registrada.</div>';
   renderTarefasDetalhe(id);
   document.getElementById('modalDetalhe').classList.add('open');
 }
 
-function renderTarefasDetalhe(clienteId){
-  const tars=todasTarefas.filter(t=>t.cliente_id===clienteId).sort((a,b)=>new Date(a.data_lembrete||0)-new Date(b.data_lembrete||0));
+function renderTarefasDetalhe(cid){
+  const tars=(todasTarefas||[]).filter(t=>t.cliente_id===cid).sort((a,b)=>new Date(a.data_lembrete||0)-new Date(b.data_lembrete||0));
   const div=document.getElementById('detalheTarefas');
   if(!tars.length){div.innerHTML='<div style="font-size:13px;color:var(--text-3);padding:8px 0">Nenhuma tarefa ainda.</div>';return;}
   const hoje=new Date();
   div.innerHTML=tars.map(t=>{
     const done=t.status==='concluida';
-    const vencida=!done&&t.data_lembrete&&new Date(t.data_lembrete)<hoje;
+    const venc=!done&&t.data_lembrete&&new Date(t.data_lembrete)<hoje;
     return`<div class="tarefa-item">
-      <div class="tarefa-check ${done?'done':''}" onclick="toggleTarefa('${t.id}','${clienteId}')">${done?'✓':''}</div>
+      <div class="tarefa-check ${done?'done':''}" onclick="toggleTarefa('${t.id}','${cid}')">${done?'✓':''}</div>
       <div style="flex:1">
         <div class="tarefa-titulo ${done?'done':''}">${t.titulo}</div>
         ${t.descricao?`<div style="font-size:12px;color:var(--text-3);margin-top:2px">${t.descricao}</div>`:''}
-        ${t.data_lembrete?`<div class="tarefa-data ${vencida?'vencida':''}">${vencida?'⚠️ Venceu em ':'📅 '}${fmtDataHora(t.data_lembrete)}</div>`:''}
-        ${t.email_lembrete?`<div style="font-size:11px;color:var(--text-3)">📧 ${t.email_lembrete}</div>`:''}
+        ${t.data_lembrete?`<div class="tarefa-data ${venc?'vencida':''}">${venc?'⚠️ Venceu em ':'📅 '}${fmtDataHora(t.data_lembrete)}</div>`:''}
       </div>
       <div style="display:flex;gap:4px">
-        <button class="action-btn" onclick="editarTarefa('${t.id}')" title="Editar">✏️</button>
-        <button class="action-btn" onclick="deletarTarefa('${t.id}','${clienteId}')" title="Excluir">🗑️</button>
+        <button class="action-btn" onclick="editarTarefa('${t.id}')">✏️</button>
+        <button class="action-btn" onclick="deletarTarefa('${t.id}','${cid}')">🗑️</button>
       </div>
     </div>`;
   }).join('');
 }
 
-async function toggleProdutoDetalhe(clienteId,produto,valor){
-  const field='tem_'+produto;
-  await db.from('carteira').update({[field]:valor}).eq('id',clienteId);
+async function toggleProdutoDetalhe(cid,prod,val){
+  await db.from('carteira').update({['tem_'+prod]:val}).eq('id',cid);
   await carregarCRM();
-  abrirDetalheCliente(clienteId);
+  abrirDetalheCliente(cid);
 }
-
 function fecharModalDetalhe(e){
   if(!e||e.target===document.getElementById('modalDetalhe')){
     document.getElementById('modalDetalhe').classList.remove('open');
     clienteDetalheId=null;
   }
 }
-function editarClienteAtual(){fecharModalDetalhe();if(clienteDetalheId) setTimeout(()=>abrirModalCliente(clienteDetalheId),100);}
+function editarClienteAtual(){fecharModalDetalhe();if(clienteDetalheId)setTimeout(()=>abrirModalCliente(clienteDetalheId),100);}
 async function deletarClienteAtual(){
-  if(!clienteDetalheId) return;
-  if(!confirm('Excluir este cliente e todas as suas tarefas?')) return;
+  if(!clienteDetalheId||!confirm('Excluir este cliente?'))return;
   await db.from('carteira').delete().eq('id',clienteDetalheId);
   fecharModalDetalhe();
   await carregarCRM();
@@ -2699,97 +2674,10 @@ async function deletarClienteAtual(){
 }
 
 // ── MODAL CLIENTE ─────────────────────────────────────────────────────
-
-function switchCliTab(tab){
-  document.getElementById('cliTabManual').classList.toggle('active', tab==='manual');
-  document.getElementById('cliTabVendas').classList.toggle('active', tab==='vendas');
-  document.getElementById('cliPanelManual').style.display = tab==='manual'?'block':'none';
-  document.getElementById('cliPanelVendas').style.display = tab==='vendas'?'block':'none';
-  if(tab==='vendas') renderClientesDasVendas();
-}
-
-function renderClientesDasVendas(){
-  const vendedor=(currentProfile?.vendedor||'').trim();
-  const busca=(document.getElementById('buscaCliVenda')?.value||'').toLowerCase();
-
-  // Nomes já na carteira
-  const jaAdicionados=new Set(todosClientes.map(c=>c.nome.toLowerCase().trim()));
-
-  // Clientes únicos das vendas deste vendedor que ainda não estão na carteira
-  const mapaClientes={};
-  todasVendas
-    .filter(v=>!vendedor||v.vendedor===vendedor)
-    .forEach(v=>{
-      const nome=(v.segurado||'').trim();
-      if(!nome) return;
-      if(jaAdicionados.has(nome.toLowerCase())) return;
-      if(!mapaClientes[nome]){
-        mapaClientes[nome]={nome, vendas:[], ramos:new Set()};
-      }
-      mapaClientes[nome].vendas.push(v);
-      mapaClientes[nome].ramos.add(v.ramo);
-    });
-
-  let lista=Object.values(mapaClientes).sort((a,b)=>a.nome.localeCompare(b.nome));
-  if(busca) lista=lista.filter(x=>x.nome.toLowerCase().includes(busca));
-
-  const div=document.getElementById('listaCliVendas');
-  if(!lista.length){
-    div.innerHTML=`<div style="text-align:center;padding:24px;color:var(--text-3);font-size:13px">
-      ${busca?'Nenhum cliente encontrado':'Todos os seus clientes já estão na carteira! 🎉'}
-    </div>`;
-    return;
-  }
-
-  div.innerHTML=lista.map(x=>{
-    const ramos=[...x.ramos].map(r=>`<span class="ramo-badge ${ramoClass(r)}" style="font-size:10.5px">${r}</span>`).join(' ');
-    const totalCom=x.vendas.reduce((a,v)=>a+(+v.comissao||0),0);
-    return `<div style="display:flex;align-items:center;justify-content:space-between;padding:12px 14px;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--bg);gap:10px">
-      <div style="flex:1;min-width:0">
-        <div style="font-weight:600;font-size:13px;margin-bottom:4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${x.nome}</div>
-        <div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:4px">${ramos}</div>
-        <div style="font-size:11.5px;color:var(--text-3)">${x.vendas.length} venda${x.vendas.length!==1?'s':''} · Comissão total: ${fmt(totalCom)}</div>
-      </div>
-      <button class="btn btn-primary" style="padding:7px 14px;font-size:12px;flex-shrink:0"
-        onclick="adicionarClienteDasVendas('${x.nome.replace(/'/g,"\\'")}')">
-        + Adicionar
-      </button>
-    </div>`;
-  }).join('');
-}
-
-async function adicionarClienteDasVendas(nome){
-  const vendedor=(currentProfile?.vendedor||'').trim();
-
-  // Detectar produtos automaticamente das vendas
-  const pv=produtosDasVendas(nome);
-
-  const payload={
-    nome, vendedor,
-    origem:'venda',
-    tipo:'PF',
-    tem_auto:pv.auto,
-    tem_residencial:pv.residencial,
-    tem_vida:pv.vida,
-    tem_saude:pv.saude,
-    tem_empresarial:pv.empresarial,
-    tem_cartao:pv.cartao,
-    tem_outros:pv.outros,
-  };
-
-  const{error}=await db.from('carteira').insert([payload]);
-  if(error){showToast('Erro: '+error.message,'error');return;}
-
-  showToast(`${nome} adicionado à carteira!`,'success');
-  await carregarCRM();
-  renderClientesDasVendas(); // atualiza lista removendo quem foi adicionado
-}
-
 function abrirModalCliente(id){
   produtosTemp={auto:false,residencial:false,vida:false,saude:false,empresarial:false,cartao:false,outros:false};
   document.getElementById('cli_id').value=id||'';
   document.getElementById('modalClienteTitulo').textContent=id?'Editar Cliente':'Novo Cliente';
-  // Resetar para aba manual; esconder abas ao editar
   const tabsWrap=document.getElementById('cliTabsWrap');
   if(tabsWrap) tabsWrap.style.display=id?'none':'flex';
   switchCliTab('manual');
@@ -2805,47 +2693,38 @@ function abrirModalCliente(id){
       document.getElementById('cli_obs').value=cl.observacoes||'';
       produtosTemp={auto:!!cl.tem_auto,residencial:!!cl.tem_residencial,vida:!!cl.tem_vida,saude:!!cl.tem_saude,empresarial:!!cl.tem_empresarial,cartao:!!cl.tem_cartao,outros:!!cl.tem_outros};
     }
-  } else {
-    ['cli_nome','cli_tel','cli_email','cli_doc','cli_obs'].forEach(id=>document.getElementById(id).value='');
-    document.getElementById('cli_tipo').value='PF';
-    document.getElementById('cli_origem').value='manual';
+  }else{
+    ['cli_nome','cli_tel','cli_email','cli_doc','cli_obs'].forEach(x=>{const el=document.getElementById(x);if(el)el.value='';});
+    const t=document.getElementById('cli_tipo');if(t)t.value='PF';
+    const o=document.getElementById('cli_origem');if(o)o.value='manual';
   }
   atualizarChips();
   document.getElementById('modalCliente').classList.add('open');
 }
 function fecharModalCliente(e){if(!e||e.target===document.getElementById('modalCliente'))fecharModalClienteDireto();}
 function fecharModalClienteDireto(){document.getElementById('modalCliente').classList.remove('open');}
-
-function toggleProduto(p){
-  produtosTemp[p]=!produtosTemp[p];
-  atualizarChips();
-}
+function toggleProduto(p){produtosTemp[p]=!produtosTemp[p];atualizarChips();}
 function atualizarChips(){
   Object.keys(produtosTemp).forEach(p=>{
     const el=document.getElementById('chip_'+p);
-    if(el) el.className='produto-chip '+(produtosTemp[p]?'tem':'nao-tem');
+    if(el)el.className='produto-chip '+(produtosTemp[p]?'tem':'nao-tem');
   });
 }
-
 async function salvarCliente(){
-  const nome=document.getElementById('cli_nome').value.trim();
+  const nome=(document.getElementById('cli_nome')?.value||'').trim();
   if(!nome){showToast('Nome é obrigatório.','error');return;}
   const vendedor=(currentProfile?.vendedor||'').trim();
   const id=document.getElementById('cli_id').value;
-  const payload={
-    nome, vendedor,
+  const payload={nome,vendedor,
     telefone:document.getElementById('cli_tel').value.trim()||null,
     email:document.getElementById('cli_email').value.trim()||null,
     documento:document.getElementById('cli_doc').value.trim()||null,
     tipo:document.getElementById('cli_tipo').value,
     origem:document.getElementById('cli_origem').value,
     observacoes:document.getElementById('cli_obs').value.trim()||null,
-    tem_auto:produtosTemp.auto,
-    tem_residencial:produtosTemp.residencial,
-    tem_vida:produtosTemp.vida,
-    tem_saude:produtosTemp.saude,
-    tem_empresarial:produtosTemp.empresarial,
-    tem_cartao:produtosTemp.cartao,
+    tem_auto:produtosTemp.auto,tem_residencial:produtosTemp.residencial,
+    tem_vida:produtosTemp.vida,tem_saude:produtosTemp.saude,
+    tem_empresarial:produtosTemp.empresarial,tem_cartao:produtosTemp.cartao,
     tem_outros:produtosTemp.outros,
   };
   const{error}=id?await db.from('carteira').update(payload).eq('id',id):await db.from('carteira').insert([payload]);
@@ -2855,25 +2734,75 @@ async function salvarCliente(){
   showToast(id?'Cliente atualizado!':'Cliente cadastrado!','success');
 }
 
+// ── IMPORTAR DAS VENDAS ───────────────────────────────────────────────
+function switchCliTab(tab){
+  document.getElementById('cliTabManual')?.classList.toggle('active',tab==='manual');
+  document.getElementById('cliTabVendas')?.classList.toggle('active',tab==='vendas');
+  const pm=document.getElementById('cliPanelManual');
+  const pv=document.getElementById('cliPanelVendas');
+  if(pm) pm.style.display=tab==='manual'?'block':'none';
+  if(pv) pv.style.display=tab==='vendas'?'block':'none';
+  if(tab==='vendas') renderClientesDasVendas();
+}
+function renderClientesDasVendas(){
+  const vendedor=(currentProfile?.vendedor||'').trim();
+  const busca=(document.getElementById('buscaCliVenda')?.value||'').toLowerCase();
+  const jaAdicionados=new Set(todosClientes.map(x=>(x.nome||'').toLowerCase().trim()));
+  const mapa={};
+  todasVendas.filter(v=>!vendedor||v.vendedor===vendedor).forEach(v=>{
+    const nome=(v.segurado||'').trim();
+    if(!nome||jaAdicionados.has(nome.toLowerCase())) return;
+    if(!mapa[nome]) mapa[nome]={nome,vendas:[],ramos:new Set()};
+    mapa[nome].vendas.push(v);
+    mapa[nome].ramos.add(v.ramo);
+  });
+  let lista=Object.values(mapa).sort((a,b)=>a.nome.localeCompare(b.nome));
+  if(busca) lista=lista.filter(x=>x.nome.toLowerCase().includes(busca));
+  const div=document.getElementById('listaCliVendas');
+  if(!div) return;
+  if(!lista.length){div.innerHTML=`<div style="text-align:center;padding:24px;color:var(--text-3);font-size:13px">${busca?'Nenhum encontrado':'Todos os clientes já estão na carteira! 🎉'}</div>`;return;}
+  div.innerHTML=lista.map(x=>{
+    const ramos=[...x.ramos].map(r=>`<span class="ramo-badge ${ramoClass(r)}" style="font-size:10.5px">${r}</span>`).join(' ');
+    const ltv=x.vendas.reduce((a,v)=>a+(+v.comissao||0),0);
+    const nome=x.nome.replace(/'/g,"\'");
+    return`<div style="display:flex;align-items:center;justify-content:space-between;padding:12px 14px;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--bg);gap:10px">
+      <div style="flex:1;min-width:0">
+        <div style="font-weight:600;font-size:13px;margin-bottom:4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${x.nome}</div>
+        <div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:4px">${ramos}</div>
+        <div style="font-size:11.5px;color:var(--text-3)">${x.vendas.length} venda${x.vendas.length!==1?'s':''} · LTV ${fmt(ltv)}</div>
+      </div>
+      <button class="btn btn-primary" style="padding:7px 14px;font-size:12px;flex-shrink:0" onclick="adicionarClienteDasVendas('${nome}')">+ Adicionar</button>
+    </div>`;
+  }).join('');
+}
+async function adicionarClienteDasVendas(nome){
+  const vendedor=(currentProfile?.vendedor||'').trim();
+  const pv=produtosDasVendas(nome);
+  const{error}=await db.from('carteira').insert([{nome,vendedor,origem:'venda',tipo:'PF',
+    tem_auto:pv.auto,tem_residencial:pv.residencial,tem_vida:pv.vida,
+    tem_saude:pv.saude,tem_empresarial:pv.empresarial,tem_cartao:pv.cartao,tem_outros:pv.outros}]);
+  if(error){showToast('Erro: '+error.message,'error');return;}
+  showToast(nome+' adicionado!','success');
+  await carregarCRM();
+  renderClientesDasVendas();
+}
+
 // ── TAREFAS ───────────────────────────────────────────────────────────
 function renderTarefasView(){
   const filtro=document.getElementById('filtroStatusTarefa')?.value||'';
   const hoje=new Date();
-  let lista=[...todasTarefas].sort((a,b)=>new Date(a.data_lembrete||'9999')-new Date(b.data_lembrete||'9999'));
-  const div=document.getElementById('tarefasViewList');
-  const empty=document.getElementById('tarefasViewEmpty');
-  // Continua mesmo sem vendedor definido
-
+  let lista=[...(todasTarefas||[])].sort((a,b)=>new Date(a.data_lembrete||'9999')-new Date(b.data_lembrete||'9999'));
   if(filtro==='vencida') lista=lista.filter(t=>t.status==='pendente'&&t.data_lembrete&&new Date(t.data_lembrete)<hoje);
   else if(filtro) lista=lista.filter(t=>t.status===filtro);
-
-  if(!lista.length){div.innerHTML='';empty.style.display='block';return;}
-  empty.style.display='none';
-
+  const div=document.getElementById('tarefasViewList');
+  const empty=document.getElementById('tarefasViewEmpty');
+  if(!div) return;
+  if(!lista.length){div.innerHTML='';if(empty)empty.style.display='block';return;}
+  if(empty) empty.style.display='none';
   div.innerHTML=lista.map(t=>{
     const cl=todosClientes.find(x=>x.id===t.cliente_id);
     const done=t.status==='concluida';
-    const vencida=!done&&t.data_lembrete&&new Date(t.data_lembrete)<hoje;
+    const venc=!done&&t.data_lembrete&&new Date(t.data_lembrete)<hoje;
     return`<div class="card" style="padding:14px 18px;margin-bottom:10px;display:flex;align-items:flex-start;gap:12px">
       <div class="tarefa-check ${done?'done':''}" onclick="toggleTarefaView('${t.id}')">${done?'✓':''}</div>
       <div style="flex:1">
@@ -2881,31 +2810,28 @@ function renderTarefasView(){
         ${cl?`<div style="font-size:12px;color:var(--accent);margin-top:2px;cursor:pointer" onclick="abrirDetalheCliente('${cl.id}')">👤 ${cl.nome}</div>`:''}
         ${t.descricao?`<div style="font-size:12px;color:var(--text-2);margin-top:4px">${t.descricao}</div>`:''}
         <div style="display:flex;gap:12px;margin-top:6px;flex-wrap:wrap">
-          ${t.data_lembrete?`<span class="tarefa-data ${vencida?'vencida':''}">${vencida?'⚠️ Venceu em ':'📅 '}${fmtDataHora(t.data_lembrete)}</span>`:''}
-          ${t.email_lembrete?`<span style="font-size:11px;color:var(--text-3)">📧 ${t.email_lembrete}</span>`:''}
+          ${t.data_lembrete?`<span class="tarefa-data ${venc?'vencida':''}">${venc?'⚠️ Venceu ':'📅 '}${fmtDataHora(t.data_lembrete)}</span>`:''}
           <span style="font-size:11px;color:var(--text-3);background:var(--bg);padding:2px 7px;border-radius:99px">${t.status}</span>
         </div>
       </div>
       <div style="display:flex;gap:4px">
-        <button class="action-btn" onclick="editarTarefa('${t.id}')" title="Editar">✏️</button>
-        <button class="action-btn" onclick="deletarTarefa('${t.id}',null)" title="Excluir">🗑️</button>
+        <button class="action-btn" onclick="editarTarefa('${t.id}')">✏️</button>
+        <button class="action-btn" onclick="deletarTarefa('${t.id}',null)">🗑️</button>
       </div>
     </div>`;
   }).join('');
 }
-
-function abrirModalTarefa(clienteId){
+function abrirModalTarefa(cid){
   document.getElementById('tar_id').value='';
-  document.getElementById('tar_cliente_id').value=clienteId||'';
+  document.getElementById('tar_cliente_id').value=cid||'';
   document.getElementById('modalTarefaTitulo').textContent='Nova Tarefa';
-  ['tar_titulo','tar_desc','tar_data','tar_email'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+  ['tar_titulo','tar_desc','tar_data'].forEach(x=>{const el=document.getElementById(x);if(el)el.value='';});
+  if(currentUser?.email){const el=document.getElementById('tar_email');if(el)el.value=currentUser.email;}
   document.getElementById('tar_status').value='pendente';
-  // Pré-preencher e-mail do usuário logado
-  if(currentUser?.email) document.getElementById('tar_email').value=currentUser.email;
   document.getElementById('modalTarefa').classList.add('open');
 }
 function editarTarefa(id){
-  const t=todasTarefas.find(x=>x.id===id);if(!t)return;
+  const t=(todasTarefas||[]).find(x=>x.id===id);if(!t)return;
   document.getElementById('tar_id').value=t.id;
   document.getElementById('tar_cliente_id').value=t.cliente_id||'';
   document.getElementById('modalTarefaTitulo').textContent='Editar Tarefa';
@@ -2918,163 +2844,61 @@ function editarTarefa(id){
 }
 function fecharModalTarefa(e){if(!e||e.target===document.getElementById('modalTarefa'))fecharModalTarefaDireto();}
 function fecharModalTarefaDireto(){document.getElementById('modalTarefa').classList.remove('open');}
-
 async function salvarTarefa(){
-  const titulo=document.getElementById('tar_titulo').value.trim();
+  const titulo=(document.getElementById('tar_titulo')?.value||'').trim();
   if(!titulo){showToast('Título é obrigatório.','error');return;}
   const vendedor=(currentProfile?.vendedor||'').trim();
   const id=document.getElementById('tar_id').value;
-  const clienteId=document.getElementById('tar_cliente_id').value||null;
-  const dataLembrete=document.getElementById('tar_data').value||null;
-  const emailLembrete=document.getElementById('tar_email').value.trim()||null;
-  const payload={
-    titulo, vendedor,
-    cliente_id:clienteId,
+  const cid=document.getElementById('tar_cliente_id').value||null;
+  const dl=document.getElementById('tar_data').value||null;
+  const payload={titulo,vendedor,cliente_id:cid,
     descricao:document.getElementById('tar_desc').value.trim()||null,
-    data_lembrete:dataLembrete?new Date(dataLembrete).toISOString():null,
-    email_lembrete:emailLembrete,
+    data_lembrete:dl?new Date(dl).toISOString():null,
+    email_lembrete:document.getElementById('tar_email').value.trim()||null,
     status:document.getElementById('tar_status').value,
   };
   const{error}=id?await db.from('lembretes').update(payload).eq('id',id):await db.from('lembretes').insert([payload]);
   if(error){showToast('Erro: '+error.message,'error');return;}
-
-  // Agendar lembrete por email via Supabase Edge Function (se tiver data e email)
-  if(dataLembrete&&emailLembrete&&!id){
-    agendarLembrete(titulo,emailLembrete,dataLembrete,clienteId);
-  }
-
   fecharModalTarefaDireto();
   await carregarCRM();
   if(clienteDetalheId) renderTarefasDetalhe(clienteDetalheId);
   showToast(id?'Tarefa atualizada!':'Tarefa criada!','success');
 }
-
-async function toggleTarefa(tarefaId,clienteId){
-  const t=todasTarefas.find(x=>x.id===tarefaId);if(!t)return;
-  const novo=t.status==='concluida'?'pendente':'concluida';
-  await db.from('lembretes').update({status:novo}).eq('id',tarefaId);
+async function toggleTarefa(tid,cid){
+  const t=(todasTarefas||[]).find(x=>x.id===tid);if(!t)return;
+  await db.from('lembretes').update({status:t.status==='concluida'?'pendente':'concluida'}).eq('id',tid);
   await carregarCRM();
-  if(clienteId) renderTarefasDetalhe(clienteId);
+  if(cid) renderTarefasDetalhe(cid);
 }
-async function toggleTarefaView(tarefaId){
-  const t=todasTarefas.find(x=>x.id===tarefaId);if(!t)return;
-  const novo=t.status==='concluida'?'pendente':'concluida';
-  await db.from('lembretes').update({status:novo}).eq('id',tarefaId);
+async function toggleTarefaView(tid){
+  const t=(todasTarefas||[]).find(x=>x.id===tid);if(!t)return;
+  await db.from('lembretes').update({status:t.status==='concluida'?'pendente':'concluida'}).eq('id',tid);
   await carregarCRM();
 }
-async function deletarTarefa(tarefaId,clienteId){
+async function deletarTarefa(tid,cid){
   if(!confirm('Excluir tarefa?'))return;
-  await db.from('lembretes').delete().eq('id',tarefaId);
+  await db.from('lembretes').delete().eq('id',tid);
   await carregarCRM();
-  if(clienteId) renderTarefasDetalhe(clienteId);
+  if(cid) renderTarefasDetalhe(cid);
   showToast('Tarefa excluída.','success');
 }
-
-// Lembrete por e-mail usando Anthropic API como relay (envia pelo sistema)
-async function agendarLembrete(titulo,email,dataHora,clienteId){
-  try{
-    const cl=clienteId?todosClientes.find(x=>x.id===clienteId):null;
-    const nomeCliente=cl?cl.nome:'';
-    const dataFmt=fmtDataHora(dataHora);
-    // Usar Supabase para armazenar e checar depois (simples, sem servidor)
-    // O lembrete fica salvo na tabela com lembrete_enviado=false
-    // Uma lógica client-side checa ao abrir o sistema
-    console.log(`Lembrete agendado: ${titulo} para ${email} em ${dataFmt}`);
-  }catch(e){console.log('Lembrete não enviado:',e);}
-}
-
-// Checar lembretes ao iniciar (mostra toast para tarefas vencidas hoje)
-function checarLembretes(){
-  const agora=new Date();
-  const hoje=agora.toDateString();
-  todasTarefas.filter(t=>
-    t.status==='pendente'&&t.data_lembrete&&
-    new Date(t.data_lembrete).toDateString()===hoje
-  ).forEach(t=>{
-    const cl=todosClientes.find(x=>x.id===t.cliente_id);
-    showToast(`⏰ Lembrete hoje: ${t.titulo}${cl?' — '+cl.nome:''}`, '');
-  });
-}
-
 function switchCrmTab(tab){
-  document.getElementById('ctab-clientes').classList.toggle('active',tab==='clientes');
-  document.getElementById('ctab-oportunidades').classList.toggle('active',tab==='oportunidades');
-  document.getElementById('crm-clientes').style.display=tab==='clientes'?'block':'none';
-  document.getElementById('crm-oportunidades').style.display=tab==='oportunidades'?'block':'none';
+  document.getElementById('ctab-clientes')?.classList.toggle('active',tab==='clientes');
+  document.getElementById('ctab-oportunidades')?.classList.toggle('active',tab==='oportunidades');
+  const cc=document.getElementById('crm-clientes');
+  const co=document.getElementById('crm-oportunidades');
+  if(cc) cc.style.display=tab==='clientes'?'block':'none';
+  if(co) co.style.display=tab==='oportunidades'?'block':'none';
   if(tab==='oportunidades') renderOportunidades();
 }
-
-function fmtDataHora(d){
-  if(!d) return '—';
-  const dt=new Date(d);
-  return dt.toLocaleDateString('pt-BR')+' '+dt.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
+function fmtDataHora(d){if(!d)return'—';const dt=new Date(d);return dt.toLocaleDateString('pt-BR')+' '+dt.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});}
+function checarLembretes(){
+  const hoje=new Date().toDateString();
+  (todasTarefas||[]).filter(t=>t.status==='pendente'&&t.data_lembrete&&new Date(t.data_lembrete).toDateString()===hoje).forEach(t=>{
+    const cl=todosClientes.find(x=>x.id===t.cliente_id);
+    showToast('⏰ Lembrete hoje: '+t.titulo+(cl?' — '+cl.nome:''),'');
+  });
 }
-
-function verVendasVendedor(vendedor, mes){
-  document.getElementById('mesFiltroHist').value = mes;
-  document.getElementById('filtroVendedorHist').value = vendedor;
-  document.getElementById('buscaHist').value = '';
-  showView('historico');
-}
-
-// ── NAV ───────────────────────────────────────────────────────────────
-function showView(id){
-  document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
-  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
-  document.querySelectorAll('.mobile-nav-item').forEach(n=>n.classList.remove('active'));
-  document.getElementById('view-'+id).classList.add('active');
-  document.getElementById('nav-'+id).classList.add('active');
-  const mnav=document.getElementById('mnav-'+id);if(mnav)mnav.classList.add('active');
-  if(id==='historico'){
-    document.getElementById('view-historico').querySelector('.page-title').textContent='Histórico de Vendas';
-    document.getElementById('view-historico').querySelector('.page-sub').textContent='Todas as vendas registradas';
-    renderHistorico();
-  }
-  if(id==='analises') renderAnalises();
-  if(id==='indicacoes') renderIndicacoes();
-  if(id==='exportar') renderPrevia();
-  if(id==='metas') renderFormMetas();
-  if(id==='dashboard') renderDashboard();
-  if(id==='carteira'){ carregarCRM().then(()=>renderClientes()); }
-  if(id==='tarefas_view'){ carregarCRM().then(()=>renderTarefasView()); }
-  // Resetar scroll — fix para iOS Safari
-  try{
-    const mainEl=document.querySelector('.main');
-    if(mainEl){ mainEl.scrollTop=0; }
-    window.scrollTo(0,0);
-    document.body.scrollTop=0;
-    document.documentElement.scrollTop=0;
-    // iOS precisa de timeout mínimo
-    setTimeout(()=>{
-      if(mainEl) mainEl.scrollTop=0;
-      window.scrollTo(0,0);
-    },10);
-  }catch(e){}
-}
-
-// ── UTILS ─────────────────────────────────────────────────────────────
-function hoje(){return new Date().toISOString().split('T')[0];}
-function fmt(v){return(+v||0).toLocaleString('pt-BR',{style:'currency',currency:'BRL'});}
-function fmtData(d){if(!d)return'—';const[y,m,dd]=d.split('-');return`${dd}/${m}/${y}`;}
-function capitalize(s){return s.charAt(0).toUpperCase()+s.slice(1);}
-function soma(arr,campo){return arr.reduce((a,v)=>a+(+v[campo]||0),0);}
-function ramoClass(r){return({'Auto':'ramo-auto','Plano de Saúde':'ramo-saude','Vida mensal':'ramo-vida','Residencial':'ramo-residencial','Empresarial':'ramo-empresarial','Cartão Porto':'ramo-cartao'}[r]||'ramo-outro');}
-function mesAnteriorDe(mes){if(!mes)return'';const[y,m]=mes.split('-');const d=new Date(+y,+m-2,1);return`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;}
-function setSync(state){
-  document.getElementById('syncDot').className='sync-dot '+state;
-  document.getElementById('syncLabel').textContent=state==='ok'?'Conectado':state==='loading'?'Sincronizando...':'Erro';
-}
-let toastTimer;
-function showToast(msg,type=''){
-  const t=document.getElementById('toast');
-  t.textContent=msg;t.className='toast show '+type;
-  clearTimeout(toastTimer);toastTimer=setTimeout(()=>t.classList.remove('show'),3200);
-}
-window.addEventListener('resize',()=>{
-  const nav=document.getElementById('mobileNav');
-  if(document.getElementById('appMain').classList.contains('visible'))
-    nav.style.display=window.innerWidth<=768?'flex':'none';
-});
 </script>
 </body>
 </html>
