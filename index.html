@@ -2470,6 +2470,11 @@ const TODOS_PRODUTOS=[
 ];
 
 async function carregarCRM(){
+  // Se perfil não carregou ainda, tentar buscar de novo
+  if(!currentProfile?.vendedor && currentUser){
+    const{data}=await db.from('profiles').select('*').eq('id',currentUser.id).single();
+    if(data) currentProfile=data;
+  }
   const vendedor=(currentProfile?.vendedor||'').trim();
   if(!vendedor){ renderClientes(); renderTarefasView(); return; }
   const[r1,r2]=await Promise.all([
