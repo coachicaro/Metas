@@ -2477,12 +2477,21 @@ async function carregarCRM(){
   }
   const vendedor=(currentProfile?.vendedor||'').trim();
   if(!vendedor){ renderClientes(); renderTarefasView(); return; }
+  // Buscar todos e filtrar no JS para evitar problema de encoding/acentos
   const[r1,r2]=await Promise.all([
-    db.from('carteira').select('*').eq('vendedor',vendedor).order('nome'),
-    db.from('lembretes').select('*').eq('vendedor',vendedor).order('data_lembrete')
+    db.from('carteira').select('*').order('nome'),
+    db.from('lembretes').select('*').order('data_lembrete')
   ]);
-  todosClientes=r1.data||[];
-  todasTarefas=r2.data||[];
+  // Filtrar por vendedor com normalização de caracteres
+  const vNorm=vendedor.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
+  todosClientes=(r1.data||[]).filter(x=>{
+    const xNorm=(x.vendedor||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
+    return xNorm===vNorm;
+  });
+  todasTarefas=(r2.data||[]).filter(x=>{
+    const xNorm=(x.vendedor||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
+    return xNorm===vNorm;
+  });
   renderClientes();
   renderTarefasView();
   renderOportunidades();
