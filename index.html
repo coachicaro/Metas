@@ -2528,26 +2528,28 @@ function renderClientes(){
   const container=document.getElementById('clientesContainer');
   if(!container) return;
 
-  const ordenacao=document.getElementById('ordenacaoCliente')?.value||'ltv_desc';
+  const ordenacao=(document.getElementById('ordenacaoCliente')?.value)||'ltv_desc';
 
-  let lista=[...todosClientes];
-  lista=lista.map(cl=>{
-    const pv=produtosDasVendas(cl.nome);
-    const vendasCl=todasVendas.filter(v=>(v.segurado||'').toLowerCase().trim()===cl.nome.toLowerCase().trim());
-    const ltv=vendasCl.reduce((a,v)=>a+(+v.comissao||0),0);
-    const numProdutos=TODOS_PRODUTOS.filter(p=>(cl['tem_'+p.key]||pv[p.key])).length;
-    return{...cl,
-      tem_auto:cl.tem_auto||pv.auto,
-      tem_residencial:cl.tem_residencial||pv.residencial,
-      tem_vida:cl.tem_vida||pv.vida,
-      tem_saude:cl.tem_saude||pv.saude,
-      tem_empresarial:cl.tem_empresarial||pv.empresarial,
-      tem_cartao:cl.tem_cartao||pv.cartao,
-      tem_outros:cl.tem_outros||pv.outros,
-      _ltv:ltv,
-      _numProdutos:numProdutos,
-      _ultimaVenda:vendasCl[0]?.data||'',
-    };
+  let lista=todosClientes.map(cl=>{
+    try{
+      const pv=produtosDasVendas(cl.nome);
+      const vendasCl=todasVendas.filter(v=>(v.segurado||'').toLowerCase().trim()===(cl.nome||'').toLowerCase().trim());
+      const ltv=vendasCl.reduce((a,v)=>a+(+v.comissao||0),0);
+      const merged={
+        ...cl,
+        tem_auto:!!(cl.tem_auto||pv.auto),
+        tem_residencial:!!(cl.tem_residencial||pv.residencial),
+        tem_vida:!!(cl.tem_vida||pv.vida),
+        tem_saude:!!(cl.tem_saude||pv.saude),
+        tem_empresarial:!!(cl.tem_empresarial||pv.empresarial),
+        tem_cartao:!!(cl.tem_cartao||pv.cartao),
+        tem_outros:!!(cl.tem_outros||pv.outros),
+      };
+      merged._ltv=ltv;
+      merged._numProdutos=TODOS_PRODUTOS.filter(p=>merged['tem_'+p.key]).length;
+      merged._ultimaVenda=vendasCl[0]?.data||'';
+      return merged;
+    }catch(e){return{...cl,_ltv:0,_numProdutos:0,_ultimaVenda:''};}
   });
 
   if(busca) lista=lista.filter(cl=>cl.nome.toLowerCase().includes(busca)||(cl.telefone||'').includes(busca)||(cl.email||'').toLowerCase().includes(busca));
