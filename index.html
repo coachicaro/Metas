@@ -2076,18 +2076,17 @@ async function salvarEdicao(){
     vendedor:document.getElementById('edit_vendedor').value,
     sdr_indicacao:document.getElementById('edit_sdr').value.trim()||null,
   };
-  try{
-    const{error}=await db.from('vendas').update(payload).eq('id',id);
-    if(error){showToast('Erro: '+error.message,'error');return;}
-    await carregarVendas();
-    fecharModalDireto();showToast('Venda atualizada!','success');
-  }catch(err){showToast('Erro: '+err.message,'error');}
+  const{error}=await db.from('vendas').update(payload).eq('id',id);
+  if(error){showToast('Erro: '+error.message,'error');return;}
+  fecharModalDireto();
+  showToast('Venda atualizada!','success');
+  setTimeout(()=>carregarVendas(),300);
 }
 async function deletarVenda(id){
   if(!confirm('Excluir esta venda?'))return;
   await db.from('vendas').delete().eq('id',id);
-  await carregarVendas();
   showToast('Venda excluída.','success');
+  setTimeout(()=>carregarVendas(),300);
 }
 function fecharModal(e){if(e.target===document.getElementById('modalOverlay'))fecharModalDireto();}
 function fecharModalDireto(){document.getElementById('modalOverlay').classList.remove('open');}
