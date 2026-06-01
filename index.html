@@ -2899,6 +2899,173 @@ function checarLembretes(){
     showToast('⏰ Lembrete hoje: '+t.titulo+(cl?' — '+cl.nome:''),'');
   });
 }
+// ── NAV ───────────────────────────────────────────────────────────────
+function verVendasVendedor(vendedor,mes){
+  document.getElementById('mesFiltroHist').value=mes;
+  document.getElementById('filtroVendedorHist').value=vendedor;
+  document.getElementById('buscaHist').value='';
+  showView('historico');
+}
+
+function showView(id){
+  document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  document.querySelectorAll('.mobile-nav-item').forEach(n=>n.classList.remove('active'));
+  document.getElementById('view-'+id).classList.add('active');
+  const nav=document.getElementById('nav-'+id);
+  if(nav) nav.classList.add('active');
+  const mnav=document.getElementById('mnav-'+id);
+  if(mnav) mnav.classList.add('active');
+  if(id==='historico'){
+    document.getElementById('view-historico').querySelector('.page-title').textContent='Histórico de Vendas';
+    document.getElementById('view-historico').querySelector('.page-sub').textContent='Todas as vendas registradas';
+    renderHistorico();
+  }
+  if(id==='analises') renderAnalises();
+  if(id==='indicacoes') renderIndicacoes();
+  if(id==='exportar') renderPrevia();
+  if(id==='metas') renderFormMetas();
+  if(id==='dashboard') renderDashboard();
+  if(id==='carteira'){ carregarCRM().then(()=>renderClientes()); }
+  if(id==='tarefas_view'){ carregarCRM().then(()=>renderTarefasView()); }
+  // Scroll to top
+  try{
+    const mainEl=document.querySelector('.main');
+    if(mainEl) mainEl.scrollTop=0;
+    window.scrollTo(0,0);
+    document.body.scrollTop=0;
+    setTimeout(()=>{if(mainEl)mainEl.scrollTop=0;window.scrollTo(0,0);},10);
+  }catch(e){}
+}
+
+// ── DASHBOARD ─────────────────────────────────────────────────────────
+function renderDashboard(){
+  const vendedor=(currentProfile?.vendedor||'').trim();
+  const mesAtual=new Date();
+  const mes=`${mesAtual.getFullYear()}-${String(mesAtual.getMonth()+1).padStart(2,'0')}`;
+  const mesAnt=mesAnteriorDe(mes);
+  document.getElementById('dashTitle').textContent=vendedor?`Olá, ${vendedor} 👋`:'Meu Dashboard';
+  document.getElementById('dashMesLabel').textContent=capitalize(mesAtual.toLocaleDateString('pt-BR',{month:'long',year:'numeric'}));
+  const filtrar=v=>!vendedor||v.vendedor.trim()===vendedor;
+  const minhasVendas=vendasDoMes(mes).filter(filtrar);
+  const minhasVendasAnt=vendasDoMes(mesAnt).filter(filtrar);
+  const minhaCom=soma(minhasVendas,'comissao');
+  const meuPL=soma(minhasVendas,'premio_liquido');
+  const minhaComAnt=soma(minhasVendasAnt,'comissao');
+  document.getElementById('dashComissao').textContent=fmt(minhaCom);
+  document.getElementById('dashPL').textContent=fmt(meuPL);
+  document.getElementById('dashVendas').textContent=minhasVendas.length;
+  if(minhaComAnt>0){
+    const diff=((minhaCom-minhaComAnt)/minhaComAnt*100);
+    const el=document.getElementById('dashDeltaCom');
+    el.className='delta '+(diff>=0?'up':'down');
+    el.textContent=(diff>=0?'▲':'▼')+' '+Math.abs(diff).toFixed(1)+'% vs mês anterior';
+  }
+  const mapRank={};
+  vendasDoMes(mes).forEach(v=>{const n=(v.vendedor||'').trim();if(n)mapRank[n]=(mapRank[n]||0)+(+v.comissao||0);});
+  if(vendedor&&!(vendedor in mapRank)) mapRank[vendedor]=0;
+  const sortedRank=Object.entries(mapRank).sort((a,b)=>b[1]-a[1]);
+  const pos=vendedor?sortedRank.findIndex(([n])=>n===vendedor):-1;
+  const emojis=['🥇','🥈','🥉'];
+  document.getElementById('dashPosicao').textContent=pos>=0?(emojis[pos]||(pos+1)+'º'):'—';
+  const metaGeral=todasMetas.find(m=>m.mes===mes&&m.vendedor===vendedor);
+  const metaCard=document.getElementById('dashMetaCard');
+  if(metaGeral&&+metaGeral.meta_comissao>0){
+    const meta=+metaGeral.meta_comissao;
+    const pct=Math.min(100,(minhaCom/meta)*100);
+    const falta=Math.max(0,meta-minhaCom);
+    metaCard.style.display='block';
+    document.getElementById('dashMetaPct').textContent=pct.toFixed(0)+'%';
+    document.getElementById('dashMetaFill').style.width=pct+'%';
+    document.getElementById('dashMetaFill').className='meta-bar-fill'+(pct>=100?' done':'');
+    document.getElementById('dashMetaRealizado').textContent=fmt(minhaCom);
+    document.getElementById('dashMetaValor').textContent=fmt(meta);
+    document.getElementById('dashMetaFalta').textContent=pct>=100?'✅ Meta batida!':fmt(falta);
+  }else{metaCard.style.display='none';}
+  const metasRamoV=todasMetasRamo.filter(m=>m.mes===mes&&m.vendedor===vendedor&&+m.meta_comissao>0);
+  const ramoCard=document.getElementById('dashMetaRamoCard');
+  if(metasRamoV.length){
+    ramoCard.style.display='block';
+    const ramoReal={};
+    minhasVendas.forEach(v=>{ramoReal[v.ramo]=(ramoReal[v.ramo]||0)+(+v.comissao||0);});
+    document.getElementById('dashMetasRamo').innerHTML=metasRamoV.map(m=>{
+      const atual=ramoReal[m.ramo]||0;
+      const p=Math.min(100,(atual/+m.meta_comissao)*100);
+      return`<div style="margin-bottom:12px">
+        <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px"><span style="font-weight:500">${m.ramo}</span><span style="color:var(--text-3)">${fmt(atual)} / ${fmt(+m.meta_comissao)} (${p.toFixed(0)}%)</span></div>
+        <div class="meta-bar" style="height:8px"><div class="meta-bar-fill ${p>=100?'done':''}" style="width:${p}%;background:${p>=100?'var(--green)':'#6366f1'}"></div></div>
+      </div>`;
+    }).join('');
+  }else{ramoCard.style.display='none';}
+  const propAbertas=todasPropostas.filter(p=>p.status==='aberta'&&(!vendedor||p.vendedor===vendedor.trim()));
+  const divPrev=document.getElementById('dashPrevisao');
+  const divPrevTotal=document.getElementById('dashPrevisaoTotal');
+  if(!propAbertas.length){
+    divPrev.innerHTML='<div class="empty-state" style="padding:24px 0"><div class="icon">📄</div>Nenhuma proposta aberta</div>';
+    divPrevTotal.style.display='none';
+  }else{
+    let totalPrev=0;
+    divPrev.innerHTML=propAbertas.map(p=>{
+      const comEst=(+p.premio_liquido||0)*(+p.percentual_comissao||0)/100;
+      const prob=p.probabilidade??50;
+      const prevPond=comEst*(prob/100);
+      totalPrev+=prevPond;
+      const probCls=prob>=70?'prob-high':prob>=40?'prob-med':'prob-low';
+      return`<div class="dash-prop-item">
+        <div><div style="font-weight:500;font-size:13px">${p.segurado}</div>
+        <div style="font-size:11.5px;color:var(--text-3)">${p.ramo} · ${p.cia}</div></div>
+        <div class="dash-prop-prob">
+          <div style="text-align:right;font-size:12px;color:var(--text-2)">${fmt(comEst)}<br><span style="font-size:11px;color:var(--text-3)">est.</span></div>
+          <span class="prob-pill ${probCls}">${prob}%</span>
+          <div style="text-align:right;font-size:12px;font-weight:600;color:var(--accent)">${fmt(prevPond)}</div>
+        </div>
+      </div>`;
+    }).join('');
+    divPrevTotal.style.display='block';
+    document.getElementById('dashPrevTotal').textContent=fmt(totalPrev);
+    document.getElementById('dashPrevSub').textContent=`${propAbertas.length} proposta${propAbertas.length!==1?'s':''} em aberto`;
+    document.getElementById('dashProjTotal').textContent=fmt(minhaCom+totalPrev);
+  }
+  const ultimas=minhasVendas.slice(0,6);
+  const tbody=document.getElementById('tbodyDash');
+  const empty=document.getElementById('emptyDash');
+  if(!ultimas.length){tbody.innerHTML='';empty.style.display='block';}
+  else{
+    empty.style.display='none';
+    tbody.innerHTML=ultimas.map(v=>`<tr>
+      <td>${fmtData(v.data)}</td>
+      <td style="max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${v.segurado}</td>
+      <td><span class="ramo-badge ${ramoClass(v.ramo)}">${v.ramo}</span></td>
+      <td>${v.cia}</td>
+      <td class="val-green">${fmt(v.comissao)}</td>
+    </tr>`).join('');
+  }
+}
+
+// ── UTILS ─────────────────────────────────────────────────────────────
+function hoje(){return new Date().toISOString().split('T')[0];}
+function fmt(v){return(+v||0).toLocaleString('pt-BR',{style:'currency',currency:'BRL'});}
+function fmtData(d){if(!d)return'—';const[y,m,dd]=d.split('-');return`${dd}/${m}/${y}`;}
+function capitalize(s){return s?s.charAt(0).toUpperCase()+s.slice(1):'';}
+function soma(arr,campo){return(arr||[]).reduce((a,v)=>a+(+v[campo]||0),0);}
+function ramoClass(r){return({'Auto':'ramo-auto','Plano de Saúde':'ramo-saude','Vida mensal':'ramo-vida','Residencial':'ramo-residencial','Empresarial':'ramo-empresarial','Cartão Porto':'ramo-cartao'}[r]||'ramo-outro');}
+function mesAnteriorDe(mes){if(!mes)return'';const[y,m]=mes.split('-');const d=new Date(+y,+m-2,1);return`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;}
+function setSync(state){
+  document.getElementById('syncDot').className='sync-dot '+state;
+  document.getElementById('syncLabel').textContent=state==='ok'?'Conectado':state==='loading'?'Sincronizando...':'Erro';
+}
+let toastTimer;
+function showToast(msg,type=''){
+  const t=document.getElementById('toast');
+  t.textContent=msg;t.className='toast show '+type;
+  clearTimeout(toastTimer);toastTimer=setTimeout(()=>t.classList.remove('show'),3200);
+}
+window.addEventListener('resize',()=>{
+  const nav=document.getElementById('mobileNav');
+  if(document.getElementById('appMain').classList.contains('visible'))
+    nav.style.display=window.innerWidth<=768?'flex':'none';
+});
+
 </script>
 </body>
 </html>
