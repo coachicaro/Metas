@@ -2043,11 +2043,18 @@ async function salvarVenda(e){
       sdr_indicacao:document.getElementById('f_sdr').value.trim()||null,
     };
 
-    const{error}=await db.from('vendas').insert([payload]);
+    const{data:insertData,error}=await db.from('vendas').insert([payload]).select();
     clearTimeout(safeTimer);
     resetBtn();
 
-    if(error){showToast('Erro: '+error.message,'error');return;}
+    if(error){
+      alert('Erro ao salvar: '+error.message+' | Código: '+error.code);
+      return;
+    }
+    if(!insertData||insertData.length===0){
+      alert('Venda não foi inserida — sem resposta do banco. Tente novamente.');
+      return;
+    }
     showToast('Venda registrada!','success');
     resetForm();
     showView('ranking');
