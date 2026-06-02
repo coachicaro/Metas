@@ -2018,30 +2018,38 @@ async function salvarVenda(e){
   e.preventDefault();
   const btn=document.getElementById('btnSalvar');
   btn.disabled=true;btn.textContent='Salvando...';
-  const pl=parseFloat(document.getElementById('f_pl').value)||0;
-  const pct=parseFloat(document.getElementById('f_pct').value)||0;
-  const comissao=Math.round(pl*pct/100*100)/100;
-  const payload={
-    data:document.getElementById('f_data').value,
-    segurado:document.getElementById('f_segurado').value.trim(),
-    ramo:document.getElementById('f_ramo').value,
-    cia:document.getElementById('f_cia').value,
-    premio_liquido:pl,
-    percentual_comissao:pct,
-    comissao:comissao,
-    vendedor:document.getElementById('f_vendedor').value,
-    sdr_indicacao:document.getElementById('f_sdr').value.trim()||null,
-  };
+
+  // Timeout de segurança — botão sempre volta em 8s
+  const resetBtn=()=>{btn.disabled=false;btn.textContent='💾 Salvar Venda';};
+  const safeTimer=setTimeout(resetBtn,8000);
+
   try{
+    const pl=parseFloat(document.getElementById('f_pl').value)||0;
+    const pct=parseFloat(document.getElementById('f_pct').value)||0;
+    const payload={
+      data:document.getElementById('f_data').value,
+      segurado:document.getElementById('f_segurado').value.trim(),
+      ramo:document.getElementById('f_ramo').value,
+      cia:document.getElementById('f_cia').value,
+      premio_liquido:pl,
+      percentual_comissao:pct,
+      comissao:Math.round(pl*pct/100*100)/100,
+      vendedor:document.getElementById('f_vendedor').value,
+      sdr_indicacao:document.getElementById('f_sdr').value.trim()||null,
+    };
+
     const{error}=await db.from('vendas').insert([payload]);
-    btn.disabled=false;btn.textContent='💾 Salvar Venda';
+    clearTimeout(safeTimer);
+    resetBtn();
+
     if(error){showToast('Erro: '+error.message,'error');return;}
     showToast('Venda registrada!','success');
     resetForm();
     showView('ranking');
     setTimeout(()=>carregarVendas(),300);
   }catch(err){
-    btn.disabled=false;btn.textContent='💾 Salvar Venda';
+    clearTimeout(safeTimer);
+    resetBtn();
     showToast('Erro: '+err.message,'error');
   }
 }
@@ -2064,6 +2072,7 @@ function calcComissaoEdit(){
 }
 async function salvarEdicao(){
   const id=document.getElementById('edit_id').value;
+  if(!id){showToast('Erro: ID da venda não encontrado.','error');return;}
   const editPl=parseFloat(document.getElementById('edit_pl').value)||0;
   const editPct=parseFloat(document.getElementById('edit_pct').value)||0;
   const payload={
@@ -2077,11 +2086,13 @@ async function salvarEdicao(){
     vendedor:document.getElementById('edit_vendedor').value,
     sdr_indicacao:document.getElementById('edit_sdr').value.trim()||null,
   };
-  const{error}=await db.from('vendas').update(payload).eq('id',id);
-  if(error){showToast('Erro: '+error.message,'error');return;}
-  fecharModalDireto();
-  showToast('Venda atualizada!','success');
-  setTimeout(()=>carregarVendas(),300);
+  try{
+    const{error}=await db.from('vendas').update(payload).eq('id',id);
+    if(error){showToast('Erro: '+error.message,'error');return;}
+    fecharModalDireto();
+    showToast('Venda atualizada!','success');
+    setTimeout(()=>carregarVendas(),300);
+  }catch(err){showToast('Erro: '+err.message,'error');}
 }
 async function deletarVenda(id){
   if(!confirm('Excluir esta venda?'))return;
