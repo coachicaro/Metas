@@ -81,6 +81,33 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
 .renov-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:24px}
 @media(max-width:768px){.renov-grid{grid-template-columns:repeat(2,1fr)}}
 
+
+/* ── KANBAN ── */
+.kanban-board{display:grid;grid-template-columns:repeat(5,1fr);gap:14px;align-items:start;padding-bottom:20px}
+.kanban-col{background:#F2F3F7;border-radius:var(--radius);padding:12px;min-height:200px}
+.kanban-col-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.kanban-col-title{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--text-2)}
+.kanban-col-count{background:var(--surface);border:1px solid var(--border);border-radius:99px;font-size:11px;font-weight:700;padding:2px 8px;color:var(--text-3)}
+.kanban-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px;margin-bottom:8px;cursor:grab;box-shadow:var(--shadow);transition:box-shadow .15s;position:relative}
+.kanban-card:hover{box-shadow:var(--shadow-lg)}
+.kanban-card.dragging{opacity:.5;cursor:grabbing}
+.kanban-col.drag-over{background:#e8eaf3;border:2px dashed var(--accent)}
+.kanban-card-nome{font-weight:600;font-size:13px;color:var(--text);margin-bottom:4px;line-height:1.3}
+.kanban-card-info{font-size:11.5px;color:var(--text-3);margin-bottom:6px}
+.kanban-card-tags{display:flex;flex-wrap:wrap;gap:4px;margin-bottom:6px}
+.kanban-card-footer{display:flex;align-items:center;justify-content:space-between;font-size:11px;color:var(--text-3)}
+.kanban-card-com{font-weight:600;font-size:12px;color:var(--accent)}
+.kanban-col-nao{border-top:3px solid #94a3b8}
+.kanban-col-cotada{border-top:3px solid #6366f1}
+.kanban-col-negociacao{border-top:3px solid #f59e0b}
+.kanban-col-fechada{border-top:3px solid #10b981}
+.kanban-col-aguardando{border-top:3px solid #3b82f6}
+.kanban-search{padding:8px 12px;font-size:13px;font-family:'DM Sans',sans-serif;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--surface);outline:none;width:200px}
+.kanban-search:focus{border-color:var(--accent)}
+@media(max-width:1100px){.kanban-board{grid-template-columns:repeat(3,1fr)}}
+@media(max-width:768px){.kanban-board{grid-template-columns:1fr 1fr}}
+@media(max-width:480px){.kanban-board{grid-template-columns:1fr}}
+
 .btn-logout{display:flex;align-items:center;gap:7px;padding:8px 0;font-size:12.5px;color:rgba(255,255,255,.45);cursor:pointer;background:none;border:none;font-family:'DM Sans',sans-serif;margin-top:10px;transition:color .15s}
 .btn-logout:hover{color:#fff}
 
@@ -371,6 +398,7 @@ input[type=range]{width:100%;accent-color:var(--accent)}
       <div class="nav-section">Renovações</div>
       <div class="nav-item" onclick="showView('renovacoes')" id="nav-renovacoes"><span class="icon">🔄</span> Controle</div>
       <div class="nav-item" onclick="showView('renov_analise')" id="nav-renov_analise"><span class="icon">📈</span> Análise</div>
+      <div class="nav-item" onclick="showView('renov_kanban')" id="nav-renov_kanban"><span class="icon">🗂️</span> Kanban</div>
       <div class="nav-section">Gestão</div>
       <div class="nav-item" onclick="showView('metas')" id="nav-metas"><span class="icon">🎯</span> Definir Metas</div>
       <div class="nav-item" onclick="showView('exportar')" id="nav-exportar"><span class="icon">📤</span> Exportar</div>
@@ -898,6 +926,27 @@ input[type=range]{width:100%;accent-color:var(--accent)}
 
   </main>
 </div>
+
+    <!-- KANBAN RENOVAÇÕES -->
+    <div class="view" id="view-renov_kanban">
+      <div class="page-title">Kanban de Renovações</div>
+      <p class="page-sub">Arraste os cards entre as colunas para atualizar o status</p>
+
+      <div class="mes-bar" style="justify-content:space-between;margin-bottom:20px">
+        <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+          <label style="font-size:12px;font-weight:500;color:var(--text-2)">Mês:</label>
+          <select id="kanbanMes" onchange="renderKanban()" style="padding:8px 10px;font-size:13px;font-family:'DM Sans',sans-serif;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--surface);outline:none"></select>
+          <select id="kanbanVendedor" onchange="renderKanban()" style="padding:8px 10px;font-size:13px;font-family:'DM Sans',sans-serif;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--surface);outline:none">
+            <option value="">Todos vendedores</option>
+            <option>Silvia</option><option>Paulo</option><option>Ícaro</option>
+          </select>
+          <input type="text" id="kanbanBusca" class="kanban-search" placeholder="🔍 Buscar cliente..." oninput="renderKanban()">
+        </div>
+        <div style="display:flex;gap:8px;font-size:12px;color:var(--text-3);align-items:center" id="kanbanResumo"></div>
+      </div>
+
+      <div class="kanban-board" id="kanbanBoard"></div>
+    </div>
 
 <!-- MOBILE NAV -->
 <nav class="mobile-nav" id="mobileNav" style="display:none">
@@ -1445,7 +1494,7 @@ function popularMeses(){
     opts.push({val,label});
   }
   const html=opts.map(o=>`<option value="${o.val}">${capitalize(o.label)}</option>`).join('');
-  ['mesFiltro','mesFiltroHist','mesFiltroInd','metaMes','exportMes','renovMesFiltro'].forEach(id=>{
+  ['mesFiltro','mesFiltroHist','mesFiltroInd','metaMes','exportMes','renovMesFiltro','kanbanMes'].forEach(id=>{
     const el=document.getElementById(id);if(el) el.innerHTML=html;
   });
   document.getElementById('mesLabel').textContent=capitalize(opts[0].label);
@@ -3199,6 +3248,7 @@ function showView(id){
   if(id==='dashboard') renderDashboard();
   if(id==='renovacoes') renderRenovacoes();
   if(id==='renov_analise') renderAnaliseRenovacoes();
+  if(id==='renov_kanban') renderKanban();
   if(id==='carteira'){ carregarCRM().then(()=>renderClientes()); }
   if(id==='tarefas_view'){ carregarCRM().then(()=>renderTarefasView()); }
   // Scroll para o topo
@@ -3837,6 +3887,93 @@ async function executarImportRenov(){
     res.style.cssText='background:var(--danger-light);color:var(--danger);border:1px solid #f5c6c2;border-radius:var(--radius-sm);padding:10px 14px;font-size:13px;margin-bottom:16px';
     res.textContent=`⚠️ ${importados} importados, ${erros} com erro.`;
   }
+}
+
+// ── KANBAN RENOVAÇÕES ─────────────────────────────────────────────────
+const KANBAN_COLS = [
+  {id:'nao_iniciada',  label:'Não Iniciada',       cls:'kanban-col-nao',       icon:'⏳'},
+  {id:'cotada',        label:'Cotada',              cls:'kanban-col-cotada',    icon:'📋'},
+  {id:'negociacao',    label:'Em Negociação',       cls:'kanban-col-negociacao',icon:'💬'},
+  {id:'fechada',       label:'Fechada ✅',           cls:'kanban-col-fechada',   icon:'✅'},
+  {id:'aguardando_transmissao', label:'Ag. Transmissão', cls:'kanban-col-aguardando', icon:'📤'},
+];
+
+let dragId=null;
+
+function renderKanban(){
+  const mes=document.getElementById('kanbanMes')?.value||'';
+  const vendedor=document.getElementById('kanbanVendedor')?.value||'';
+  const busca=(document.getElementById('kanbanBusca')?.value||'').toLowerCase();
+  const board=document.getElementById('kanbanBoard');
+  if(!board) return;
+
+  let lista=todasRenovacoes;
+  if(mes) lista=lista.filter(r=>r.mes_renovacao===mes);
+  if(vendedor) lista=lista.filter(r=>r.vendedor===vendedor);
+  if(busca) lista=lista.filter(r=>(r.cliente||'').toLowerCase().includes(busca)||(r.cia||'').toLowerCase().includes(busca));
+
+  // Resumo
+  const resumo=document.getElementById('kanbanResumo');
+  if(resumo) resumo.innerHTML=`<span>${lista.length} apólices</span>&nbsp;·&nbsp;<span style="color:var(--green);font-weight:600">${lista.filter(r=>r.kanban_status==='fechada').length} fechadas</span>`;
+
+  board.innerHTML = KANBAN_COLS.map(col=>{
+    const cards=lista.filter(r=>(r.kanban_status||'nao_iniciada')===col.id);
+    return `<div class="kanban-col ${col.cls}" id="kcol-${col.id}"
+      ondragover="event.preventDefault();document.getElementById('kcol-${col.id}').classList.add('drag-over')"
+      ondragleave="document.getElementById('kcol-${col.id}').classList.remove('drag-over')"
+      ondrop="dropKanban(event,'${col.id}')">
+      <div class="kanban-col-header">
+        <span class="kanban-col-title">${col.icon} ${col.label}</span>
+        <span class="kanban-col-count">${cards.length}</span>
+      </div>
+      ${cards.map(r=>kanbanCard(r)).join('')}
+    </div>`;
+  }).join('');
+}
+
+function kanbanCard(r){
+  const tagEnd=r.tem_endosso?`<span style="padding:1px 6px;border-radius:99px;font-size:10px;font-weight:700;background:#FEF3C7;color:#92400E">✏️ END</span>`:'';
+  const tagSin=r.tem_sinistro?`<span style="padding:1px 6px;border-radius:99px;font-size:10px;font-weight:700;background:#FEE2E2;color:#991B1B">⚠️ SIN</span>`:'';
+  const venci=r.data_vencimento?`<span>📅 ${fmtData(r.data_vencimento)}</span>`:'';
+  const comAnt=+r.comissao_anterior||0;
+  return `<div class="kanban-card" draggable="true"
+    ondragstart="dragId='${r.id}';this.classList.add('dragging')"
+    ondragend="this.classList.remove('dragging')"
+    ondblclick="editarRenovacao('${r.id}')">
+    <div class="kanban-card-nome">${r.cliente}</div>
+    <div class="kanban-card-info">${r.cia||''}${r.ramo?' · '+r.ramo:''}</div>
+    ${(tagEnd||tagSin)?`<div class="kanban-card-tags">${tagEnd}${tagSin}</div>`:''}
+    <div class="kanban-card-footer">
+      ${venci}
+      <span class="kanban-card-com">CC ${fmt(comAnt)}</span>
+    </div>
+    <div style="margin-top:6px">
+      <select onchange="moverKanban('${r.id}',this.value)"
+        style="width:100%;padding:3px 6px;font-size:11px;border:1px solid var(--border);border-radius:4px;background:var(--bg);font-family:'DM Sans',sans-serif">
+        ${KANBAN_COLS.map(col=>`<option value="${col.id}" ${(r.kanban_status||'nao_iniciada')===col.id?'selected':''}>${col.icon} ${col.label}</option>`).join('')}
+      </select>
+    </div>
+  </div>`;
+}
+
+async function dropKanban(event, novoStatus){
+  event.preventDefault();
+  document.getElementById('kcol-'+novoStatus).classList.remove('drag-over');
+  if(!dragId) return;
+  await moverKanban(dragId, novoStatus);
+  dragId=null;
+}
+
+async function moverKanban(id, novoStatus){
+  const r=todasRenovacoes.find(x=>x.id===id);
+  if(!r||r.kanban_status===novoStatus) return;
+  const{error}=await db.from('renovacoes').update({kanban_status:novoStatus}).eq('id',id);
+  if(error){showToast('Erro: '+error.message,'error');return;}
+  r.kanban_status=novoStatus;
+  // Se fechou no kanban, atualizar status também
+  if(novoStatus==='fechada') r.status='renovada';
+  renderKanban();
+  showToast('Card movido!','success');
 }
 
 </script>
