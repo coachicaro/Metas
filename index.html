@@ -1124,7 +1124,7 @@ input[type=range]{width:100%;accent-color:var(--accent)}
         <label style="font-size:12px;font-weight:600">Atribuir ao vendedor:</label>
         <select id="renovImportVendedor" style="padding:8px 12px;font-size:13px;font-family:'DM Sans',sans-serif;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--surface);outline:none;width:100%">
           <option value="">Selecione o vendedor responsável</option>
-          <option>Silvia</option><option>Paulo</option><option>Ícaro</option>
+          <option selected>Silvia</option><option>Paulo</option><option>Ícaro</option>
         </select>
       </div>
     </div>
@@ -3418,7 +3418,12 @@ function renderRenovacoes(){
       <td>${variStr}</td>
       <td style="display:flex;gap:4px;flex-wrap:wrap">${tagEndosso}${tagSinistro}</td>
       <td><span class="status-badge status-${r.status}">${capitalize(r.status)}</span></td>
-      <td>
+      <td style="white-space:nowrap">
+        <select onchange="trocarVendedorRenov('${r.id}',this.value)" style="padding:3px 6px;font-size:11px;border:1px solid var(--border);border-radius:4px;background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;margin-right:4px">
+          <option value="Silvia" ${r.vendedor==='Silvia'?'selected':''}>Silvia</option>
+          <option value="Paulo" ${r.vendedor==='Paulo'?'selected':''}>Paulo</option>
+          <option value="Ícaro" ${r.vendedor==='Ícaro'?'selected':''}>Ícaro</option>
+        </select>
         <button class="action-btn" onclick="editarRenovacao('${r.id}')">✏️</button>
         <button class="action-btn" onclick="deletarRenovacao('${r.id}')">🗑️</button>
       </td>
@@ -3624,6 +3629,14 @@ async function salvarRenovacao(){
   await carregarRenovacoes();
 }
 
+async function trocarVendedorRenov(id, vendedor){
+  const{error}=await db.from('renovacoes').update({vendedor}).eq('id',id);
+  if(error){showToast('Erro: '+error.message,'error');return;}
+  // Atualizar localmente sem reload completo
+  const r=todasRenovacoes.find(x=>x.id===id);
+  if(r) r.vendedor=vendedor;
+  showToast(`Atribuído para ${vendedor}!`,'success');
+}
 async function editarRenovacao(id){abrirModalRenovacao(id);}
 
 async function deletarRenovacao(id){
