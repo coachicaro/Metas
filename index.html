@@ -68,6 +68,19 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
 .perf-sub{font-size:11px;color:var(--text-3)}
 .perf-melhor{font-size:11px;font-weight:600;color:var(--green);margin-top:4px}
 
+
+/* ── RENOVAÇÕES ── */
+.status-renovada{background:var(--green-light);color:var(--green)}
+.status-perdida{background:var(--danger-light);color:var(--danger)}
+.status-pendente{background:#FEF9C3;color:#854D0E}
+.status-cancelada{background:#F3F4F6;color:#6B7280}
+.renov-stat-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px 20px;box-shadow:var(--shadow)}
+.renov-stat-card .label{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:var(--text-3);margin-bottom:6px}
+.renov-stat-card .value{font-family:'DM Serif Display',serif;font-size:20px;color:var(--text)}
+.renov-stat-card .sub{font-size:11.5px;color:var(--text-3);margin-top:3px}
+.renov-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:24px}
+@media(max-width:768px){.renov-grid{grid-template-columns:repeat(2,1fr)}}
+
 .btn-logout{display:flex;align-items:center;gap:7px;padding:8px 0;font-size:12.5px;color:rgba(255,255,255,.45);cursor:pointer;background:none;border:none;font-family:'DM Sans',sans-serif;margin-top:10px;transition:color .15s}
 .btn-logout:hover{color:#fff}
 
@@ -355,6 +368,9 @@ input[type=range]{width:100%;accent-color:var(--accent)}
       <div class="nav-section">CRM Premium</div>
       <div class="nav-item" onclick="showView('carteira')" id="nav-carteira"><span class="icon">👥</span> Minha Carteira</div>
       <div class="nav-item" onclick="showView('tarefas_view')" id="nav-tarefas_view"><span class="icon">✅</span> Tarefas</div>
+      <div class="nav-section">Renovações</div>
+      <div class="nav-item" onclick="showView('renovacoes')" id="nav-renovacoes"><span class="icon">🔄</span> Controle</div>
+      <div class="nav-item" onclick="showView('renov_analise')" id="nav-renov_analise"><span class="icon">📈</span> Análise</div>
       <div class="nav-section">Gestão</div>
       <div class="nav-item" onclick="showView('metas')" id="nav-metas"><span class="icon">🎯</span> Definir Metas</div>
       <div class="nav-item" onclick="showView('exportar')" id="nav-exportar"><span class="icon">📤</span> Exportar</div>
@@ -783,6 +799,106 @@ input[type=range]{width:100%;accent-color:var(--accent)}
       <div id="tarefasViewEmpty" class="empty-state" style="display:none"><div class="icon">✅</div>Nenhuma tarefa ainda</div>
     </div>
 
+    <!-- RENOVAÇÕES CONTROLE -->
+    <div class="view" id="view-renovacoes">
+      <div class="page-title">Controle de Renovações</div>
+      <p class="page-sub">Acompanhe renovações, perdas e resultado por mês</p>
+
+      <!-- Filtros -->
+      <div class="mes-bar" style="justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:20px">
+        <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+          <label style="font-size:12px;font-weight:500;color:var(--text-2)">Mês:</label>
+          <select id="renovMesFiltro" onchange="renderRenovacoes()" style="padding:8px 10px;font-size:13px;font-family:'DM Sans',sans-serif;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--surface);outline:none"></select>
+          <select id="renovVendedorFiltro" onchange="renderRenovacoes()" style="padding:8px 10px;font-size:13px;font-family:'DM Sans',sans-serif;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--surface);outline:none">
+            <option value="">Todos vendedores</option>
+            <option>Silvia</option><option>Paulo</option><option>Ícaro</option>
+          </select>
+          <select id="renovStatusFiltro" onchange="renderRenovacoes()" style="padding:8px 10px;font-size:13px;font-family:'DM Sans',sans-serif;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--surface);outline:none">
+            <option value="">Todos status</option>
+            <option value="pendente">Pendentes</option>
+            <option value="renovada">Renovadas</option>
+            <option value="perdida">Perdidas</option>
+            <option value="cancelada">Canceladas</option>
+          </select>
+        </div>
+        <div style="display:flex;gap:8px">
+          <button class="btn btn-ghost" onclick="abrirModalImportRenov()">📥 Importar Planilha</button>
+          <button class="btn btn-primary" onclick="abrirModalRenovacao()">➕ Nova Renovação</button>
+        </div>
+      </div>
+
+      <!-- Cards resumo -->
+      <div class="renov-grid" id="renovCards"></div>
+
+      <!-- Tabela -->
+      <div class="card" style="padding:0">
+        <div class="table-wrap">
+          <table>
+            <thead><tr>
+              <th>Cliente</th><th>Ramo</th><th>Seguradora</th><th>Vendedor</th>
+              <th>Vencimento</th><th>Com. Anterior</th><th>Com. Atual</th>
+              <th>Variação</th><th>Status</th><th></th>
+            </tr></thead>
+            <tbody id="tbodyRenov"></tbody>
+          </table>
+        </div>
+        <div id="emptyRenov" class="empty-state" style="display:none">
+          <div class="icon">🔄</div>Nenhuma renovação encontrada
+        </div>
+      </div>
+    </div>
+
+    <!-- RENOVAÇÕES ANÁLISE -->
+    <div class="view" id="view-renov_analise">
+      <div class="page-title">Análise de Renovações</div>
+      <p class="page-sub">Churn, crescimento e resultado por ramo</p>
+
+      <div class="mes-bar" style="margin-bottom:20px">
+        <label style="font-size:12px;font-weight:500;color:var(--text-2)">Período:</label>
+        <select id="renovAnalisePeriodo" onchange="renderAnaliseRenovacoes()" style="padding:8px 10px;font-size:13px;font-family:'DM Sans',sans-serif;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--surface);outline:none">
+          <option value="3">Últimos 3 meses</option>
+          <option value="6" selected>Últimos 6 meses</option>
+          <option value="12">Últimos 12 meses</option>
+          <option value="0">Todo o período</option>
+        </select>
+        <select id="renovAnaliseVendedor" onchange="renderAnaliseRenovacoes()" style="padding:8px 10px;font-size:13px;font-family:'DM Sans',sans-serif;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--surface);outline:none">
+          <option value="">Todos vendedores</option>
+          <option>Silvia</option><option>Paulo</option><option>Ícaro</option>
+        </select>
+      </div>
+
+      <!-- KPIs -->
+      <div class="summary-grid" style="margin-bottom:24px" id="renovKpis"></div>
+
+      <!-- Gráficos -->
+      <div class="chart-grid" style="margin-bottom:20px">
+        <div class="chart-card chart-full">
+          <div class="chart-title">Renovadas vs Perdidas por Mês</div>
+          <canvas id="chartRenovMes" style="max-height:260px"></canvas>
+        </div>
+      </div>
+      <div class="chart-grid" style="margin-bottom:20px">
+        <div class="chart-card">
+          <div class="chart-title">Comissão Anterior vs Atual por Mês</div>
+          <canvas id="chartRenovComissao" style="max-height:240px"></canvas>
+        </div>
+        <div class="chart-card">
+          <div class="chart-title">Taxa de Renovação por Ramo</div>
+          <canvas id="chartRenovRamo" style="max-height:240px"></canvas>
+        </div>
+      </div>
+      <div class="chart-grid" style="margin-bottom:20px">
+        <div class="chart-card">
+          <div class="chart-title">Churn por Mês (%)</div>
+          <canvas id="chartChurn" style="max-height:240px"></canvas>
+        </div>
+        <div class="chart-card">
+          <div class="chart-title">Crescimento de Comissão por Vendedor</div>
+          <canvas id="chartRenovVendedor" style="max-height:240px"></canvas>
+        </div>
+      </div>
+    </div>
+
 <!-- MOBILE NAV -->
 <nav class="mobile-nav" id="mobileNav" style="display:none">
   <div style="display:flex;overflow-x:auto;width:100%;scrollbar-width:none;-ms-overflow-style:none;padding-bottom:env(safe-area-inset-bottom)">
@@ -793,7 +909,8 @@ input[type=range]{width:100%;accent-color:var(--accent)}
     <div class="mobile-nav-item" id="mnav-historico" onclick="showView('historico')"><span class="mn-icon">📋</span><span class="mn-label">Histórico</span></div>
     <div class="mobile-nav-item" id="mnav-carteira" onclick="showView('carteira')"><span class="mn-icon">👥</span><span class="mn-label">Carteira</span></div>
     <div class="mobile-nav-item" id="mnav-tarefas_view" onclick="showView('tarefas_view')"><span class="mn-icon">✅</span><span class="mn-label">Tarefas</span></div>
-    <div class="mobile-nav-item" id="mnav-metas" onclick="showView('metas')"><span class="mn-icon">🎯</span><span class="mn-label">Metas</span></div>
+    <div class="mobile-nav-item" id="mnav-renovacoes" onclick="showView('renovacoes')"><span class="mn-icon">🔄</span><span class="mn-label">Renovações</span></div>
+  <div class="mobile-nav-item" id="mnav-metas" onclick="showView('metas')"><span class="mn-icon">🎯</span><span class="mn-label">Metas</span></div>
     <div class="mobile-nav-item" id="mnav-exportar" onclick="showView('exportar')"><span class="mn-icon">📤</span><span class="mn-label">Exportar</span></div>
   </div>
 </nav>
@@ -906,6 +1023,95 @@ input[type=range]{width:100%;accent-color:var(--accent)}
     <div class="form-actions">
       <button class="btn btn-ghost" onclick="fecharModalTarefaDireto()">Cancelar</button>
       <button class="btn btn-primary" onclick="salvarTarefa()">💾 Salvar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL NOVA RENOVAÇÃO -->
+<div class="modal-overlay" id="modalRenovacao" onclick="fecharModalRenov(event)">
+  <div class="modal" style="max-width:680px">
+    <div class="modal-title" id="modalRenovTitulo">Nova Renovação</div>
+    <input type="hidden" id="renov_id">
+    <div class="form-grid" style="margin-bottom:14px">
+      <div class="field"><label>Cliente *</label><input type="text" id="renov_cliente" placeholder="Nome do cliente"></div>
+      <div class="field"><label>Vendedor *</label>
+        <select id="renov_vendedor"><option value="">Selecione...</option><option>Silvia</option><option>Paulo</option><option>Ícaro</option></select>
+      </div>
+      <div class="field"><label>Mês de Renovação *</label><input type="month" id="renov_mes"></div>
+    </div>
+    <div class="form-grid" style="margin-bottom:14px">
+      <div class="field"><label>Ramo *</label>
+        <select id="renov_ramo"><option value="">Selecione...</option>
+          <option>Auto</option><option>Residencial</option><option>Vida mensal</option>
+          <option>Plano de Saúde</option><option>Empresarial</option><option>Moto</option>
+          <option>Cartão Porto</option><option>Outro</option>
+        </select>
+      </div>
+      <div class="field"><label>Seguradora</label><input type="text" id="renov_cia" placeholder="Ex: HDI, Porto..."></div>
+      <div class="field"><label>Vencimento</label><input type="date" id="renov_venc"></div>
+    </div>
+    <div class="form-grid" style="margin-bottom:14px">
+      <div class="field"><label>Comissão Ano Anterior (R$)</label><input type="number" id="renov_com_ant" step="0.01" min="0" placeholder="0,00" oninput="calcVariacaoRenov()"></div>
+      <div class="field"><label>Comissão Ano Atual (R$)</label><input type="number" id="renov_com_atual" step="0.01" min="0" placeholder="0,00" oninput="calcVariacaoRenov()"></div>
+      <div class="field"><label>Variação</label><div class="computed" id="renov_variacao_preview">—</div></div>
+    </div>
+    <div class="form-grid" style="margin-bottom:14px">
+      <div class="field"><label>PL Anterior (R$)</label><input type="number" id="renov_pl_ant" step="0.01" min="0" placeholder="0,00"></div>
+      <div class="field"><label>PL Atual (R$)</label><input type="number" id="renov_pl_atual" step="0.01" min="0" placeholder="0,00"></div>
+      <div class="field"><label>Status *</label>
+        <select id="renov_status">
+          <option value="pendente">Pendente</option>
+          <option value="renovada">Renovada ✅</option>
+          <option value="perdida">Perdida ❌</option>
+          <option value="cancelada">Cancelada</option>
+        </select>
+      </div>
+    </div>
+    <div class="field" style="margin-bottom:16px"><label>Motivo da perda / Observações</label>
+      <textarea id="renov_obs" rows="2" style="resize:vertical" placeholder="Opcional..."></textarea>
+    </div>
+    <div class="form-actions">
+      <button class="btn btn-ghost" onclick="fecharModalRenovDireto()">Cancelar</button>
+      <button class="btn btn-primary" onclick="salvarRenovacao()">💾 Salvar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL IMPORTAR RENOVAÇÕES -->
+<div class="modal-overlay" id="modalImportRenov" onclick="fecharModalImportRenov(event)">
+  <div class="modal" style="max-width:700px">
+    <div class="modal-title">📥 Importar Planilha de Renovações</div>
+    <div style="background:var(--accent-light);border-radius:var(--radius-sm);padding:14px 16px;margin-bottom:18px;font-size:13px;color:var(--accent-text);line-height:1.7">
+      <strong>Colunas esperadas:</strong> Cliente, Ramo, Cia, Vendedor, Mês, Vencimento, Comissão Anterior, Comissão Atual, PL Anterior, PL Atual, Status
+    </div>
+    <div id="renovImportDropzone" onclick="document.getElementById('renovImportFile').click()"
+      style="border:2px dashed var(--border);border-radius:var(--radius);padding:28px;text-align:center;cursor:pointer;background:var(--bg);margin-bottom:16px">
+      <div style="font-size:32px;margin-bottom:8px">📂</div>
+      <div style="font-weight:500;color:var(--text-2)">Clique para selecionar ou arraste o arquivo</div>
+      <div style="font-size:12px;color:var(--text-3);margin-top:4px">.xlsx ou .csv</div>
+    </div>
+    <input type="file" id="renovImportFile" accept=".xlsx,.xls,.csv" style="display:none" onchange="lerArquivoRenov(this)">
+    <div id="renovImportPreview" style="display:none;margin-bottom:16px">
+      <div style="font-size:11px;font-weight:600;text-transform:uppercase;color:var(--text-3);margin-bottom:8px">
+        Preview — <span id="renovImportCount">0</span> registros
+      </div>
+      <div style="overflow-x:auto;max-height:200px;overflow-y:auto;border:1px solid var(--border);border-radius:var(--radius-sm)">
+        <table style="width:100%;border-collapse:collapse;font-size:12px">
+          <thead id="renovImportHead"></thead>
+          <tbody id="renovImportBody"></tbody>
+        </table>
+      </div>
+    </div>
+    <div id="renovImportProgress" style="display:none;margin-bottom:16px">
+      <div style="font-size:13px;color:var(--text-2);margin-bottom:6px" id="renovImportLabel">Importando...</div>
+      <div style="height:8px;background:var(--border);border-radius:99px"><div id="renovImportBar" style="height:100%;background:var(--accent);border-radius:99px;width:0%;transition:width .3s"></div></div>
+    </div>
+    <div id="renovImportResult" style="display:none;padding:10px 14px;border-radius:var(--radius-sm);font-size:13px;margin-bottom:16px"></div>
+    <div class="form-actions" style="margin-top:0">
+      <button class="btn btn-ghost" onclick="fecharModalImportRenovDireto()">Cancelar</button>
+      <button class="btn btn-primary" id="btnImportarRenov" onclick="executarImportRenov()" style="display:none">
+        📥 Importar <span id="btnImportarRenovCount"></span> registros
+      </button>
     </div>
   </div>
 </div>
@@ -1114,7 +1320,7 @@ async function iniciarApp(user){
 
   popularMeses();
   setSync('loading');
-  await Promise.all([carregarVendas(),carregarPropostas(),carregarMetas(),carregarCRM()]);
+  await Promise.all([carregarVendas(),carregarPropostas(),carregarMetas(),carregarCRM(),carregarRenovacoes()]);
   subscribeRealtime();
   checarLembretes();
   document.getElementById('f_data').value=hoje();
@@ -1203,6 +1409,7 @@ function subscribeRealtime(){
     .on('postgres_changes',{event:'*',schema:'public',table:'metas_ramo'},()=>carregarMetas())
     .on('postgres_changes',{event:'*',schema:'public',table:'carteira'},()=>carregarCRM())
     .on('postgres_changes',{event:'*',schema:'public',table:'lembretes'},()=>carregarCRM())
+    .on('postgres_changes',{event:'*',schema:'public',table:'renovacoes'},()=>carregarRenovacoes())
     .subscribe();
 }
 
@@ -1217,7 +1424,7 @@ function popularMeses(){
     opts.push({val,label});
   }
   const html=opts.map(o=>`<option value="${o.val}">${capitalize(o.label)}</option>`).join('');
-  ['mesFiltro','mesFiltroHist','mesFiltroInd','metaMes','exportMes'].forEach(id=>{
+  ['mesFiltro','mesFiltroHist','mesFiltroInd','metaMes','exportMes','renovMesFiltro'].forEach(id=>{
     const el=document.getElementById(id);if(el) el.innerHTML=html;
   });
   document.getElementById('mesLabel').textContent=capitalize(opts[0].label);
@@ -2969,6 +3176,8 @@ function showView(id){
   if(id==='exportar') renderPrevia();
   if(id==='metas') renderFormMetas();
   if(id==='dashboard') renderDashboard();
+  if(id==='renovacoes') renderRenovacoes();
+  if(id==='renov_analise') renderAnaliseRenovacoes();
   if(id==='carteira'){ carregarCRM().then(()=>renderClientes()); }
   if(id==='tarefas_view'){ carregarCRM().then(()=>renderTarefasView()); }
   // Scroll para o topo — funciona em iOS Safari
@@ -3120,6 +3329,441 @@ window.addEventListener('resize',()=>{
     nav.style.display=window.innerWidth<=768?'flex':'none';
 });
 
+// ── RENOVAÇÕES ────────────────────────────────────────────────────────
+let todasRenovacoes=[];
+
+async function carregarRenovacoes(){
+  const{data,error}=await db.from('renovacoes').select('*').order('data_vencimento',{ascending:true});
+  if(error){console.error('Erro renovações:',error.message);return;}
+  todasRenovacoes=data||[];
+  renderRenovacoes();
+}
+
+function renovacoesDoMes(mes,arr){
+  arr=arr||todasRenovacoes;
+  return mes?arr.filter(r=>r.mes_renovacao===mes):arr;
+}
+
+function renovacoesDoPeriodo(meses,arr){
+  arr=arr||todasRenovacoes;
+  if(!meses||meses.length===0) return arr;
+  return arr.filter(r=>meses.includes(r.mes_renovacao));
+}
+
+// ── RENDER CONTROLE ───────────────────────────────────────────────────
+function renderRenovacoes(){
+  const mes=document.getElementById('renovMesFiltro')?.value||'';
+  const vendedor=document.getElementById('renovVendedorFiltro')?.value||'';
+  const status=document.getElementById('renovStatusFiltro')?.value||'';
+
+  let lista=todasRenovacoes;
+  if(mes) lista=lista.filter(r=>r.mes_renovacao===mes);
+  if(vendedor) lista=lista.filter(r=>r.vendedor===vendedor);
+  if(status) lista=lista.filter(r=>r.status===status);
+
+  // Cards resumo
+  const total=lista.length;
+  const renovadas=lista.filter(r=>r.status==='renovada');
+  const perdidas=lista.filter(r=>r.status==='perdida');
+  const pendentes=lista.filter(r=>r.status==='pendente');
+  const taxaRenov=total>0?Math.round((renovadas.length/total)*100):0;
+  const churn=total>0?Math.round((perdidas.length/total)*100):0;
+  const comAnt=lista.reduce((s,r)=>s+(+r.comissao_anterior||0),0);
+  const comAtual=renovadas.reduce((s,r)=>s+(+r.comissao_atual||0),0);
+  const varComissao=comAnt>0?((comAtual-comAnt)/comAnt*100):0;
+
+  const cards=document.getElementById('renovCards');
+  if(cards) cards.innerHTML=`
+    <div class="renov-stat-card"><div class="label">Total</div><div class="value">${total}</div><div class="sub">apólices no período</div></div>
+    <div class="renov-stat-card"><div class="label">Renovadas</div><div class="value" style="color:var(--green)">${renovadas.length}</div><div class="sub">taxa ${taxaRenov}%</div></div>
+    <div class="renov-stat-card"><div class="label">Perdidas (Churn)</div><div class="value" style="color:var(--danger)">${perdidas.length}</div><div class="sub">${churn}% do total</div></div>
+    <div class="renov-stat-card"><div class="label">Pendentes</div><div class="value" style="color:#854D0E">${pendentes.length}</div><div class="sub">aguardando</div></div>
+    <div class="renov-stat-card"><div class="label">Var. Comissão</div>
+      <div class="value" style="color:${varComissao>=0?'var(--green)':'var(--danger)'}">
+        ${varComissao>=0?'▲':'▼'} ${Math.abs(varComissao).toFixed(1)}%
+      </div>
+      <div class="sub">${fmt(comAnt)} → ${fmt(comAtual)}</div>
+    </div>`;
+
+  // Tabela
+  const tbody=document.getElementById('tbodyRenov');
+  const empty=document.getElementById('emptyRenov');
+  if(!lista.length){if(tbody)tbody.innerHTML='';if(empty)empty.style.display='block';return;}
+  if(empty) empty.style.display='none';
+
+  tbody.innerHTML=lista.map(r=>{
+    const comAntR=+r.comissao_anterior||0;
+    const comAtualR=+r.comissao_atual||0;
+    const vari=comAntR>0?((comAtualR-comAntR)/comAntR*100):0;
+    const variStr=comAntR>0?`<span style="font-weight:600;color:${vari>=0?'var(--green)':'var(--danger)'}">${vari>=0?'▲':'▼'}${Math.abs(vari).toFixed(1)}%</span>`:'—';
+    return`<tr>
+      <td style="font-weight:500">${r.cliente}</td>
+      <td><span class="ramo-badge ${ramoClass(r.ramo)}">${r.ramo}</span></td>
+      <td style="font-size:12px;color:var(--text-2)">${r.cia||'—'}</td>
+      <td><span class="vendedor-chip">${r.vendedor}</span></td>
+      <td style="font-size:12px;color:var(--text-3)">${r.data_vencimento?fmtData(r.data_vencimento):'—'}</td>
+      <td>${fmt(r.comissao_anterior)}</td>
+      <td class="val-green">${fmt(r.comissao_atual)}</td>
+      <td>${variStr}</td>
+      <td><span class="status-badge status-${r.status}">${capitalize(r.status)}</span></td>
+      <td>
+        <button class="action-btn" onclick="editarRenovacao('${r.id}')">✏️</button>
+        <button class="action-btn" onclick="deletarRenovacao('${r.id}')">🗑️</button>
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+// ── ANÁLISE RENOVAÇÕES ────────────────────────────────────────────────
+function renderAnaliseRenovacoes(){
+  const periodoN=parseInt(document.getElementById('renovAnalisePeriodo')?.value||'6');
+  const vendedor=document.getElementById('renovAnaliseVendedor')?.value||'';
+
+  const agora=new Date();
+  let meses=[];
+  if(periodoN===0){
+    const todos=new Set(todasRenovacoes.map(r=>r.mes_renovacao));
+    meses=[...todos].sort();
+  } else {
+    for(let i=periodoN-1;i>=0;i--){
+      const d=new Date(agora.getFullYear(),agora.getMonth()-i,1);
+      meses.push(`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`);
+    }
+  }
+
+  let base=todasRenovacoes;
+  if(vendedor) base=base.filter(r=>r.vendedor===vendedor);
+
+  const lista=renovacoesDoPeriodo(meses,base);
+  const renovadas=lista.filter(r=>r.status==='renovada');
+  const perdidas=lista.filter(r=>r.status==='perdida');
+  const total=lista.length;
+  const taxaRenov=total>0?Math.round((renovadas.length/total)*100):0;
+  const churnTotal=total>0?Math.round((perdidas.length/total)*100):0;
+  const comAntTotal=lista.reduce((s,r)=>s+(+r.comissao_anterior||0),0);
+  const comAtualTotal=renovadas.reduce((s,r)=>s+(+r.comissao_atual||0),0);
+  const crescimento=comAntTotal>0?((comAtualTotal-comAntTotal)/comAntTotal*100):0;
+
+  // KPIs
+  const kpis=document.getElementById('renovKpis');
+  if(kpis) kpis.innerHTML=`
+    <div class="summary-card"><div class="label">Total Apólices</div><div class="value">${total}</div><div class="sub">no período</div></div>
+    <div class="summary-card"><div class="label">Taxa de Renovação</div><div class="value" style="color:var(--green)">${taxaRenov}%</div><div class="sub">${renovadas.length} renovadas</div></div>
+    <div class="summary-card"><div class="label">Churn</div><div class="value" style="color:var(--danger)">${churnTotal}%</div><div class="sub">${perdidas.length} perdidas</div></div>
+    <div class="summary-card"><div class="label">Comissão Anterior</div><div class="value">${fmt(comAntTotal)}</div><div class="sub">período anterior</div></div>
+    <div class="summary-card"><div class="label">Crescimento Comissão</div>
+      <div class="value" style="color:${crescimento>=0?'var(--green)':'var(--danger)'}">
+        ${crescimento>=0?'▲':'▼'} ${Math.abs(crescimento).toFixed(1)}%
+      </div>
+      <div class="sub">${fmt(comAntTotal)} → ${fmt(comAtualTotal)}</div>
+    </div>`;
+
+  // Gráfico renovadas vs perdidas por mês
+  destroyChart('renovMes');
+  const labMeses=meses.map(m=>fmtMesLabel(m));
+  charts['renovMes']=new Chart(document.getElementById('chartRenovMes'),{
+    type:'bar',
+    data:{labels:labMeses,datasets:[
+      {label:'Renovadas',data:meses.map(m=>base.filter(r=>r.mes_renovacao===m&&r.status==='renovada').length),backgroundColor:'#10b981cc',borderRadius:4},
+      {label:'Perdidas',data:meses.map(m=>base.filter(r=>r.mes_renovacao===m&&r.status==='perdida').length),backgroundColor:'#ef4444cc',borderRadius:4},
+      {label:'Pendentes',data:meses.map(m=>base.filter(r=>r.mes_renovacao===m&&r.status==='pendente').length),backgroundColor:'#f59e0bcc',borderRadius:4},
+    ]},
+    options:{responsive:true,interaction:{mode:'index',intersect:false},
+      plugins:{legend:{position:'top'}},scales:{x:{stacked:false},y:{stacked:false,ticks:{stepSize:1}}}}
+  });
+
+  // Gráfico comissão anterior vs atual
+  destroyChart('renovCom');
+  charts['renovCom']=new Chart(document.getElementById('chartRenovComissao'),{
+    type:'bar',
+    data:{labels:labMeses,datasets:[
+      {label:'Com. Anterior',data:meses.map(m=>base.filter(r=>r.mes_renovacao===m).reduce((s,r)=>s+(+r.comissao_anterior||0),0)),backgroundColor:'#94a3b8cc',borderRadius:4},
+      {label:'Com. Atual',data:meses.map(m=>base.filter(r=>r.mes_renovacao===m&&r.status==='renovada').reduce((s,r)=>s+(+r.comissao_atual||0),0)),backgroundColor:'#2A3568cc',borderRadius:4},
+    ]},
+    options:{responsive:true,interaction:{mode:'index',intersect:false},
+      plugins:{legend:{position:'top'},tooltip:{callbacks:{label:ctx=>`${ctx.dataset.label}: ${fmt(ctx.raw)}`}}},
+      scales:{y:{ticks:{callback:v=>fmt(v)}}}}
+  });
+
+  // Gráfico taxa renovação por ramo
+  destroyChart('renovRamo');
+  const ramos=[...new Set(lista.map(r=>r.ramo))].sort();
+  const taxasPorRamo=ramos.map(ramo=>{
+    const total=lista.filter(r=>r.ramo===ramo).length;
+    const renov=lista.filter(r=>r.ramo===ramo&&r.status==='renovada').length;
+    return total>0?Math.round((renov/total)*100):0;
+  });
+  charts['renovRamo']=new Chart(document.getElementById('chartRenovRamo'),{
+    type:'bar',
+    data:{labels:ramos,datasets:[{label:'Taxa %',data:taxasPorRamo,backgroundColor:'#6366f1cc',borderRadius:4}]},
+    options:{responsive:true,plugins:{legend:{display:false}},
+      scales:{y:{min:0,max:100,ticks:{callback:v=>v+'%'}},x:{ticks:{maxRotation:35,font:{size:11}}}}}
+  });
+
+  // Gráfico churn por mês
+  destroyChart('churn');
+  charts['churn']=new Chart(document.getElementById('chartChurn'),{
+    type:'line',
+    data:{labels:labMeses,datasets:[{
+      label:'Churn %',
+      data:meses.map(m=>{
+        const tot=base.filter(r=>r.mes_renovacao===m).length;
+        const perd=base.filter(r=>r.mes_renovacao===m&&r.status==='perdida').length;
+        return tot>0?Math.round((perd/tot)*100):0;
+      }),
+      borderColor:'#ef4444',backgroundColor:'#ef444422',fill:true,tension:.4,borderWidth:2,pointRadius:4
+    }]},
+    options:{responsive:true,plugins:{legend:{display:false}},
+      scales:{y:{min:0,max:100,ticks:{callback:v=>v+'%'}},x:{grid:{display:false}}}}
+  });
+
+  // Gráfico crescimento por vendedor
+  destroyChart('renovVend');
+  const comAntPorVend=VENDEDORES.map(v=>lista.filter(r=>r.vendedor===v).reduce((s,r)=>s+(+r.comissao_anterior||0),0));
+  const comAtualPorVend=VENDEDORES.map(v=>lista.filter(r=>r.vendedor===v&&r.status==='renovada').reduce((s,r)=>s+(+r.comissao_atual||0),0));
+  charts['renovVend']=new Chart(document.getElementById('chartRenovVendedor'),{
+    type:'bar',
+    data:{labels:VENDEDORES,datasets:[
+      {label:'Anterior',data:comAntPorVend,backgroundColor:'#94a3b8cc',borderRadius:4},
+      {label:'Atual',data:comAtualPorVend,backgroundColor:VENDEDORES.map(v=>CORES_VENDEDOR[v]+'cc'),borderRadius:4},
+    ]},
+    options:{responsive:true,plugins:{legend:{position:'top'},tooltip:{callbacks:{label:ctx=>`${ctx.dataset.label}: ${fmt(ctx.raw)}`}}},
+      scales:{y:{ticks:{callback:v=>fmt(v)}}}}
+  });
+}
+
+// ── MODAL RENOVAÇÃO ───────────────────────────────────────────────────
+function abrirModalRenovacao(id){
+  document.getElementById('renov_id').value=id||'';
+  document.getElementById('modalRenovTitulo').textContent=id?'Editar Renovação':'Nova Renovação';
+  if(id){
+    const r=todasRenovacoes.find(x=>x.id===id);
+    if(r){
+      document.getElementById('renov_cliente').value=r.cliente||'';
+      document.getElementById('renov_vendedor').value=r.vendedor||'';
+      document.getElementById('renov_mes').value=r.mes_renovacao||'';
+      document.getElementById('renov_ramo').value=r.ramo||'';
+      document.getElementById('renov_cia').value=r.cia||'';
+      document.getElementById('renov_venc').value=r.data_vencimento||'';
+      document.getElementById('renov_com_ant').value=r.comissao_anterior||'';
+      document.getElementById('renov_com_atual').value=r.comissao_atual||'';
+      document.getElementById('renov_pl_ant').value=r.premio_anterior||'';
+      document.getElementById('renov_pl_atual').value=r.premio_atual||'';
+      document.getElementById('renov_status').value=r.status||'pendente';
+      document.getElementById('renov_obs').value=r.observacoes||'';
+      calcVariacaoRenov();
+    }
+  } else {
+    ['renov_cliente','renov_cia','renov_venc','renov_obs','renov_com_ant','renov_com_atual','renov_pl_ant','renov_pl_atual'].forEach(id=>{
+      const el=document.getElementById(id);if(el)el.value='';
+    });
+    document.getElementById('renov_status').value='pendente';
+    document.getElementById('renov_variacao_preview').textContent='—';
+    // Pré-preencher mês atual
+    const agora=new Date();
+    document.getElementById('renov_mes').value=`${agora.getFullYear()}-${String(agora.getMonth()+1).padStart(2,'0')}`;
+  }
+  document.getElementById('modalRenovacao').classList.add('open');
+}
+
+function calcVariacaoRenov(){
+  const ant=parseFloat(document.getElementById('renov_com_ant').value)||0;
+  const atual=parseFloat(document.getElementById('renov_com_atual').value)||0;
+  const el=document.getElementById('renov_variacao_preview');
+  if(!ant){el.textContent='—';return;}
+  const vari=((atual-ant)/ant*100);
+  el.textContent=(vari>=0?'▲':'▼')+' '+Math.abs(vari).toFixed(1)+'%';
+  el.style.color=vari>=0?'var(--green)':'var(--danger)';
+}
+
+function fecharModalRenov(e){if(!e||e.target===document.getElementById('modalRenovacao'))fecharModalRenovDireto();}
+function fecharModalRenovDireto(){document.getElementById('modalRenovacao').classList.remove('open');}
+
+async function salvarRenovacao(){
+  const cliente=(document.getElementById('renov_cliente').value||'').trim();
+  const vendedor=document.getElementById('renov_vendedor').value;
+  const ramo=document.getElementById('renov_ramo').value;
+  const mes=document.getElementById('renov_mes').value;
+  if(!cliente||!vendedor||!ramo||!mes){showToast('Preencha os campos obrigatórios.','error');return;}
+  const id=document.getElementById('renov_id').value;
+  const payload={
+    cliente,vendedor,ramo,mes_renovacao:mes,
+    cia:document.getElementById('renov_cia').value.trim()||null,
+    data_vencimento:document.getElementById('renov_venc').value||null,
+    comissao_anterior:parseFloat(document.getElementById('renov_com_ant').value)||0,
+    comissao_atual:parseFloat(document.getElementById('renov_com_atual').value)||0,
+    premio_anterior:parseFloat(document.getElementById('renov_pl_ant').value)||0,
+    premio_atual:parseFloat(document.getElementById('renov_pl_atual').value)||0,
+    status:document.getElementById('renov_status').value,
+    observacoes:document.getElementById('renov_obs').value.trim()||null,
+  };
+  const{error}=id?await db.from('renovacoes').update(payload).eq('id',id):await db.from('renovacoes').insert([payload]);
+  if(error){showToast('Erro: '+error.message,'error');return;}
+  fecharModalRenovDireto();
+  showToast(id?'Renovação atualizada!':'Renovação registrada!','success');
+  await carregarRenovacoes();
+}
+
+async function editarRenovacao(id){abrirModalRenovacao(id);}
+
+async function deletarRenovacao(id){
+  if(!confirm('Excluir esta renovação?'))return;
+  await db.from('renovacoes').delete().eq('id',id);
+  showToast('Renovação excluída.','success');
+  await carregarRenovacoes();
+}
+
+// ── IMPORTAR RENOVAÇÕES ───────────────────────────────────────────────
+let renovImportRows=[];
+
+function abrirModalImportRenov(){
+  renovImportRows=[];
+  document.getElementById('renovImportFile').value='';
+  document.getElementById('renovImportPreview').style.display='none';
+  document.getElementById('renovImportProgress').style.display='none';
+  document.getElementById('renovImportResult').style.display='none';
+  document.getElementById('btnImportarRenov').style.display='none';
+  document.getElementById('renovImportDropzone').innerHTML=`<div style="font-size:32px;margin-bottom:8px">📂</div><div style="font-weight:500;color:var(--text-2)">Clique para selecionar ou arraste</div><div style="font-size:12px;color:var(--text-3);margin-top:4px">.xlsx ou .csv</div>`;
+  document.getElementById('modalImportRenov').classList.add('open');
+  const dz=document.getElementById('renovImportDropzone');
+  dz.ondragover=e=>{e.preventDefault();dz.style.borderColor='var(--accent)';};
+  dz.ondragleave=()=>{dz.style.borderColor='var(--border)';};
+  dz.ondrop=e=>{e.preventDefault();dz.style.borderColor='var(--border)';const f=e.dataTransfer.files[0];if(f)processarRenovImport(f);};
+}
+function fecharModalImportRenov(e){if(!e||e.target===document.getElementById('modalImportRenov'))fecharModalImportRenovDireto();}
+function fecharModalImportRenovDireto(){document.getElementById('modalImportRenov').classList.remove('open');}
+function lerArquivoRenov(input){const f=input.files[0];if(f)processarRenovImport(f);}
+
+function processarRenovImport(file){
+  document.getElementById('renovImportDropzone').innerHTML=`<div style="font-size:32px;margin-bottom:8px">⏳</div><div style="font-weight:500;color:var(--text-2)">Lendo ${file.name}...</div>`;
+  const reader=new FileReader();
+  reader.onload=e=>{
+    try{
+      const wb=XLSX.read(new Uint8Array(e.target.result),{type:'array',cellDates:true,cellFormula:false});
+      const ws=wb.Sheets[wb.SheetNames[0]];
+      Object.keys(ws).forEach(addr=>{if(ws[addr]&&ws[addr].f)ws[addr]={v:ws[addr].v,t:ws[addr].t};});
+      const rows=XLSX.utils.sheet_to_json(ws,{header:1,defval:null,raw:true});
+      if(!rows.length){showToast('Arquivo vazio.','error');return;}
+
+      // Detectar cabeçalho
+      let headerIdx=0;
+      for(let i=0;i<Math.min(5,rows.length);i++){
+        if(rows[i].some(v=>String(v||'').toLowerCase().includes('cliente')||String(v||'').toLowerCase().includes('segurado'))){headerIdx=i;break;}
+      }
+      const headers=rows[headerIdx].map(h=>String(h||'').toLowerCase().trim());
+
+      // Mapeamento automático de colunas
+      const findCol=(keys)=>{for(const k of keys){const i=headers.findIndex(h=>h.includes(k));if(i>=0)return i;}return -1;};
+      const colMap={
+        cliente:   findCol(['cliente','segurado','nome']),
+        vendedor:  findCol(['vendedor','broker','corretor']),
+        ramo:      findCol(['ramo','produto','tipo']),
+        cia:       findCol(['cia','seguradora','companhia']),
+        mes:       findCol(['mês','mes','month','competência','competencia']),
+        venc:      findCol(['vencimento','vigência','vigencia','expira']),
+        comAnt:    findCol(['anterior','ant','2024','2025','com. ant','comissão ant']),
+        comAtual:  findCol(['atual','2025','2026','com. atual','comissão atual']),
+        plAnt:     findCol(['pl ant','prêmio ant','premio ant']),
+        plAtual:   findCol(['pl atual','prêmio atual','premio atual']),
+        status:    findCol(['status','situação','situacao']),
+      };
+
+      const validRows=[];
+      for(let i=headerIdx+1;i<rows.length;i++){
+        const row=rows[i];
+        const cliente=colMap.cliente>=0?String(row[colMap.cliente]||'').trim():'';
+        const vendedor=colMap.vendedor>=0?String(row[colMap.vendedor]||'').trim():'';
+        const ramo=colMap.ramo>=0?String(row[colMap.ramo]||'').trim():'Outro';
+        if(!cliente||!vendedor) continue;
+
+        // Parsear mês
+        let mes='';
+        if(colMap.mes>=0){
+          const v=row[colMap.mes];
+          if(v instanceof Date) mes=`${v.getFullYear()}-${String(v.getMonth()+1).padStart(2,'0')}`;
+          else if(typeof v==='string'&&v.match(/\d{4}-\d{2}/)) mes=v.slice(0,7);
+          else{const agora=new Date();mes=`${agora.getFullYear()}-${String(agora.getMonth()+1).padStart(2,'0')}`;}
+        }
+
+        // Parsear valores numéricos
+        const pn=v=>{if(v===null||v===undefined)return 0;if(typeof v==='number')return v;const s=String(v).replace(/R\$\s*/g,'').replace(/\./g,'').replace(',','.');return parseFloat(s)||0;};
+
+        // Parsear status
+        let status='pendente';
+        if(colMap.status>=0){
+          const sv=String(row[colMap.status]||'').toLowerCase();
+          if(sv.includes('renov')||sv.includes('ok')||sv.includes('sim')) status='renovada';
+          else if(sv.includes('perd')||sv.includes('não')||sv.includes('nao')||sv.includes('cancel')) status='perdida';
+        }
+
+        validRows.push({
+          cliente,vendedor,ramo,
+          cia:colMap.cia>=0?String(row[colMap.cia]||'').trim():null,
+          mes_renovacao:mes,
+          comissao_anterior:pn(colMap.comAnt>=0?row[colMap.comAnt]:null),
+          comissao_atual:pn(colMap.comAtual>=0?row[colMap.comAtual]:null),
+          premio_anterior:pn(colMap.plAnt>=0?row[colMap.plAnt]:null),
+          premio_atual:pn(colMap.plAtual>=0?row[colMap.plAtual]:null),
+          status,
+        });
+      }
+
+      renovImportRows=validRows;
+      document.getElementById('renovImportDropzone').innerHTML=`<div style="font-size:32px;margin-bottom:8px">✅</div><div style="font-weight:500;color:var(--green)">${file.name}</div><div style="font-size:12px;color:var(--text-3);margin-top:4px">${validRows.length} registros encontrados</div>`;
+      document.getElementById('renovImportCount').textContent=validRows.length;
+
+      // Preview
+      document.getElementById('renovImportHead').innerHTML=`<tr style="background:var(--bg)">${['Cliente','Vendedor','Ramo','Mês','Com. Ant.','Com. Atual','Status'].map(h=>`<th style="padding:7px 10px;font-size:11px;font-weight:600;text-transform:uppercase;color:var(--text-3);border-bottom:1px solid var(--border)">${h}</th>`).join('')}</tr>`;
+      document.getElementById('renovImportBody').innerHTML=validRows.slice(0,15).map(r=>`<tr>
+        <td style="padding:6px 10px;font-size:12px;border-bottom:1px solid var(--border)">${r.cliente}</td>
+        <td style="padding:6px 10px;font-size:12px;border-bottom:1px solid var(--border)">${r.vendedor}</td>
+        <td style="padding:6px 10px;font-size:12px;border-bottom:1px solid var(--border)">${r.ramo}</td>
+        <td style="padding:6px 10px;font-size:12px;border-bottom:1px solid var(--border)">${r.mes_renovacao}</td>
+        <td style="padding:6px 10px;font-size:12px;border-bottom:1px solid var(--border)">${fmt(r.comissao_anterior)}</td>
+        <td style="padding:6px 10px;font-size:12px;border-bottom:1px solid var(--border);color:var(--green);font-weight:600">${fmt(r.comissao_atual)}</td>
+        <td style="padding:6px 10px;font-size:12px;border-bottom:1px solid var(--border)"><span class="status-badge status-${r.status}">${capitalize(r.status)}</span></td>
+      </tr>`).join('');
+
+      document.getElementById('renovImportPreview').style.display='block';
+      if(validRows.length>0){
+        document.getElementById('btnImportarRenov').style.display='inline-flex';
+        document.getElementById('btnImportarRenovCount').textContent=validRows.length;
+      }
+    }catch(err){showToast('Erro ao ler: '+err.message,'error');}
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+async function executarImportRenov(){
+  if(!renovImportRows.length){showToast('Nenhum registro válido.','error');return;}
+  const btn=document.getElementById('btnImportarRenov');
+  btn.disabled=true;
+  document.getElementById('renovImportProgress').style.display='block';
+  const BATCH=100;
+  let importados=0,erros=0;
+  for(let i=0;i<renovImportRows.length;i+=BATCH){
+    const lote=renovImportRows.slice(i,i+BATCH);
+    const{error}=await db.from('renovacoes').insert(lote);
+    if(error) erros+=lote.length; else importados+=lote.length;
+    const pct=Math.min(100,Math.round(((i+BATCH)/renovImportRows.length)*100));
+    document.getElementById('renovImportBar').style.width=pct+'%';
+    document.getElementById('renovImportLabel').textContent=`Importando... ${Math.min(i+BATCH,renovImportRows.length)} de ${renovImportRows.length}`;
+    await new Promise(r=>setTimeout(r,30));
+  }
+  btn.disabled=false;
+  const res=document.getElementById('renovImportResult');
+  res.style.display='block';
+  if(erros===0){
+    res.style.cssText='background:var(--green-light);color:var(--green);border:1px solid #bbf7d0;border-radius:var(--radius-sm);padding:10px 14px;font-size:13px;margin-bottom:16px';
+    res.textContent=`✅ ${importados} renovações importadas!`;
+    await carregarRenovacoes();
+    setTimeout(fecharModalImportRenovDireto,2000);
+  } else {
+    res.style.cssText='background:var(--danger-light);color:var(--danger);border:1px solid #f5c6c2;border-radius:var(--radius-sm);padding:10px 14px;font-size:13px;margin-bottom:16px';
+    res.textContent=`⚠️ ${importados} importados, ${erros} com erro.`;
+  }
+}
+
 </script>
 </body>
-</html>
+</html><!-- JS PLACEHOLDER -->
