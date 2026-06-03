@@ -832,9 +832,9 @@ input[type=range]{width:100%;accent-color:var(--accent)}
         <div class="table-wrap">
           <table>
             <thead><tr>
-              <th>Cliente</th><th>Ramo</th><th>Seguradora</th><th>Vendedor</th>
+              <th>Cliente</th><th>Apólice</th><th>Ramo</th><th>Seguradora</th><th>Vendedor</th>
               <th>Vencimento</th><th>Com. Anterior</th><th>Com. Atual</th>
-              <th>Variação</th><th>Status</th><th></th>
+              <th>Variação</th><th>Tags</th><th>Status</th><th></th>
             </tr></thead>
             <tbody id="tbodyRenov"></tbody>
           </table>
@@ -1040,6 +1040,18 @@ input[type=range]{width:100%;accent-color:var(--accent)}
       <div class="field"><label>Mês de Renovação *</label><input type="month" id="renov_mes"></div>
     </div>
     <div class="form-grid" style="margin-bottom:14px">
+      <div class="field"><label>Número da Apólice</label><input type="text" id="renov_apolice" placeholder="Ex: AR 431060731"></div>
+      <div class="field" style="display:flex;align-items:center;gap:16px;padding-top:20px">
+        <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer">
+          <input type="checkbox" id="renov_endosso" style="width:16px;height:16px;accent-color:var(--accent)"> ✏️ Tem Endosso
+        </label>
+        <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer">
+          <input type="checkbox" id="renov_sinistro" style="width:16px;height:16px;accent-color:#ef4444"> ⚠️ Tem Sinistro
+        </label>
+      </div>
+      <div class="field"><label>Tipo do Endosso</label><input type="text" id="renov_tipo_endosso" placeholder="Ex: END SUBST VEIC, END UTIL VEIC..."></div>
+    </div>
+    <div class="form-grid" style="margin-bottom:14px">
       <div class="field"><label>Ramo *</label>
         <select id="renov_ramo"><option value="">Selecione...</option>
           <option>Auto</option><option>Residencial</option><option>Vida mensal</option>
@@ -1107,6 +1119,15 @@ input[type=range]{width:100%;accent-color:var(--accent)}
       <div style="height:8px;background:var(--border);border-radius:99px"><div id="renovImportBar" style="height:100%;background:var(--accent);border-radius:99px;width:0%;transition:width .3s"></div></div>
     </div>
     <div id="renovImportResult" style="display:none;padding:10px 14px;border-radius:var(--radius-sm);font-size:13px;margin-bottom:16px"></div>
+    <div id="renovImportVendedorWrap" style="display:none;margin-bottom:16px">
+      <div class="field">
+        <label style="font-size:12px;font-weight:600">Atribuir ao vendedor:</label>
+        <select id="renovImportVendedor" style="padding:8px 12px;font-size:13px;font-family:'DM Sans',sans-serif;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--surface);outline:none;width:100%">
+          <option value="">Selecione o vendedor responsável</option>
+          <option>Silvia</option><option>Paulo</option><option>Ícaro</option>
+        </select>
+      </div>
+    </div>
     <div class="form-actions" style="margin-top:0">
       <button class="btn btn-ghost" onclick="fecharModalImportRenovDireto()">Cancelar</button>
       <button class="btn btn-primary" id="btnImportarRenov" onclick="executarImportRenov()" style="display:none">
@@ -3383,8 +3404,11 @@ function renderRenovacoes(){
     const comAtualR=+r.comissao_atual||0;
     const vari=comAntR>0?((comAtualR-comAntR)/comAntR*100):0;
     const variStr=comAntR>0?`<span style="font-weight:600;color:${vari>=0?'var(--green)':'var(--danger)'}">${vari>=0?'▲':'▼'}${Math.abs(vari).toFixed(1)}%</span>`:'—';
+    const tagEndosso=r.tem_endosso?`<span style="display:inline-block;padding:2px 7px;border-radius:99px;font-size:10.5px;font-weight:700;background:#FEF3C7;color:#92400E;border:1px solid #FCD34D" title="${r.tipo_endosso||'Endosso'}">✏️ END</span>`:'';
+    const tagSinistro=r.tem_sinistro?`<span style="display:inline-block;padding:2px 7px;border-radius:99px;font-size:10.5px;font-weight:700;background:#FEE2E2;color:#991B1B;border:1px solid #FCA5A5">⚠️ SIN</span>`:'';
     return`<tr>
-      <td style="font-weight:500">${r.cliente}</td>
+      <td style="font-weight:500;max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${r.cliente}">${r.cliente}</td>
+      <td style="font-size:11.5px;color:var(--text-3)">${r.apolice||'—'}</td>
       <td><span class="ramo-badge ${ramoClass(r.ramo)}">${r.ramo}</span></td>
       <td style="font-size:12px;color:var(--text-2)">${r.cia||'—'}</td>
       <td><span class="vendedor-chip">${r.vendedor}</span></td>
@@ -3392,6 +3416,7 @@ function renderRenovacoes(){
       <td>${fmt(r.comissao_anterior)}</td>
       <td class="val-green">${fmt(r.comissao_atual)}</td>
       <td>${variStr}</td>
+      <td style="display:flex;gap:4px;flex-wrap:wrap">${tagEndosso}${tagSinistro}</td>
       <td><span class="status-badge status-${r.status}">${capitalize(r.status)}</span></td>
       <td>
         <button class="action-btn" onclick="editarRenovacao('${r.id}')">✏️</button>
@@ -3536,12 +3561,16 @@ function abrirModalRenovacao(id){
       document.getElementById('renov_com_atual').value=r.comissao_atual||'';
       document.getElementById('renov_pl_ant').value=r.premio_anterior||'';
       document.getElementById('renov_pl_atual').value=r.premio_atual||'';
+      document.getElementById('renov_apolice').value=r.apolice||'';
+      document.getElementById('renov_endosso').checked=!!r.tem_endosso;
+      document.getElementById('renov_sinistro').checked=!!r.tem_sinistro;
+      document.getElementById('renov_tipo_endosso').value=r.tipo_endosso||'';
       document.getElementById('renov_status').value=r.status||'pendente';
       document.getElementById('renov_obs').value=r.observacoes||'';
       calcVariacaoRenov();
     }
   } else {
-    ['renov_cliente','renov_cia','renov_venc','renov_obs','renov_com_ant','renov_com_atual','renov_pl_ant','renov_pl_atual'].forEach(id=>{
+    ['renov_cliente','renov_apolice','renov_tipo_endosso','renov_cia','renov_venc','renov_obs','renov_com_ant','renov_com_atual','renov_pl_ant','renov_pl_atual'].forEach(id=>{
       const el=document.getElementById(id);if(el)el.value='';
     });
     document.getElementById('renov_status').value='pendente';
@@ -3575,6 +3604,7 @@ async function salvarRenovacao(){
   const id=document.getElementById('renov_id').value;
   const payload={
     cliente,vendedor,ramo,mes_renovacao:mes,
+    apolice:document.getElementById('renov_apolice').value.trim()||null,
     cia:document.getElementById('renov_cia').value.trim()||null,
     data_vencimento:document.getElementById('renov_venc').value||null,
     comissao_anterior:parseFloat(document.getElementById('renov_com_ant').value)||0,
@@ -3582,6 +3612,9 @@ async function salvarRenovacao(){
     premio_anterior:parseFloat(document.getElementById('renov_pl_ant').value)||0,
     premio_atual:parseFloat(document.getElementById('renov_pl_atual').value)||0,
     status:document.getElementById('renov_status').value,
+    tem_endosso:document.getElementById('renov_endosso').checked,
+    tem_sinistro:document.getElementById('renov_sinistro').checked,
+    tipo_endosso:document.getElementById('renov_tipo_endosso').value.trim()||null,
     observacoes:document.getElementById('renov_obs').value.trim()||null,
   };
   const{error}=id?await db.from('renovacoes').update(payload).eq('id',id):await db.from('renovacoes').insert([payload]);
@@ -3632,86 +3665,127 @@ function processarRenovImport(file){
       const rows=XLSX.utils.sheet_to_json(ws,{header:1,defval:null,raw:true});
       if(!rows.length){showToast('Arquivo vazio.','error');return;}
 
-      // Detectar cabeçalho
-      let headerIdx=0;
-      for(let i=0;i<Math.min(5,rows.length);i++){
-        if(rows[i].some(v=>String(v||'').toLowerCase().includes('cliente')||String(v||'').toLowerCase().includes('segurado'))){headerIdx=i;break;}
-      }
-      const headers=rows[headerIdx].map(h=>String(h||'').toLowerCase().trim());
+      const pn=v=>{if(v===null||v===undefined)return 0;if(typeof v==='number')return v;const s=String(v).replace(/R\$\s*/g,'').replace(/\./g,'').replace(',','.');return parseFloat(s)||0;};
 
-      // Mapeamento automático de colunas
-      const findCol=(keys)=>{for(const k of keys){const i=headers.findIndex(h=>h.includes(k));if(i>=0)return i;}return -1;};
-      const colMap={
-        cliente:   findCol(['cliente','segurado','nome']),
-        vendedor:  findCol(['vendedor','broker','corretor']),
-        ramo:      findCol(['ramo','produto','tipo']),
-        cia:       findCol(['cia','seguradora','companhia']),
-        mes:       findCol(['mês','mes','month','competência','competencia']),
-        venc:      findCol(['vencimento','vigência','vigencia','expira']),
-        comAnt:    findCol(['anterior','ant','2024','2025','com. ant','comissão ant']),
-        comAtual:  findCol(['atual','2025','2026','com. atual','comissão atual']),
-        plAnt:     findCol(['pl ant','prêmio ant','premio ant']),
-        plAtual:   findCol(['pl atual','prêmio atual','premio atual']),
-        status:    findCol(['status','situação','situacao']),
-      };
+      // Detectar formato Syros (tem "Final de Vigência" ou "RENOVAÇÕES" no topo)
+      const isSyros=rows.some(r=>r&&(String(r[1]||'').includes('Final de Vigência')||String(r[1]||'').toUpperCase().includes('RENOVAÇÕES')));
 
       const validRows=[];
-      for(let i=headerIdx+1;i<rows.length;i++){
-        const row=rows[i];
-        const cliente=colMap.cliente>=0?String(row[colMap.cliente]||'').trim():'';
-        const vendedor=colMap.vendedor>=0?String(row[colMap.vendedor]||'').trim():'';
-        const ramo=colMap.ramo>=0?String(row[colMap.ramo]||'').trim():'Outro';
-        if(!cliente||!vendedor) continue;
 
-        // Parsear mês
-        let mes='';
-        if(colMap.mes>=0){
-          const v=row[colMap.mes];
-          if(v instanceof Date) mes=`${v.getFullYear()}-${String(v.getMonth()+1).padStart(2,'0')}`;
-          else if(typeof v==='string'&&v.match(/\d{4}-\d{2}/)) mes=v.slice(0,7);
-          else{const agora=new Date();mes=`${agora.getFullYear()}-${String(agora.getMonth()+1).padStart(2,'0')}`;}
+      if(isSyros){
+        // Extrair mês do título ex: "RENOVAÇÕES DE JUNHO/2026"
+        const MMAP={JAN:'01',FEV:'02',MAR:'03',ABR:'04',MAI:'05',JUN:'06',JUL:'07',AGO:'08',SET:'09',OUT:'10',NOV:'11',DEZ:'12'};
+        let mesImport='';
+        for(const row of rows){
+          const titulo=String(row[1]||'').toUpperCase();
+          const m=titulo.match(/(JAN|FEV|MAR|ABR|MAI|JUN|JUL|AGO|SET|OUT|NOV|DEZ)[A-Z]*\s*\/\s*(\d{4})/);
+          if(m){mesImport=`${m[2]}-${MMAP[m[1].slice(0,3)]}`;break;}
         }
+        if(!mesImport){const n=new Date();mesImport=`${n.getFullYear()}-${String(n.getMonth()+1).padStart(2,'0')}`;}
 
-        // Parsear valores numéricos
-        const pn=v=>{if(v===null||v===undefined)return 0;if(typeof v==='number')return v;const s=String(v).replace(/R\$\s*/g,'').replace(/\./g,'').replace(',','.');return parseFloat(s)||0;};
+        let dataVenc='';
+        for(const row of rows){
+          if(!row||row.every(v=>!v)) continue;
+          // Linha de data: col B tem data, col D vazia
+          if(row[1]&&!row[3]){
+            const v=row[1];
+            if(v instanceof Date) dataVenc=`${v.getFullYear()}-${String(v.getMonth()+1).padStart(2,'0')}-${String(v.getDate()).padStart(2,'0')}`;
+            else{const s=String(v);const m=s.match(/(\d{4})-(\d{2})-(\d{2})/);if(m)dataVenc=`${m[1]}-${m[2]}-${m[3]}`;}
+          }
+          // Linha de apólice: col D tem número da apólice
+          if(row[3]){
+            const apolice=String(row[3]).trim();
+            const seguradoRaw=String(row[4]||'').trim();
+            const cia=String(row[7]||'').trim();
+            const ramoRaw=String(row[8]||'').trim();
+            if(!seguradoRaw||!cia) continue;
 
-        // Parsear status
-        let status='pendente';
-        if(colMap.status>=0){
-          const sv=String(row[colMap.status]||'').toLowerCase();
-          if(sv.includes('renov')||sv.includes('ok')||sv.includes('sim')) status='renovada';
-          else if(sv.includes('perd')||sv.includes('não')||sv.includes('nao')||sv.includes('cancel')) status='perdida';
+            // Detectar endosso no nome do segurado
+            const endMatch=seguradoRaw.match(/-\s*(END[\s\S]*)/i);
+            const temEndosso=!!endMatch;
+            const tipoEndosso=endMatch?endMatch[1].trim():'';
+            const cliente=seguradoRaw.replace(/-\s*END[\s\S]*/i,'').trim();
+
+            // Detectar sinistro na coluna C
+            const temSinistro=String(row[2]||'').toUpperCase().includes('SINISTRO');
+
+            // Normalizar ramo
+            let ramo='Outro';
+            const ru=ramoRaw.toUpperCase();
+            if(ru.includes('AUTO')||ru.startsWith('01')) ramo='Auto';
+            else if(ru.includes('RESID')||ru.startsWith('02')) ramo='Residencial';
+            else if(ru.includes('EMPRES')||ru.startsWith('03')) ramo='Empresarial';
+            else if(ru.includes('VIDA')) ramo='Vida mensal';
+            else if(ru.includes('SAÚDE')||ru.includes('SAUDE')||ru.includes('PLANO')) ramo='Plano de Saúde';
+            else if(ru.includes('MAQ')||ru.includes('EQUIP')) ramo='Equipamentos';
+            else ramo=ramoRaw.replace(/^\d+\s*[-.]?\s*/,'').trim()||'Outro';
+
+            validRows.push({
+              cliente, apolice:apolice.replace(/^\s+/,''), ramo,
+              cia:cia.trim(),
+              mes_renovacao:mesImport,
+              data_vencimento:dataVenc||null,
+              comissao_anterior:pn(row[5]),
+              comissao_atual:0,
+              premio_anterior:0,
+              premio_atual:pn(row[6]),
+              status:'pendente',
+              tem_endosso:temEndosso,
+              tem_sinistro:temSinistro,
+              tipo_endosso:tipoEndosso||null,
+              vendedor:'',
+            });
+          }
         }
-
-        validRows.push({
-          cliente,vendedor,ramo,
-          cia:colMap.cia>=0?String(row[colMap.cia]||'').trim():null,
-          mes_renovacao:mes,
-          comissao_anterior:pn(colMap.comAnt>=0?row[colMap.comAnt]:null),
-          comissao_atual:pn(colMap.comAtual>=0?row[colMap.comAtual]:null),
-          premio_anterior:pn(colMap.plAnt>=0?row[colMap.plAnt]:null),
-          premio_atual:pn(colMap.plAtual>=0?row[colMap.plAtual]:null),
-          status,
-        });
+      } else {
+        // Formato genérico
+        let hi=0;
+        for(let i=0;i<Math.min(5,rows.length);i++){
+          if(rows[i].some(v=>String(v||'').toLowerCase().includes('cliente')||String(v||'').toLowerCase().includes('segurado'))){hi=i;break;}
+        }
+        const hdrs=rows[hi].map(h=>String(h||'').toLowerCase().trim());
+        const fc=(keys)=>{for(const k of keys){const i=hdrs.findIndex(h=>h.includes(k));if(i>=0)return i;}return -1;};
+        const cm={cliente:fc(['cliente','segurado','nome']),vendedor:fc(['vendedor']),ramo:fc(['ramo','produto']),
+          cia:fc(['cia','seguradora']),mes:fc(['mês','mes']),venc:fc(['vencimento','vigência']),
+          comAnt:fc(['anterior','2024','2025']),comAtual:fc(['atual','2026']),status:fc(['status']),apolice:fc(['apólice','apolice'])};
+        for(let i=hi+1;i<rows.length;i++){
+          const row=rows[i];
+          const sr=cm.cliente>=0?String(row[cm.cliente]||'').trim():'';
+          if(!sr) continue;
+          const em=sr.match(/-\s*(END[\s\S]*)/i);
+          let mes='';if(cm.mes>=0){const v=row[cm.mes];if(v instanceof Date)mes=`${v.getFullYear()}-${String(v.getMonth()+1).padStart(2,'0')}`;}
+          if(!mes){const n=new Date();mes=`${n.getFullYear()}-${String(n.getMonth()+1).padStart(2,'0')}`;}
+          let status='pendente';if(cm.status>=0){const sv=String(row[cm.status]||'').toLowerCase();if(sv.includes('renov'))status='renovada';else if(sv.includes('perd'))status='perdida';}
+          validRows.push({
+            cliente:sr.replace(/-\s*END[\s\S]*/i,'').trim(),
+            vendedor:cm.vendedor>=0?String(row[cm.vendedor]||'').trim():'',
+            ramo:cm.ramo>=0?String(row[cm.ramo]||'').trim():'Outro',
+            cia:cm.cia>=0?String(row[cm.cia]||'').trim():null,
+            apolice:cm.apolice>=0?String(row[cm.apolice]||'').trim():null,
+            mes_renovacao:mes,
+            comissao_anterior:pn(cm.comAnt>=0?row[cm.comAnt]:null),
+            comissao_atual:pn(cm.comAtual>=0?row[cm.comAtual]:null),
+            status,tem_endosso:!!em,tipo_endosso:em?em[1].trim():null,tem_sinistro:false,
+          });
+        }
       }
 
       renovImportRows=validRows;
       document.getElementById('renovImportDropzone').innerHTML=`<div style="font-size:32px;margin-bottom:8px">✅</div><div style="font-weight:500;color:var(--green)">${file.name}</div><div style="font-size:12px;color:var(--text-3);margin-top:4px">${validRows.length} registros encontrados</div>`;
       document.getElementById('renovImportCount').textContent=validRows.length;
-
-      // Preview
-      document.getElementById('renovImportHead').innerHTML=`<tr style="background:var(--bg)">${['Cliente','Vendedor','Ramo','Mês','Com. Ant.','Com. Atual','Status'].map(h=>`<th style="padding:7px 10px;font-size:11px;font-weight:600;text-transform:uppercase;color:var(--text-3);border-bottom:1px solid var(--border)">${h}</th>`).join('')}</tr>`;
+      document.getElementById('renovImportHead').innerHTML=`<tr style="background:var(--bg)">${['Cliente','Apólice','Ramo','Mês','Venc.','CC Anterior','Prêmio Atual','Tags'].map(h=>`<th style="padding:7px 10px;font-size:11px;font-weight:600;text-transform:uppercase;color:var(--text-3);border-bottom:1px solid var(--border)">${h}</th>`).join('')}</tr>`;
       document.getElementById('renovImportBody').innerHTML=validRows.slice(0,15).map(r=>`<tr>
-        <td style="padding:6px 10px;font-size:12px;border-bottom:1px solid var(--border)">${r.cliente}</td>
-        <td style="padding:6px 10px;font-size:12px;border-bottom:1px solid var(--border)">${r.vendedor}</td>
+        <td style="padding:6px 10px;font-size:12px;border-bottom:1px solid var(--border);max-width:130px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${r.cliente}</td>
+        <td style="padding:6px 10px;font-size:12px;border-bottom:1px solid var(--border)">${r.apolice||'—'}</td>
         <td style="padding:6px 10px;font-size:12px;border-bottom:1px solid var(--border)">${r.ramo}</td>
         <td style="padding:6px 10px;font-size:12px;border-bottom:1px solid var(--border)">${r.mes_renovacao}</td>
+        <td style="padding:6px 10px;font-size:12px;border-bottom:1px solid var(--border)">${r.data_vencimento||'—'}</td>
         <td style="padding:6px 10px;font-size:12px;border-bottom:1px solid var(--border)">${fmt(r.comissao_anterior)}</td>
-        <td style="padding:6px 10px;font-size:12px;border-bottom:1px solid var(--border);color:var(--green);font-weight:600">${fmt(r.comissao_atual)}</td>
-        <td style="padding:6px 10px;font-size:12px;border-bottom:1px solid var(--border)"><span class="status-badge status-${r.status}">${capitalize(r.status)}</span></td>
+        <td style="padding:6px 10px;font-size:12px;border-bottom:1px solid var(--border);color:var(--green);font-weight:600">${fmt(r.premio_atual)}</td>
+        <td style="padding:6px 10px;font-size:12px;border-bottom:1px solid var(--border)">${r.tem_endosso?'<span style="background:#FEF3C7;color:#92400E;padding:2px 6px;border-radius:99px;font-weight:700">✏️ END</span>':''} ${r.tem_sinistro?'<span style="background:#FEE2E2;color:#991B1B;padding:2px 6px;border-radius:99px;font-weight:700">⚠️ SIN</span>':''}</td>
       </tr>`).join('');
-
       document.getElementById('renovImportPreview').style.display='block';
+      document.getElementById('renovImportVendedorWrap').style.display='block';
       if(validRows.length>0){
         document.getElementById('btnImportarRenov').style.display='inline-flex';
         document.getElementById('btnImportarRenovCount').textContent=validRows.length;
@@ -3729,7 +3803,8 @@ async function executarImportRenov(){
   const BATCH=100;
   let importados=0,erros=0;
   for(let i=0;i<renovImportRows.length;i+=BATCH){
-    const lote=renovImportRows.slice(i,i+BATCH);
+    const vend=document.getElementById('renovImportVendedor')?.value||'';
+    const lote=renovImportRows.slice(i,i+BATCH).map(r=>({...r,vendedor:r.vendedor||vend}));
     const{error}=await db.from('renovacoes').insert(lote);
     if(error) erros+=lote.length; else importados+=lote.length;
     const pct=Math.min(100,Math.round(((i+BATCH)/renovImportRows.length)*100));
