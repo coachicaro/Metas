@@ -847,7 +847,8 @@ input[type=range]{width:100%;accent-color:var(--accent)}
           </select>
         </div>
         <div style="display:flex;gap:8px">
-          <button class="btn btn-ghost" onclick="abrirModalImportRenov()">📥 Importar Planilha</button>
+          <button class="btn btn-ghost" onclick="abrirModalImportRenov()">📥 Importar Mês</button>
+          <button class="btn btn-ghost" onclick="abrirModalImportHistoricoRenov()">🗂️ Importar Histórico</button>
           <button class="btn btn-primary" onclick="abrirModalRenovacao()">➕ Nova Renovação</button>
         </div>
       </div>
@@ -924,8 +925,6 @@ input[type=range]{width:100%;accent-color:var(--accent)}
       </div>
     </div>
 
-  </main>
-</div>
 
     <!-- KANBAN RENOVAÇÕES -->
     <div class="view" id="view-renov_kanban">
@@ -947,6 +946,9 @@ input[type=range]{width:100%;accent-color:var(--accent)}
 
       <div class="kanban-board" id="kanbanBoard"></div>
     </div>
+
+  </main>
+</div>
 
 <!-- MOBILE NAV -->
 <nav class="mobile-nav" id="mobileNav" style="display:none">
@@ -1072,6 +1074,50 @@ input[type=range]{width:100%;accent-color:var(--accent)}
     <div class="form-actions">
       <button class="btn btn-ghost" onclick="fecharModalTarefaDireto()">Cancelar</button>
       <button class="btn btn-primary" onclick="salvarTarefa()">💾 Salvar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL IMPORTAR HISTÓRICO RENOVAÇÕES -->
+<div class="modal-overlay" id="modalImportHistRenov" onclick="fecharModalImportHistRenovEvt(event)">
+  <div class="modal" style="max-width:680px">
+    <div class="modal-title">🗂️ Importar Histórico de Renovações</div>
+    <div style="background:var(--accent-light);border-radius:var(--radius-sm);padding:14px 16px;margin-bottom:18px;font-size:13px;color:var(--accent-text);line-height:1.7">
+      Importe planilhas de meses anteriores para ter métricas históricas completas.<br>
+      <strong>Selecione múltiplos arquivos de uma vez</strong> — o sistema processa todos automaticamente.
+    </div>
+
+    <div class="field" style="margin-bottom:14px">
+      <label>Atribuir ao vendedor</label>
+      <select id="histRenovVendedor" style="padding:9px 12px;font-size:13px;font-family:'DM Sans',sans-serif;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--bg);outline:none;width:100%">
+        <option value="" selected>Selecione o vendedor</option>
+        <option>Silvia</option><option>Paulo</option><option>Ícaro</option>
+      </select>
+    </div>
+
+    <div id="histRenovDropzone" onclick="document.getElementById('histRenovFiles').click()"
+      style="border:2px dashed var(--border);border-radius:var(--radius);padding:28px;text-align:center;cursor:pointer;background:var(--bg);margin-bottom:16px;transition:all .15s">
+      <div style="font-size:32px;margin-bottom:8px">📂</div>
+      <div style="font-weight:500;color:var(--text-2)">Clique para selecionar os arquivos</div>
+      <div style="font-size:12px;color:var(--text-3);margin-top:4px">Pode selecionar vários .xlsx de uma vez</div>
+    </div>
+    <input type="file" id="histRenovFiles" accept=".xlsx,.xls,.csv" multiple style="display:none" onchange="processarHistoricoRenov(this.files)">
+
+    <div id="histRenovFilesLista" style="margin-bottom:16px"></div>
+
+    <div id="histRenovProgress" style="display:none;margin-bottom:16px">
+      <div style="font-size:13px;color:var(--text-2);margin-bottom:6px" id="histRenovProgressLabel">Processando...</div>
+      <div style="height:8px;background:var(--border);border-radius:99px">
+        <div id="histRenovProgressBar" style="height:100%;background:var(--accent);border-radius:99px;width:0%;transition:width .3s"></div>
+      </div>
+    </div>
+    <div id="histRenovResult" style="display:none;padding:10px 14px;border-radius:var(--radius-sm);font-size:13px;margin-bottom:16px"></div>
+
+    <div class="form-actions" style="margin-top:0">
+      <button class="btn btn-ghost" onclick="fecharModalImportHistRenov()">Cancelar</button>
+      <button class="btn btn-primary" id="btnImportarHistRenov" onclick="executarImportHistoricoRenov()" style="display:none">
+        🗂️ Importar <span id="btnHistRenovCount">0</span> registros de <span id="btnHistRenovArqs">0</span> arquivo(s)
+      </button>
     </div>
   </div>
 </div>
@@ -3974,6 +4020,158 @@ async function moverKanban(id, novoStatus){
   if(novoStatus==='fechada') r.status='renovada';
   renderKanban();
   showToast('Card movido!','success');
+}
+
+// ── IMPORTAR HISTÓRICO RENOVAÇÕES ─────────────────────────────────────
+let histRenovTodos=[];
+
+function abrirModalImportHistoricoRenov(){
+  histRenovTodos=[];
+  document.getElementById('histRenovFiles').value='';
+  document.getElementById('histRenovFilesLista').innerHTML='';
+  document.getElementById('histRenovProgress').style.display='none';
+  document.getElementById('histRenovResult').style.display='none';
+  document.getElementById('btnImportarHistRenov').style.display='none';
+  document.getElementById('histRenovVendedor').value='';
+  const dz=document.getElementById('histRenovDropzone');
+  dz.innerHTML=`<div style="font-size:32px;margin-bottom:8px">📂</div><div style="font-weight:500;color:var(--text-2)">Clique para selecionar os arquivos</div><div style="font-size:12px;color:var(--text-3);margin-top:4px">Pode selecionar vários .xlsx de uma vez</div>`;
+  dz.ondragover=e=>{e.preventDefault();dz.style.borderColor='var(--accent)';};
+  dz.ondragleave=()=>{dz.style.borderColor='var(--border)';};
+  dz.ondrop=e=>{e.preventDefault();dz.style.borderColor='var(--border)';processarHistoricoRenov(e.dataTransfer.files);};
+  document.getElementById('modalImportHistRenov').classList.add('open');
+}
+function fecharModalImportHistRenovEvt(e){if(e.target===document.getElementById('modalImportHistRenov'))fecharModalImportHistRenov();}
+function fecharModalImportHistRenov(){document.getElementById('modalImportHistRenov').classList.remove('open');}
+
+async function processarHistoricoRenov(files){
+  if(!files||!files.length) return;
+  histRenovTodos=[];
+  const lista=document.getElementById('histRenovFilesLista');
+  lista.innerHTML=`<div style="font-size:12px;font-weight:600;color:var(--text-3);margin-bottom:8px;text-transform:uppercase;letter-spacing:.06em">Processando ${files.length} arquivo(s)...</div>`;
+
+  const lerArquivo=(file)=>new Promise(resolve=>{
+    const reader=new FileReader();
+    reader.onload=e=>{
+      try{
+        const wb=XLSX.read(new Uint8Array(e.target.result),{type:'array',cellDates:true,cellFormula:false});
+        const ws=wb.Sheets[wb.SheetNames[0]];
+        Object.keys(ws).forEach(a=>{if(ws[a]&&ws[a].f)ws[a]={v:ws[a].v,t:ws[a].t};});
+        const rows=XLSX.utils.sheet_to_json(ws,{header:1,defval:null,raw:true});
+
+        const MMAP={JAN:'01',FEV:'02',MAR:'03',ABR:'04',MAI:'05',JUN:'06',JUL:'07',AGO:'08',SET:'09',OUT:'10',NOV:'11',DEZ:'12'};
+        let mesImport='';
+        for(const row of rows){
+          const t=String(row[1]||'').toUpperCase();
+          const m=t.match(/(JAN|FEV|MAR|ABR|MAI|JUN|JUL|AGO|SET|OUT|NOV|DEZ)[A-Z]*\s*\/\s*(\d{4})/);
+          if(m){mesImport=`${m[2]}-${MMAP[m[1].slice(0,3)]}`;break;}
+        }
+        if(!mesImport){
+          // Tentar extrair do nome do arquivo
+          const nm=file.name.toUpperCase();
+          const m2=nm.match(/(JAN|FEV|MAR|ABR|MAI|JUN|JUL|AGO|SET|OUT|NOV|DEZ)[A-Z]*[_\-\s]*(\d{4})/);
+          if(m2) mesImport=`${m2[2]}-${MMAP[m2[1].slice(0,3)]}`;
+          else{const n=new Date();mesImport=`${n.getFullYear()}-${String(n.getMonth()+1).padStart(2,'0')}`;}
+        }
+
+        const pn=v=>{if(!v)return 0;if(typeof v==='number')return v;return parseFloat(String(v).replace(/R\$\s*/g,'').replace(/\./g,'').replace(',','.'))||0;};
+        const registros=[];
+        let dataVenc='';
+
+        for(const row of rows){
+          if(!row||row.every(v=>!v)) continue;
+          if(row[1]&&!row[3]){
+            const v=row[1];
+            if(v instanceof Date) dataVenc=`${v.getFullYear()}-${String(v.getMonth()+1).padStart(2,'0')}-${String(v.getDate()).padStart(2,'0')}`;
+            else{const m=String(v).match(/(\d{4})-(\d{2})-(\d{2})/);if(m)dataVenc=`${m[1]}-${m[2]}-${m[3]}`;}
+          }
+          if(row[3]){
+            const sr=String(row[4]||'').trim();
+            const cia=String(row[7]||'').trim();
+            if(!sr||!cia) continue;
+            const em=sr.match(/-\s*(END[\s\S]*)/i);
+            let ramo='Outro';
+            const ru=String(row[8]||'').toUpperCase();
+            if(ru.includes('AUTO')||ru.startsWith('01')) ramo='Auto';
+            else if(ru.includes('RESID')||ru.startsWith('02')) ramo='Residencial';
+            else if(ru.includes('EMPRES')||ru.startsWith('03')) ramo='Empresarial';
+            else if(ru.includes('VIDA')) ramo='Vida mensal';
+            else if(ru.includes('SAÚDE')||ru.includes('SAUDE')||ru.includes('PLANO')) ramo='Plano de Saúde';
+            else ramo=String(row[8]||'').replace(/^\d+\s*[-.]?\s*/,'').trim()||'Outro';
+            registros.push({
+              cliente:sr.replace(/-\s*END[\s\S]*/i,'').trim(),
+              apolice:String(row[3]).trim(),
+              ramo, cia:cia.trim(),
+              mes_renovacao:mesImport,
+              data_vencimento:dataVenc||null,
+              comissao_anterior:pn(row[5]),
+              comissao_atual:0, premio_anterior:0, premio_atual:pn(row[6]),
+              status:'pendente', kanban_status:'nao_iniciada',
+              tem_endosso:!!em, tem_sinistro:String(row[2]||'').toUpperCase().includes('SINISTRO'),
+              tipo_endosso:em?em[1].trim():null, vendedor:'',
+            });
+          }
+        }
+        resolve({nome:file.name, mes:mesImport, count:registros.length, registros});
+      }catch(err){resolve({nome:file.name, mes:'?', count:0, registros:[], erro:err.message});}
+    };
+    reader.readAsArrayBuffer(file);
+  });
+
+  const resultados=await Promise.all(Array.from(files).map(lerArquivo));
+  histRenovTodos=resultados.flatMap(r=>r.registros);
+
+  lista.innerHTML=`<div style="font-size:12px;font-weight:600;color:var(--text-3);margin-bottom:8px;text-transform:uppercase;letter-spacing:.06em">${files.length} arquivo(s) processados</div>`+
+    resultados.map(r=>`
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 12px;background:var(--bg);border-radius:var(--radius-sm);margin-bottom:6px;font-size:13px">
+        <span>📄 ${r.nome}</span>
+        <span style="display:flex;gap:12px;align-items:center">
+          <span style="color:var(--text-3)">${r.mes}</span>
+          <span style="font-weight:600;color:${r.erro?'var(--danger)':'var(--green)'}">${r.erro?'❌ Erro':'✅ '+r.count+' registros'}</span>
+        </span>
+      </div>`).join('');
+
+  const total=histRenovTodos.length;
+  document.getElementById('btnHistRenovCount').textContent=total;
+  document.getElementById('btnHistRenovArqs').textContent=files.length;
+  if(total>0) document.getElementById('btnImportarHistRenov').style.display='inline-flex';
+}
+
+async function executarImportHistoricoRenov(){
+  const vendedor=document.getElementById('histRenovVendedor').value;
+  if(!vendedor){showToast('Selecione o vendedor antes de importar.','error');return;}
+  if(!histRenovTodos.length){showToast('Nenhum registro para importar.','error');return;}
+
+  const btn=document.getElementById('btnImportarHistRenov');
+  btn.disabled=true;
+  document.getElementById('histRenovProgress').style.display='block';
+  document.getElementById('histRenovResult').style.display='none';
+
+  const payload=histRenovTodos.map(r=>({...r,vendedor:r.vendedor||vendedor}));
+  const BATCH=100;
+  let importados=0,erros=0;
+
+  for(let i=0;i<payload.length;i+=BATCH){
+    const lote=payload.slice(i,i+BATCH);
+    const{error}=await db.from('renovacoes').insert(lote);
+    if(error) erros+=lote.length; else importados+=lote.length;
+    const pct=Math.min(100,Math.round(((i+BATCH)/payload.length)*100));
+    document.getElementById('histRenovProgressBar').style.width=pct+'%';
+    document.getElementById('histRenovProgressLabel').textContent=`Importando... ${Math.min(i+BATCH,payload.length)} de ${payload.length}`;
+    await new Promise(r=>setTimeout(r,30));
+  }
+
+  btn.disabled=false;
+  const res=document.getElementById('histRenovResult');
+  res.style.display='block';
+  if(erros===0){
+    res.style.cssText='background:var(--green-light);color:var(--green);border:1px solid #bbf7d0;border-radius:var(--radius-sm);padding:10px 14px;font-size:13px';
+    res.textContent=`✅ ${importados} renovações históricas importadas!`;
+    await carregarRenovacoes();
+    setTimeout(fecharModalImportHistRenov,2000);
+  }else{
+    res.style.cssText='background:var(--danger-light);color:var(--danger);border:1px solid #f5c6c2;border-radius:var(--radius-sm);padding:10px 14px;font-size:13px';
+    res.textContent=`⚠️ ${importados} importados, ${erros} com erro.`;
+  }
 }
 
 </script>
