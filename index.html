@@ -108,6 +108,32 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
 @media(max-width:768px){.kanban-board{grid-template-columns:1fr 1fr}}
 @media(max-width:480px){.kanban-board{grid-template-columns:1fr}}
 
+
+/* ── GRUPOS CARTEIRA ── */
+.grupo-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow);margin-bottom:14px;overflow:hidden;transition:box-shadow .2s}
+.grupo-card:hover{box-shadow:var(--shadow-lg)}
+.grupo-header{padding:16px 18px;cursor:pointer;display:flex;align-items:center;justify-content:space-between;gap:10px;border-bottom:2px solid var(--accent-light)}
+.grupo-header.expanded{border-bottom-color:var(--accent)}
+.grupo-header-left{display:flex;align-items:center;gap:12px;flex:1;min-width:0}
+.grupo-avatar{width:40px;height:40px;border-radius:50%;background:var(--accent);color:#fff;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:700;flex-shrink:0}
+.grupo-nome{font-weight:700;font-size:14px;color:var(--text)}
+.grupo-meta{font-size:12px;color:var(--text-3);margin-top:2px}
+.grupo-ltv{font-family:'DM Serif Display',serif;font-size:16px;color:var(--accent);white-space:nowrap}
+.grupo-tags{display:flex;flex-wrap:wrap;gap:4px;margin-top:6px}
+.grupo-chevron{font-size:12px;color:var(--text-3);transition:transform .2s;flex-shrink:0}
+.grupo-chevron.open{transform:rotate(180deg)}
+.grupo-body{display:none;padding:0 12px 12px}
+.grupo-body.open{display:block}
+.subcliente-card{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:var(--radius-sm);margin-top:8px;background:var(--bg);border:1px solid var(--border);cursor:pointer;transition:background .15s}
+.subcliente-card:hover{background:var(--accent-light)}
+.subcliente-nome{font-weight:500;font-size:13px;color:var(--text);flex:1}
+.subcliente-info{font-size:11.5px;color:var(--text-3)}
+.subcliente-ltv{font-size:12px;font-weight:600;color:var(--accent)}
+.grupo-add-sub{display:flex;align-items:center;gap:6px;padding:8px 12px;border-radius:var(--radius-sm);margin-top:6px;font-size:12px;font-weight:500;color:var(--accent);cursor:pointer;border:1px dashed var(--accent-light);background:transparent;width:100%;justify-content:center;transition:all .15s}
+.grupo-add-sub:hover{background:var(--accent-light)}
+.solo-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px 18px;box-shadow:var(--shadow);cursor:pointer;transition:all .15s;margin-bottom:14px}
+.solo-card:hover{box-shadow:var(--shadow-lg);border-color:#c7d2fe}
+
 .btn-logout{display:flex;align-items:center;gap:7px;padding:8px 0;font-size:12.5px;color:rgba(255,255,255,.45);cursor:pointer;background:none;border:none;font-family:'DM Sans',sans-serif;margin-top:10px;transition:color .15s}
 .btn-logout:hover{color:#fff}
 
@@ -796,7 +822,7 @@ input[type=range]{width:100%;accent-color:var(--accent)}
           </div>
           <button class="btn btn-primary" onclick="abrirModalCliente()">➕ Novo Cliente</button>
         </div>
-        <div id="clientesContainer"></div>
+        <div id="clientesContainer" style="max-width:900px"></div>
       </div>
 
       <div id="crm-oportunidades" style="display:none">
@@ -1051,6 +1077,8 @@ input[type=range]{width:100%;accent-color:var(--accent)}
     </div>
     <div id="detalheTarefas"></div>
     <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:20px;padding-top:16px;border-top:1px solid var(--border)">
+      <button class="btn btn-ghost" id="btnDesvincular" style="font-size:12px;padding:7px 14px;display:none" onclick="desvincularClienteDetalhe()">🔗 Remover do grupo</button>
+      <button class="btn btn-ghost" style="font-size:12px;padding:7px 14px" onclick="abrirModalVincular(null,'',null,clienteDetalheId,'')">+ Adicionar ao grupo</button>
       <button class="btn btn-danger" style="font-size:12px;padding:7px 14px" onclick="deletarClienteAtual()">🗑️ Excluir cliente</button>
     </div>
   </div>
@@ -1228,6 +1256,21 @@ input[type=range]{width:100%;accent-color:var(--accent)}
       <button class="btn btn-primary" id="btnImportarRenov" onclick="executarImportRenov()" style="display:none">
         📥 Importar <span id="btnImportarRenovCount"></span> registros
       </button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL VINCULAR SUB-CLIENTE -->
+<div class="modal-overlay" id="modalVincular" onclick="fecharModalVincular(event)">
+  <div class="modal" style="max-width:500px">
+    <div class="modal-title">Vincular Sub-cliente</div>
+    <p style="font-size:13px;color:var(--text-2);margin-bottom:16px">Selecione o cliente que será vinculado como membro do grupo de <strong id="vincularPrincipalNome"></strong>:</p>
+    <input type="hidden" id="vincularPrincipalId">
+    <input type="text" id="vincularBusca" placeholder="🔍 Buscar cliente..." oninput="renderListaVincular()"
+      style="width:100%;padding:9px 12px;font-size:13px;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--bg);outline:none;margin-bottom:12px;font-family:'DM Sans',sans-serif">
+    <div id="vincularLista" style="max-height:300px;overflow-y:auto;display:flex;flex-direction:column;gap:6px"></div>
+    <div class="form-actions" style="margin-top:16px">
+      <button class="btn btn-ghost" onclick="fecharModalVincularDireto()">Cancelar</button>
     </div>
   </div>
 </div>
@@ -2880,47 +2923,74 @@ function renderClientes(){
   const el=document.getElementById('clientesContainer');
   if(!el) return;
 
+  if(!currentProfile){
+    el.innerHTML='<div style="text-align:center;padding:32px;color:var(--text-3)">Carregando...</div>';
+    return;
+  }
+
   const busca=(document.getElementById('buscaCliente')?.value||'').toLowerCase();
   const filtro=(document.getElementById('filtroRamoCliente')?.value)||'';
   const ordem=(document.getElementById('ordenacaoCliente')?.value)||'ltv_desc';
 
-  // Enriquecer
-  let lista=todosClientes.map(cl=>{
+  // Enriquecer todos os clientes
+  const enriquecer=cl=>{
     const pv=produtosDasVendas(cl.nome);
     const vc=todasVendas.filter(v=>(v.segurado||'').toLowerCase().trim()===(cl.nome||'').toLowerCase().trim());
     const ltv=vc.reduce((s,v)=>s+(+v.comissao||0),0);
     const r={...cl,
-      tem_auto:!!(cl.tem_auto||pv.auto),
-      tem_residencial:!!(cl.tem_residencial||pv.residencial),
-      tem_vida:!!(cl.tem_vida||pv.vida),
-      tem_saude:!!(cl.tem_saude||pv.saude),
-      tem_empresarial:!!(cl.tem_empresarial||pv.empresarial),
-      tem_cartao:!!(cl.tem_cartao||pv.cartao),
+      tem_auto:!!(cl.tem_auto||pv.auto), tem_residencial:!!(cl.tem_residencial||pv.residencial),
+      tem_vida:!!(cl.tem_vida||pv.vida), tem_saude:!!(cl.tem_saude||pv.saude),
+      tem_empresarial:!!(cl.tem_empresarial||pv.empresarial), tem_cartao:!!(cl.tem_cartao||pv.cartao),
       tem_outros:!!(cl.tem_outros||pv.outros),
     };
-    r._ltv=ltv;
-    r._np=TODOS_PRODUTOS.filter(p=>r['tem_'+p.key]).length;
-    r._ult=vc[0]?.data||'';
+    r._ltv=ltv; r._np=TODOS_PRODUTOS.filter(p=>r['tem_'+p.key]).length; r._ult=vc[0]?.data||'';
     return r;
-  });
+  };
 
-  // Filtrar
-  if(busca) lista=lista.filter(x=>(x.nome||'').toLowerCase().includes(busca)||(x.telefone||'').includes(busca));
+  const todos=todosClientes.map(enriquecer);
+
+  // Separar principais e sub-clientes
+  const principais=todos.filter(cl=>!cl.cliente_principal_id);
+  const subs=todos.filter(cl=>!!cl.cliente_principal_id);
+
+  // Aplicar filtros nos principais
+  let lista=principais;
+  if(busca) lista=lista.filter(cl=>{
+    const subsDeste=subs.filter(s=>s.cliente_principal_id===cl.id);
+    return (cl.nome||'').toLowerCase().includes(busca)||
+           subsDeste.some(s=>(s.nome||'').toLowerCase().includes(busca));
+  });
   if(filtro){
     const sem=filtro.startsWith('sem_');
     const campo='tem_'+(sem?filtro.slice(4):filtro);
-    lista=lista.filter(x=>sem?!x[campo]:!!x[campo]);
+    lista=lista.filter(cl=>{
+      const subsDeste=subs.filter(s=>s.cliente_principal_id===cl.id);
+      if(sem) return !cl[campo]&&subsDeste.every(s=>!s[campo]);
+      return !!cl[campo]||subsDeste.some(s=>!!s[campo]);
+    });
   }
+
+  // Calcular LTV consolidado do grupo
+  lista=lista.map(cl=>{
+    const subsDeste=subs.filter(s=>s.cliente_principal_id===cl.id).map(enriquecer);
+    const ltvGrupo=cl._ltv+subsDeste.reduce((s,x)=>s+x._ltv,0);
+    // Produtos do grupo (união)
+    const prodsGrupo={};
+    TODOS_PRODUTOS.forEach(p=>{
+      prodsGrupo[p.key]=cl['tem_'+p.key]||subsDeste.some(s=>s['tem_'+p.key]);
+    });
+    return{...cl,_subs:subsDeste,_ltvGrupo:ltvGrupo,_prodsGrupo:prodsGrupo};
+  });
 
   // Ordenar
   lista.sort((a,b)=>{
-    if(ordem==='ltv_asc') return a._ltv-b._ltv;
+    if(ordem==='ltv_asc') return a._ltvGrupo-b._ltvGrupo;
     if(ordem==='produtos_desc') return b._np-a._np;
     if(ordem==='produtos_asc') return a._np-b._np;
     if(ordem==='nome_asc') return(a.nome||'').localeCompare(b.nome||'');
     if(ordem==='nome_desc') return(b.nome||'').localeCompare(a.nome||'');
     if(ordem==='recente') return(b._ult||'').localeCompare(a._ult||'');
-    return b._ltv-a._ltv;
+    return b._ltvGrupo-a._ltvGrupo;
   });
 
   if(!lista.length){
@@ -2932,24 +3002,104 @@ function renderClientes(){
     return;
   }
 
-  el.innerHTML='<div class="clientes-grid">'+lista.map(cl=>{
+  el.innerHTML=lista.map(cl=>{
+    const temSubs=cl._subs&&cl._subs.length>0;
+    const initials=(cl.nome||'?').split(' ').map(w=>w[0]).slice(0,2).join('').toUpperCase();
+    const ltvStr=cl._ltvGrupo>0?`<span class="grupo-ltv">LTV ${fmt(cl._ltvGrupo)}</span>`:'';
     const tars=(todasTarefas||[]).filter(t=>t.cliente_id===cl.id&&t.status==='pendente');
     const venc=tars.filter(t=>t.data_lembrete&&new Date(t.data_lembrete)<new Date());
     const badge=tars.length?`<div class="cliente-tarefas-badge" style="${venc.length?'background:#ef4444':''}">${tars.length}</div>`:'';
-    const prods=TODOS_PRODUTOS.map(p=>`<span class="prod-tag ${cl['tem_'+p.key]?'tem':'nao-tem'}">${p.label}</span>`).join('');
-    const pct=Math.round(cl._np/TODOS_PRODUTOS.length*100);
-    const ltv=cl._ltv>0?`<span style="font-size:11px;font-weight:700;color:var(--accent)">LTV ${fmt(cl._ltv)}</span>`:'';
-    return`<div class="cliente-card" onclick="abrirDetalheCliente('${cl.id}')">${badge}
-      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:4px;margin-bottom:4px">
-        <div class="cliente-nome" style="margin-bottom:0">${cl.nome}</div>${ltv}
-      </div>
-      <div class="cliente-info">${[cl.tipo,cl.telefone,cl.email].filter(Boolean).join(' · ')||'Sem contato'}</div>
-      <div class="cliente-produtos">${prods}</div>
-      <div style="font-size:11px;color:var(--text-3);margin-bottom:4px">${cl._np} de ${TODOS_PRODUTOS.length} produtos · ${pct}%</div>
-      <div class="oportunidade-bar"><div class="oportunidade-fill" style="width:${pct}%"></div></div>
-    </div>`;
-  }).join('')+'</div>';
+
+    // Produtos consolidados do grupo
+    const prods=TODOS_PRODUTOS.map(p=>`<span class="prod-tag ${cl._prodsGrupo[p.key]?'tem':'nao-tem'}">${p.label}</span>`).join('');
+
+    if(temSubs){
+      // Card de grupo com sub-clientes
+      const subsHtml=cl._subs.map(s=>{
+        const stars=(todasTarefas||[]).filter(t=>t.cliente_id===s.id&&t.status==='pendente');
+        return`<div class="subcliente-card" onclick="abrirDetalheCliente('${s.id}')">
+          <span style="font-size:18px">${s.tipo==='PJ'?'🏢':'👤'}</span>
+          <div style="flex:1;min-width:0">
+            <div class="subcliente-nome">${s.nome}</div>
+            <div class="subcliente-info">${s.tipo||'PF'}${s.telefone?' · '+s.telefone:''}</div>
+          </div>
+          <div style="text-align:right">
+            <div class="subcliente-ltv">${s._ltv>0?fmt(s._ltv):''}</div>
+            ${stars.length?`<span style="font-size:10px;color:var(--accent)">📌 ${stars.length}</span>`:''}
+          </div>
+        </div>`;
+      }).join('');
+
+      return`<div class="grupo-card" id="grupo-${cl.id}">
+        ${badge}
+        <div class="grupo-header" onclick="toggleGrupo('${cl.id}')">
+          <div class="grupo-header-left">
+            <div class="grupo-avatar">${initials}</div>
+            <div style="flex:1;min-width:0">
+              <div class="grupo-nome">${cl.nome}</div>
+              <div class="grupo-meta">${cl.tipo||'PF'}${cl.telefone?' · '+cl.telefone:''} · ${cl._subs.length+1} pessoas no grupo</div>
+              <div class="grupo-tags">${prods}</div>
+            </div>
+          </div>
+          <div style="display:flex;align-items:center;gap:12px">
+            ${ltvStr}
+            <span class="grupo-chevron" id="chev-${cl.id}">▼</span>
+          </div>
+        </div>
+        <div class="grupo-body" id="body-${cl.id}">
+          <div class="subcliente-card" onclick="abrirDetalheCliente('${cl.id}')">
+            <span style="font-size:18px">⭐</span>
+            <div style="flex:1;min-width:0">
+              <div class="subcliente-nome">${cl.nome} <span style="font-size:10px;background:var(--accent);color:#fff;padding:1px 6px;border-radius:99px;margin-left:4px">principal</span></div>
+              <div class="subcliente-info">${cl.tipo||'PF'}${cl.telefone?' · '+cl.telefone:''}</div>
+            </div>
+            <div class="subcliente-ltv">${cl._ltv>0?fmt(cl._ltv):''}</div>
+          </div>
+          ${subsHtml}
+          <button class="grupo-add-sub" onclick="abrirModalVincular('${cl.id}','${cl.nome.replace(/'/g,"\\'")}')">
+            ➕ Vincular outro cliente a este grupo
+          </button>
+        </div>
+      </div>`;
+    } else {
+      // Card simples (sem sub-clientes)
+      const pct=Math.round(cl._np/TODOS_PRODUTOS.length*100);
+      return`<div class="solo-card" id="solo-${cl.id}" style="position:relative">
+        ${badge}
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:4px">
+          <div style="display:flex;align-items:center;gap:10px;flex:1;min-width:0" onclick="abrirDetalheCliente('${cl.id}')">
+            <div class="grupo-avatar" style="width:34px;height:34px;font-size:13px">${initials}</div>
+            <div>
+              <div class="cliente-nome" style="margin-bottom:2px">${cl.nome}</div>
+              <div class="cliente-info">${[cl.tipo,cl.telefone,cl.email].filter(Boolean).join(' · ')||'Sem contato'}</div>
+            </div>
+          </div>
+          <div style="display:flex;align-items:center;gap:8px">
+            ${ltvStr}
+            <button onclick="abrirModalVincular(null,'',null,'${cl.id}','${cl.nome.replace(/'/g,"\\'")}');event.stopPropagation()"
+              title="Vincular a um grupo" style="background:none;border:1px solid var(--border);border-radius:4px;padding:3px 8px;font-size:11px;cursor:pointer;color:var(--text-3)">+ grupo</button>
+          </div>
+        </div>
+        <div onclick="abrirDetalheCliente('${cl.id}')">
+          <div class="cliente-produtos">${prods}</div>
+          <div style="font-size:11px;color:var(--text-3);margin-bottom:4px">${cl._np} de ${TODOS_PRODUTOS.length} produtos · ${pct}%</div>
+          <div class="oportunidade-bar"><div class="oportunidade-fill" style="width:${pct}%"></div></div>
+        </div>
+      </div>`;
+    }
+  }).join('');
 }
+
+function toggleGrupo(id){
+  const body=document.getElementById('body-'+id);
+  const chev=document.getElementById('chev-'+id);
+  const header=document.querySelector(`#grupo-${id} .grupo-header`);
+  if(!body) return;
+  const open=body.classList.toggle('open');
+  if(chev) chev.classList.toggle('open',open);
+  if(header) header.classList.toggle('expanded',open);
+}
+
 
 // ── RENDER OPORTUNIDADES ──────────────────────────────────────────────
 function renderOportunidades(){
@@ -2979,6 +3129,9 @@ function abrirDetalheCliente(id){
   if(!cl) return;
   const pv=produtosDasVendas(cl.nome);
   const mg={...cl,tem_auto:!!(cl.tem_auto||pv.auto),tem_residencial:!!(cl.tem_residencial||pv.residencial),tem_vida:!!(cl.tem_vida||pv.vida),tem_saude:!!(cl.tem_saude||pv.saude),tem_empresarial:!!(cl.tem_empresarial||pv.empresarial),tem_cartao:!!(cl.tem_cartao||pv.cartao),tem_outros:!!(cl.tem_outros||pv.outros)};
+  // Mostrar botão desvincular se for sub-cliente
+  const btnDesv=document.getElementById('btnDesvincular');
+  if(btnDesv) btnDesv.style.display=cl.cliente_principal_id?'inline-flex':'none';
   document.getElementById('detalheNome').textContent=cl.nome;
   document.getElementById('detalheInfo').textContent=[cl.tipo,cl.documento,cl.telefone,cl.email].filter(Boolean).join(' · ')||'Sem contato';
   document.getElementById('detalheProdutos').innerHTML=TODOS_PRODUTOS.map(p=>`
@@ -4172,6 +4325,98 @@ async function executarImportHistoricoRenov(){
     res.style.cssText='background:var(--danger-light);color:var(--danger);border:1px solid #f5c6c2;border-radius:var(--radius-sm);padding:10px 14px;font-size:13px';
     res.textContent=`⚠️ ${importados} importados, ${erros} com erro.`;
   }
+}
+
+// ── VINCULAR SUB-CLIENTE ──────────────────────────────────────────────
+let _vincularPrincipalId=null;
+let _vincularSubId=null; // quando se quer vincular um cliente existente a um grupo
+
+function abrirModalVincular(principalId, principalNome, _x, subId, subNome){
+  // Modo 1: principalId definido = adicionar sub ao grupo existente
+  // Modo 2: subId definido = vincular este cliente a um grupo
+  _vincularPrincipalId=principalId||null;
+  _vincularSubId=subId||null;
+  document.getElementById('vincularPrincipalId').value=principalId||'';
+  document.getElementById('vincularPrincipalNome').textContent=principalNome||subNome||'';
+  document.getElementById('vincularBusca').value='';
+  renderListaVincular();
+  document.getElementById('modalVincular').classList.add('open');
+}
+function fecharModalVincular(e){if(!e||e.target===document.getElementById('modalVincular'))fecharModalVincularDireto();}
+function fecharModalVincularDireto(){document.getElementById('modalVincular').classList.remove('open');}
+
+function renderListaVincular(){
+  const busca=(document.getElementById('vincularBusca')?.value||'').toLowerCase();
+  const lista=document.getElementById('vincularLista');
+  if(!lista) return;
+
+  // Se estamos adicionando sub a um principal: mostrar clientes que não têm grupo
+  // Se estamos vinculando um cliente a um grupo: mostrar clientes principais
+  let opcoes=todosClientes.filter(cl=>{
+    if(_vincularPrincipalId){
+      // Clientes que não são sub de ninguém e não são o próprio principal
+      return !cl.cliente_principal_id && cl.id!==_vincularPrincipalId;
+    } else {
+      // Clientes principais para o sub se vincular
+      return !cl.cliente_principal_id && cl.id!==_vincularSubId;
+    }
+  });
+
+  if(busca) opcoes=opcoes.filter(cl=>(cl.nome||'').toLowerCase().includes(busca));
+
+  if(!opcoes.length){
+    lista.innerHTML='<div style="text-align:center;padding:20px;color:var(--text-3);font-size:13px">Nenhum cliente disponível</div>';
+    return;
+  }
+
+  lista.innerHTML=opcoes.map(cl=>`
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 12px;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--bg);cursor:pointer;transition:background .15s"
+      onmouseover="this.style.background='var(--accent-light)'" onmouseout="this.style.background='var(--bg)'">
+      <div>
+        <div style="font-weight:500;font-size:13px">${cl.nome}</div>
+        <div style="font-size:11.5px;color:var(--text-3)">${cl.tipo||'PF'}${cl.telefone?' · '+cl.telefone:''}</div>
+      </div>
+      <button class="btn btn-primary" style="padding:5px 14px;font-size:12px"
+        onclick="executarVinculo('${cl.id}')">Vincular</button>
+    </div>`).join('');
+}
+
+async function executarVinculo(clienteId){
+  let principalId, subId;
+  if(_vincularPrincipalId){
+    // Adicionar clienteId como sub do principal
+    principalId=_vincularPrincipalId;
+    subId=clienteId;
+  } else {
+    // Vincular _vincularSubId ao principal clienteId
+    principalId=clienteId;
+    subId=_vincularSubId;
+  }
+
+  const{error}=await db.from('carteira').update({
+    cliente_principal_id:principalId,
+    is_principal:false
+  }).eq('id',subId);
+
+  if(error){showToast('Erro: '+error.message,'error');return;}
+
+  fecharModalVincularDireto();
+  await carregarCRM();
+  showToast('Cliente vinculado ao grupo!','success');
+}
+
+async function desvincularCliente(subId){
+  if(!confirm('Remover este cliente do grupo? Ele voltará a aparecer como cliente independente.')) return;
+  const{error}=await db.from('carteira').update({cliente_principal_id:null,is_principal:true}).eq('id',subId);
+  if(error){showToast('Erro: '+error.message,'error');return;}
+  await carregarCRM();
+  showToast('Cliente removido do grupo.','success');
+}
+
+function desvincularClienteDetalhe(){
+  if(!clienteDetalheId) return;
+  desvincularCliente(clienteDetalheId);
+  fecharModalDetalhe();
 }
 
 </script>
