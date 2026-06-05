@@ -476,7 +476,7 @@ input[type=range]{width:100%;accent-color:var(--accent)}
           <button class="btn-periodo" id="dashPer6" onclick="setDashPeriodo('6m')">6 meses</button>
           <button class="btn-periodo" id="dashPer12" onclick="setDashPeriodo('12m')">12 meses</button>
         </div>
-        <select id="dashMesSel" onchange="setDashPeriodo('mes')" style="padding:8px 12px;font-size:13px;font-family:'DM Sans',sans-serif;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--surface);outline:none"></select>
+        <select id="dashMesSel" onchange="onDashMesChange()" style="padding:8px 12px;font-size:13px;font-family:'DM Sans',sans-serif;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--surface);outline:none"></select>
       </div>
 
       <!-- Cards pessoais -->
@@ -2604,14 +2604,22 @@ let dashPeriodoAtual='mes';
 
 function setDashPeriodo(periodo){
   dashPeriodoAtual=periodo;
-  // Atualizar botões ativos
   ['mes','3m','6m','12m'].forEach(p=>{
     const btn=document.getElementById('dashPer'+(p==='mes'?'1':p.replace('m','')));
     if(btn) btn.classList.toggle('active',p===periodo);
   });
-  // Mostrar/ocultar select de mês
   const sel=document.getElementById('dashMesSel');
-  if(sel) sel.style.display=periodo==='mes'?'block':'none';
+  if(sel) sel.style.display=periodo==='mes'?'inline-block':'none';
+  renderDashboard();
+}
+
+function onDashMesChange(){
+  // Garante que está em modo mês e re-renderiza
+  dashPeriodoAtual='mes';
+  ['mes','3m','6m','12m'].forEach(p=>{
+    const btn=document.getElementById('dashPer'+(p==='mes'?'1':p.replace('m','')));
+    if(btn) btn.classList.toggle('active',p==='mes');
+  });
   renderDashboard();
 }
 
