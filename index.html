@@ -134,6 +134,29 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
 .solo-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px 18px;box-shadow:var(--shadow);cursor:pointer;transition:all .15s;margin-bottom:14px}
 .solo-card:hover{box-shadow:var(--shadow-lg);border-color:#c7d2fe}
 
+
+/* ── OTE ── */
+.ote-faixa{display:flex;align-items:center;gap:0;margin-bottom:16px;border-radius:var(--radius);overflow:hidden;border:1px solid var(--border)}
+.ote-faixa-item{flex:1;padding:12px 10px;text-align:center;transition:all .2s;position:relative}
+.ote-faixa-item.ativa{z-index:2;transform:scaleY(1.06);box-shadow:0 4px 16px rgba(0,0,0,.15)}
+.ote-faixa-pct{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px}
+.ote-faixa-mult{font-family:'DM Serif Display',serif;font-size:22px;font-weight:700}
+.ote-faixa-val{font-size:11.5px;margin-top:4px;font-weight:600}
+.ote-faixa-f0{background:#fee2e2;color:#991b1b}
+.ote-faixa-f1{background:#fef3c7;color:#92400e}
+.ote-faixa-f2{background:#fef9c3;color:#854d0e}
+.ote-faixa-f3{background:#dcfce7;color:#166534}
+.ote-faixa-f4{background:#d1fae5;color:#065f46}
+.ote-resultado{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:28px;box-shadow:var(--shadow);text-align:center;margin-bottom:20px}
+.ote-resultado-label{font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:var(--text-3);margin-bottom:8px}
+.ote-resultado-valor{font-family:'DM Serif Display',serif;font-size:40px;color:var(--accent);margin-bottom:4px}
+.ote-resultado-sub{font-size:13px;color:var(--text-2)}
+.ote-progress-wrap{background:var(--bg);border-radius:var(--radius);padding:20px;margin-bottom:20px;border:1px solid var(--border)}
+.ote-progress-bar{height:16px;background:var(--border);border-radius:99px;overflow:hidden;margin:12px 0}
+.ote-progress-fill{height:100%;border-radius:99px;transition:width .5s ease}
+.ote-historico-item{display:flex;align-items:center;justify-content:space-between;padding:12px 0;border-bottom:1px solid var(--border)}
+.ote-historico-item:last-child{border-bottom:none}
+
 .btn-logout{display:flex;align-items:center;gap:7px;padding:8px 0;font-size:12.5px;color:rgba(255,255,255,.45);cursor:pointer;background:none;border:none;font-family:'DM Sans',sans-serif;margin-top:10px;transition:color .15s}
 .btn-logout:hover{color:#fff}
 
@@ -426,6 +449,7 @@ input[type=range]{width:100%;accent-color:var(--accent)}
       <div class="nav-item" onclick="showView('renov_analise')" id="nav-renov_analise"><span class="icon">📈</span> Análise</div>
       <div class="nav-item" onclick="showView('renov_kanban')" id="nav-renov_kanban"><span class="icon">🗂️</span> Kanban</div>
       <div class="nav-section">Gestão</div>
+      <div class="nav-item" onclick="showView('ote')" id="nav-ote"><span class="icon">💰</span> OTE — Silvia</div>
       <div class="nav-item" onclick="showView('metas')" id="nav-metas"><span class="icon">🎯</span> Definir Metas</div>
       <div class="nav-item" onclick="showView('exportar')" id="nav-exportar"><span class="icon">📤</span> Exportar</div>
     </nav>
@@ -975,6 +999,88 @@ input[type=range]{width:100%;accent-color:var(--accent)}
 
   </main>
 </div>
+
+    <!-- OTE SILVIA -->
+    <div class="view" id="view-ote">
+      <div class="page-title">OTE — Silvia</div>
+      <p class="page-sub">On-Target Earnings · Meta mensal: <strong>R$ 4.500,00</strong> · Recebimento alvo (100%): <strong>R$ 627,95</strong></p>
+
+      <!-- Seletor de mês -->
+      <div class="mes-bar" style="margin-bottom:24px">
+        <label style="font-size:12px;font-weight:500;color:var(--text-2)">Mês:</label>
+        <select id="oteMes" onchange="renderOTE()" style="padding:8px 12px;font-size:13px;font-family:'DM Sans',sans-serif;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--surface);outline:none"></select>
+      </div>
+
+      <!-- Faixas de multiplicador -->
+      <div class="card" style="margin-bottom:20px">
+        <div class="card-title">Tabela de Multiplicadores</div>
+        <div class="ote-faixa" id="oteFaixas">
+          <div class="ote-faixa-item ote-faixa-f0" id="faixa0">
+            <div class="ote-faixa-pct">Abaixo 70%</div>
+            <div class="ote-faixa-mult">0x</div>
+            <div class="ote-faixa-val">R$ 0,00</div>
+          </div>
+          <div class="ote-faixa-item ote-faixa-f1" id="faixa1">
+            <div class="ote-faixa-pct">70,1% – 85%</div>
+            <div class="ote-faixa-mult">0,5x</div>
+            <div class="ote-faixa-val">R$ 313,98</div>
+          </div>
+          <div class="ote-faixa-item ote-faixa-f2" id="faixa2">
+            <div class="ote-faixa-pct">85,1% – 99%</div>
+            <div class="ote-faixa-mult">0,7x</div>
+            <div class="ote-faixa-val">R$ 439,57</div>
+          </div>
+          <div class="ote-faixa-item ote-faixa-f3" id="faixa3">
+            <div class="ote-faixa-pct">100% – 119%</div>
+            <div class="ote-faixa-mult">1x</div>
+            <div class="ote-faixa-val">R$ 627,95</div>
+          </div>
+          <div class="ote-faixa-item ote-faixa-f4" id="faixa4">
+            <div class="ote-faixa-pct">120%+</div>
+            <div class="ote-faixa-mult">1,3x</div>
+            <div class="ote-faixa-val">R$ 816,34</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Resultado do mês -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px">
+        <div class="ote-resultado">
+          <div class="ote-resultado-label">Comissão Realizada</div>
+          <div class="ote-resultado-valor" id="oteRealizado">R$ 0,00</div>
+          <div class="ote-resultado-sub" id="oteAtingPct">0% da meta</div>
+        </div>
+        <div class="ote-resultado" id="oteResultadoCard">
+          <div class="ote-resultado-label">Bônus OTE a Receber</div>
+          <div class="ote-resultado-valor" id="oteBonus">R$ 0,00</div>
+          <div class="ote-resultado-sub" id="oteFaixaAtiva">Faixa: —</div>
+        </div>
+      </div>
+
+      <!-- Barra de progresso -->
+      <div class="ote-progress-wrap">
+        <div style="display:flex;justify-content:space-between;font-size:13px;font-weight:500">
+          <span>Progresso da Meta</span>
+          <span id="oteProgressPct" style="font-weight:700;color:var(--accent)">0%</span>
+        </div>
+        <div class="ote-progress-bar">
+          <div class="ote-progress-fill" id="oteProgressFill" style="width:0%;background:var(--accent)"></div>
+        </div>
+        <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--text-3)">
+          <span>R$ 0,00</span>
+          <span>Meta: R$ 4.500,00</span>
+        </div>
+        <div id="oteFaltaMensagem" style="margin-top:10px;font-size:13px;text-align:center;color:var(--text-2)"></div>
+      </div>
+
+      <!-- Histórico mensal -->
+      <div class="card">
+        <div class="card-title">Histórico OTE — Meses Anteriores</div>
+        <div id="oteHistorico">
+          <div class="empty-state" style="padding:24px 0"><div class="icon">📊</div>Carregando histórico...</div>
+        </div>
+      </div>
+    </div>
 
 <!-- MOBILE NAV -->
 <nav class="mobile-nav" id="mobileNav" style="display:none">
@@ -1583,7 +1689,7 @@ function popularMeses(){
     opts.push({val,label});
   }
   const html=opts.map(o=>`<option value="${o.val}">${capitalize(o.label)}</option>`).join('');
-  ['mesFiltro','mesFiltroHist','mesFiltroInd','metaMes','exportMes','renovMesFiltro','kanbanMes'].forEach(id=>{
+  ['mesFiltro','mesFiltroHist','mesFiltroInd','metaMes','exportMes','renovMesFiltro','kanbanMes','oteMes'].forEach(id=>{
     const el=document.getElementById(id);if(el) el.innerHTML=html;
   });
   document.getElementById('mesLabel').textContent=capitalize(opts[0].label);
@@ -3448,6 +3554,7 @@ function showView(id){
   if(id==='renovacoes') renderRenovacoes();
   if(id==='renov_analise') renderAnaliseRenovacoes();
   if(id==='renov_kanban') renderKanban();
+  if(id==='ote') renderOTE();
   if(id==='carteira'){ carregarCRM().then(()=>renderClientes()); }
   if(id==='tarefas_view'){ carregarCRM().then(()=>renderTarefasView()); }
   // Scroll para o topo
@@ -4417,6 +4524,138 @@ function desvincularClienteDetalhe(){
   if(!clienteDetalheId) return;
   desvincularCliente(clienteDetalheId);
   fecharModalDetalhe();
+}
+
+// ── OTE SILVIA ────────────────────────────────────────────────────────
+const OTE_META       = 4500;    // meta de comissão mensal
+const OTE_ALVO       = 627.95;  // recebimento em 100%
+const OTE_VENDEDOR   = 'Silvia';
+
+const OTE_FAIXAS = [
+  {min:0,    max:70,   mult:0,   label:'Abaixo 70%',     id:'faixa0'},
+  {min:70.1, max:85,   mult:0.5, label:'70,1% – 85%',    id:'faixa1'},
+  {min:85.1, max:99,   mult:0.7, label:'85,1% – 99%',    id:'faixa2'},
+  {min:100,  max:119,  mult:1.0, label:'100% – 119%',    id:'faixa3'},
+  {min:120,  max:9999, mult:1.3, label:'120%+',           id:'faixa4'},
+];
+
+function calcOTE(comissaoRealizada){
+  const pct=(comissaoRealizada/OTE_META)*100;
+  const faixa=OTE_FAIXAS.find(f=>pct>=f.min&&pct<=f.max)||OTE_FAIXAS[0];
+  const bonus=Math.round(OTE_ALVO*faixa.mult*100)/100;
+  return{pct, faixa, bonus};
+}
+
+function renderOTE(){
+  const mes=document.getElementById('oteMes')?.value||'';
+  if(!mes) return;
+
+  // Vendas da Silvia no mês
+  const vendasSilvia=vendasDoMes(mes).filter(v=>v.vendedor===OTE_VENDEDOR);
+  const comissaoRealizada=soma(vendasSilvia,'comissao');
+
+  const{pct,faixa,bonus}=calcOTE(comissaoRealizada);
+  const pctCapped=Math.min(pct,150); // cap visual em 150%
+
+  // Resultado
+  document.getElementById('oteRealizado').textContent=fmt(comissaoRealizada);
+  document.getElementById('oteAtingPct').textContent=pct.toFixed(1)+'% da meta';
+  document.getElementById('oteBonus').textContent=fmt(bonus);
+  document.getElementById('oteFaixaAtiva').textContent='Faixa: '+faixa.label+' ('+faixa.mult+'x)';
+
+  // Cor do card de resultado
+  const card=document.getElementById('oteResultadoCard');
+  if(bonus===0) card.style.borderColor='#fca5a5';
+  else if(faixa.mult>=1) card.style.borderColor='#86efac';
+  else card.style.borderColor='#fcd34d';
+
+  // Barra de progresso
+  const fillW=Math.min(100,pct);
+  const fill=document.getElementById('oteProgressFill');
+  fill.style.width=fillW+'%';
+  fill.style.background=pct>=100?'var(--green)':pct>=85?'#f59e0b':'var(--accent)';
+  document.getElementById('oteProgressPct').textContent=pct.toFixed(1)+'%';
+  document.getElementById('oteProgressPct').style.color=pct>=100?'var(--green)':pct>=85?'#f59e0b':'var(--accent)';
+
+  // Mensagem motivacional
+  const msgEl=document.getElementById('oteFaltaMensagem');
+  const falta=Math.max(0,OTE_META-comissaoRealizada);
+  if(pct>=120){
+    msgEl.innerHTML='🎉 <strong>Acelerador ativado!</strong> Meta superada em '+((pct-100).toFixed(1))+'% — bônus máximo!';
+    msgEl.style.color='var(--green)';
+  } else if(pct>=100){
+    msgEl.innerHTML='✅ <strong>Meta batida!</strong> Faltam '+fmt(OTE_META*1.2-comissaoRealizada)+' para ativar o acelerador 1,3x';
+    msgEl.style.color='var(--green)';
+  } else if(pct>=85){
+    msgEl.innerHTML='💪 Faltam <strong>'+fmt(falta)+'</strong> para bater a meta e receber <strong>'+fmt(OTE_ALVO)+'</strong>';
+    msgEl.style.color='#f59e0b';
+  } else if(pct>=70){
+    msgEl.innerHTML='⚡ Faltam <strong>'+fmt(falta)+'</strong> para chegar na faixa 0,7x · Continua!';
+    msgEl.style.color='#f59e0b';
+  } else {
+    msgEl.innerHTML='🚀 Faltam <strong>'+fmt(falta)+'</strong> para entrar na primeira faixa de bônus';
+    msgEl.style.color='var(--text-3)';
+  }
+
+  // Destacar faixa ativa
+  OTE_FAIXAS.forEach(f=>{
+    const el=document.getElementById(f.id);
+    if(el){
+      el.classList.toggle('ativa',f.id===faixa.id);
+      if(f.id===faixa.id) el.style.outline='3px solid currentColor';
+      else el.style.outline='none';
+    }
+  });
+
+  // Histórico dos últimos 6 meses
+  renderOTEHistorico();
+}
+
+function renderOTEHistorico(){
+  const agora=new Date();
+  const meses=[];
+  for(let i=5;i>=0;i--){
+    const d=new Date(agora.getFullYear(),agora.getMonth()-i,1);
+    meses.push(`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`);
+  }
+
+  const el=document.getElementById('oteHistorico');
+  if(!el) return;
+
+  const rows=meses.map(m=>{
+    const vendas=vendasDoMes(m).filter(v=>v.vendedor===OTE_VENDEDOR);
+    const com=soma(vendas,'comissao');
+    const{pct,faixa,bonus}=calcOTE(com);
+    return{mes:m,com,pct,faixa,bonus};
+  });
+
+  if(rows.every(r=>r.com===0)){
+    el.innerHTML='<div class="empty-state" style="padding:24px 0"><div class="icon">📊</div>Sem dados históricos ainda</div>';
+    return;
+  }
+
+  el.innerHTML=rows.map(r=>{
+    const corPct=r.pct>=100?'var(--green)':r.pct>=85?'#f59e0b':'var(--danger)';
+    const corBonus=r.bonus>0?'var(--green)':'var(--text-3)';
+    return`<div class="ote-historico-item">
+      <div>
+        <div style="font-weight:500;font-size:13px">${fmtMesLabel(r.mes)}</div>
+        <div style="font-size:11.5px;color:var(--text-3)">${r.faixa.label} · ${r.faixa.mult}x</div>
+      </div>
+      <div style="text-align:center">
+        <div style="font-weight:600;font-size:13px">${fmt(r.com)}</div>
+        <div style="font-size:11px;color:var(--text-3)">comissão</div>
+      </div>
+      <div style="text-align:center">
+        <div style="font-weight:700;font-size:14px;color:${corPct}">${r.pct.toFixed(1)}%</div>
+        <div style="font-size:11px;color:var(--text-3)">da meta</div>
+      </div>
+      <div style="text-align:right">
+        <div style="font-family:'DM Serif Display',serif;font-size:16px;color:${corBonus}">${fmt(r.bonus)}</div>
+        <div style="font-size:11px;color:var(--text-3)">bônus OTE</div>
+      </div>
+    </div>`;
+  }).join('');
 }
 
 </script>
