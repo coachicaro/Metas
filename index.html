@@ -467,12 +467,24 @@ input[type=range]{width:100%;accent-color:var(--accent)}
       <div class="page-title" id="dashTitle">Meu Dashboard</div>
       <p class="page-sub" id="dashSub">Seu desempenho pessoal · <span id="dashMesLabel">—</span></p>
 
+      <!-- Seletor de período -->
+      <div class="mes-bar" style="margin-bottom:24px;flex-wrap:wrap;gap:10px">
+        <label style="font-size:12px;font-weight:500;color:var(--text-2)">Período:</label>
+        <div style="display:flex;gap:6px;flex-wrap:wrap">
+          <button class="btn-periodo active" id="dashPer1" onclick="setDashPeriodo('mes')">Mês</button>
+          <button class="btn-periodo" id="dashPer3" onclick="setDashPeriodo('3m')">3 meses</button>
+          <button class="btn-periodo" id="dashPer6" onclick="setDashPeriodo('6m')">6 meses</button>
+          <button class="btn-periodo" id="dashPer12" onclick="setDashPeriodo('12m')">12 meses</button>
+        </div>
+        <select id="dashMesSel" onchange="setDashPeriodo('mes')" style="padding:8px 12px;font-size:13px;font-family:'DM Sans',sans-serif;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--surface);outline:none"></select>
+      </div>
+
       <!-- Cards pessoais -->
       <div class="summary-grid" style="margin-bottom:24px">
         <div class="summary-card">
           <div class="label">Minha Comissão</div>
           <div class="value" id="dashComissao">R$ 0,00</div>
-          <div class="sub">no mês atual</div>
+          <div class="sub" id="dashSubComissao">no período</div>
           <div class="delta neutral" id="dashDeltaCom"></div>
         </div>
         <div class="summary-card">
@@ -483,7 +495,7 @@ input[type=range]{width:100%;accent-color:var(--accent)}
         <div class="summary-card">
           <div class="label">Minhas Vendas</div>
           <div class="value" id="dashVendas">0</div>
-          <div class="sub">apólices no mês</div>
+          <div class="sub" id="dashSubVendas">apólices no período</div>
         </div>
         <div class="summary-card">
           <div class="label">Posição no Ranking</div>
@@ -1689,7 +1701,7 @@ function popularMeses(){
     opts.push({val,label});
   }
   const html=opts.map(o=>`<option value="${o.val}">${capitalize(o.label)}</option>`).join('');
-  ['mesFiltro','mesFiltroHist','mesFiltroInd','metaMes','exportMes','renovMesFiltro','kanbanMes','oteMes'].forEach(id=>{
+  ['mesFiltro','mesFiltroHist','mesFiltroInd','metaMes','exportMes','renovMesFiltro','kanbanMes','oteMes','dashMesSel'].forEach(id=>{
     const el=document.getElementById(id);if(el) el.innerHTML=html;
   });
   document.getElementById('mesLabel').textContent=capitalize(opts[0].label);
@@ -2588,1042 +2600,130 @@ function fecharModal(e){if(e.target===document.getElementById('modalOverlay'))fe
 function fecharModalDireto(){document.getElementById('modalOverlay').classList.remove('open');}
 
 // ── DASHBOARD ─────────────────────────────────────────────────────────
-function renderDashboard(){
-  // Funciona mesmo sem perfil carregado ainda
+let dashPeriodoAtual='mes';
+
+function setDashPeriodo(periodo){
+  dashPeriodoAtual=periodo;
+  // Atualizar botões ativos
+  ['mes','3m','6m','12m'].forEach(p=>{
+    const btn=document.getElementById('dashPer'+(p==='mes'?'1':p.replace('m','')));
+    if(btn) btn.classList.toggle('active',p===periodo);
+  });
+  // Mostrar/ocultar select de mês
+  const sel=document.getElementById('dashMesSel');
+  if(sel) sel.style.display=periodo==='mes'?'block':'none';
+  renderDashboard();
+}
+
+function getDashVendas(){
   const vendedor=(currentProfile?.vendedor||'').trim();
-  const mesAtual=new Date();
-  const mes=`${mesAtual.getFullYear()}-${String(mesAtual.getMonth()+1).padStart(2,'0')}`;
-  const mesAnt=mesAnteriorDe(mes);
-
-  // Título personalizado
-  document.getElementById('dashTitle').textContent=vendedor?`Olá, ${vendedor} 👋`:'Meu Dashboard';
-  document.getElementById('dashMesLabel').textContent=capitalize(mesAtual.toLocaleDateString('pt-BR',{month:'long',year:'numeric'}));
-
-  // Filtra por vendedor se tiver perfil, senão mostra tudo
   const filtrar=v=>!vendedor||v.vendedor.trim()===vendedor;
-  const minhasVendas=vendasDoMes(mes).filter(filtrar);
-  const minhasVendasAnt=vendasDoMes(mesAnt).filter(filtrar);
-  const minhaCom=soma(minhasVendas,'comissao');
-  const meuPL=soma(minhasVendas,'premio_liquido');
-  const minhaComAnt=soma(minhasVendasAnt,'comissao');
+  const agora=new Date();
 
-  document.getElementById('dashComissao').textContent=fmt(minhaCom);
-  document.getElementById('dashPL').textContent=fmt(meuPL);
-  document.getElementById('dashVendas').textContent=minhasVendas.length;
-
-  // Delta comissão
-  if(minhaComAnt>0){
-    const diff=((minhaCom-minhaComAnt)/minhaComAnt*100);
-    const el=document.getElementById('dashDeltaCom');
-    el.className='delta '+(diff>=0?'up':'down');
-    el.textContent=(diff>=0?'▲':'▼')+' '+Math.abs(diff).toFixed(1)+'% vs mês anterior';
-  }
-
-  // Posição no ranking — usa todas as vendas do mês, todos vendedores
-  const mapRank={};
-  vendasDoMes(mes).forEach(v=>{
-    const nome=(v.vendedor||'').trim();
-    if(nome) mapRank[nome]=(mapRank[nome]||0)+(+v.comissao||0);
-  });
-  // Garantir que o vendedor logado apareça mesmo com 0
-  if(vendedor && !(vendedor in mapRank)) mapRank[vendedor]=0;
-  const sortedRank=Object.entries(mapRank).sort((a,b)=>b[1]-a[1]);
-  const pos=vendedor?sortedRank.findIndex(([n])=>n===vendedor):-1;
-  const emojis=['🥇','🥈','🥉'];
-  const posEl=document.getElementById('dashPosicao');
-  if(!vendedor){ posEl.textContent='—'; }
-  else if(pos>=0){ posEl.textContent=emojis[pos]||(pos+1)+'º'; }
-  else{ posEl.textContent='—'; }
-
-  // Meta geral
-  const metaGeral=todasMetas.find(m=>m.mes===mes&&m.vendedor===vendedor);
-  const metaCard=document.getElementById('dashMetaCard');
-  if(metaGeral&&+metaGeral.meta_comissao>0){
-    const meta=+metaGeral.meta_comissao;
-    const pct=Math.min(100,(minhaCom/meta)*100);
-    const falta=Math.max(0,meta-minhaCom);
-    metaCard.style.display='block';
-    document.getElementById('dashMetaPct').textContent=pct.toFixed(0)+'%';
-    document.getElementById('dashMetaFill').style.width=pct+'%';
-    document.getElementById('dashMetaFill').className='meta-bar-fill'+(pct>=100?' done':'');
-    document.getElementById('dashMetaRealizado').textContent=fmt(minhaCom);
-    document.getElementById('dashMetaValor').textContent=fmt(meta);
-    document.getElementById('dashMetaFalta').textContent=pct>=100?'✅ Meta batida!':fmt(falta);
-  } else { metaCard.style.display='none'; }
-
-  // Metas por ramo
-  const metasRamoV=todasMetasRamo.filter(m=>m.mes===mes&&m.vendedor===vendedor&&+m.meta_comissao>0);
-  const ramoCard=document.getElementById('dashMetaRamoCard');
-  if(metasRamoV.length){
-    ramoCard.style.display='block';
-    const ramoReal={};
-    minhasVendas.forEach(v=>{ramoReal[v.ramo]=(ramoReal[v.ramo]||0)+(+v.comissao||0);});
-    document.getElementById('dashMetasRamo').innerHTML=metasRamoV.map(m=>{
-      const atual=ramoReal[m.ramo]||0;
-      const p=Math.min(100,(atual/+m.meta_comissao)*100);
-      return `<div style="margin-bottom:12px">
-        <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px">
-          <span style="font-weight:500">${m.ramo}</span>
-          <span style="color:var(--text-3)">${fmt(atual)} / ${fmt(+m.meta_comissao)} (${p.toFixed(0)}%)</span>
-        </div>
-        <div class="meta-bar" style="height:8px">
-          <div class="meta-bar-fill ${p>=100?'done':''}" style="width:${p}%;background:${p>=100?'var(--green)':'#6366f1'}"></div>
-        </div>
-      </div>`;
-    }).join('');
-  } else { ramoCard.style.display='none'; }
-
-  // Previsão de fechamento — propostas abertas do vendedor
-  const propAbertas=todasPropostas.filter(p=>p.status==='aberta'&&(!vendedor||p.vendedor.trim()===vendedor));
-  const divPrev=document.getElementById('dashPrevisao');
-  const divPrevTotal=document.getElementById('dashPrevisaoTotal');
-
-  if(!propAbertas.length){
-    divPrev.innerHTML='<div class="empty-state" style="padding:24px 0"><div class="icon">📄</div>Nenhuma proposta aberta</div>';
-    divPrevTotal.style.display='none';
-  } else {
-    let totalPrevPonderado=0;
-    divPrev.innerHTML=propAbertas.map(p=>{
-      const comEst=(+p.premio_liquido||0)*(+p.percentual_comissao||0)/100;
-      const prob=p.probabilidade??50;
-      const prevPond=comEst*(prob/100);
-      totalPrevPonderado+=prevPond;
-      const probCls=prob>=70?'prob-high':prob>=40?'prob-med':'prob-low';
-      const dataFecha=p.previsao_fechamento?`· Fecha ${fmtData(p.previsao_fechamento)}`:'';
-      return `<div class="dash-prop-item">
-        <div>
-          <div style="font-weight:500;font-size:13px">${p.segurado}</div>
-          <div style="font-size:11.5px;color:var(--text-3)">${p.ramo} · ${p.cia} ${dataFecha}</div>
-        </div>
-        <div class="dash-prop-prob">
-          <div style="text-align:right;font-size:12px;color:var(--text-2)">${fmt(comEst)}<br><span style="font-size:11px;color:var(--text-3)">est. comissão</span></div>
-          <span class="prob-pill ${probCls}">${prob}%</span>
-          <div style="text-align:right;font-size:12px;font-weight:600;color:var(--accent)">${fmt(prevPond)}<br><span style="font-size:11px;color:var(--text-3);font-weight:400">ponderado</span></div>
-        </div>
-      </div>`;
-    }).join('');
-
-    divPrevTotal.style.display='block';
-    document.getElementById('dashPrevTotal').textContent=fmt(totalPrevPonderado);
-    document.getElementById('dashPrevSub').textContent=`${propAbertas.length} proposta${propAbertas.length!==1?'s':''} em aberto`;
-    document.getElementById('dashProjTotal').textContent=fmt(minhaCom+totalPrevPonderado);
-  }
-
-  // Últimas vendas pessoais
-  const ultimas=minhasVendas.slice(0,6);
-  const tbody=document.getElementById('tbodyDash');
-  const empty=document.getElementById('emptyDash');
-  if(!ultimas.length){tbody.innerHTML='';empty.style.display='block';}
-  else{
-    empty.style.display='none';
-    tbody.innerHTML=ultimas.map(v=>`
-      <tr>
-        <td>${fmtData(v.data)}</td>
-        <td style="max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${v.segurado}</td>
-        <td><span class="ramo-badge ${ramoClass(v.ramo)}">${v.ramo}</span></td>
-        <td>${v.cia}</td>
-        <td class="val-green">${fmt(v.comissao)}</td>
-      </tr>`).join('');
-  }
-}
-
-// ── IMPORTAÇÃO ────────────────────────────────────────────────────────
-let importRowsFinal = [];
-
-const MESES_IMPORT = {
-  'jan':'01','fev':'02','mar':'03','abr':'04','mai':'05','jun':'06',
-  'jul':'07','ago':'08','set':'09','out':'10','nov':'11','dez':'12','abril':'04'
-};
-
-function abrirModalImport(){
-  importRowsFinal = [];
-  document.getElementById('importFile').value='';
-  document.getElementById('importMapWrap').style.display='none';
-  document.getElementById('importPreviewWrap').style.display='none';
-  document.getElementById('importProgressWrap').style.display='none';
-  document.getElementById('importResult').style.display='none';
-  document.getElementById('btnImportar').style.display='none';
-  document.getElementById('importDropzone').innerHTML=`<div style="font-size:36px;margin-bottom:8px">📂</div><div style="font-weight:500;color:var(--text-2)">Clique para selecionar ou arraste o arquivo aqui</div><div style="font-size:12px;color:var(--text-3);margin-top:4px">.xlsx — formato Syros/Creta</div>`;
-  document.getElementById('modalImport').classList.add('open');
-  const dz=document.getElementById('importDropzone');
-  dz.ondragover=e=>{e.preventDefault();dz.classList.add('drag')};
-  dz.ondragleave=()=>dz.classList.remove('drag');
-  dz.ondrop=e=>{e.preventDefault();dz.classList.remove('drag');const f=e.dataTransfer.files[0];if(f)processarArquivo(f)};
-}
-function fecharModalImport(e){if(e.target===document.getElementById('modalImport'))fecharModalImportDireto();}
-function fecharModalImportDireto(){document.getElementById('modalImport').classList.remove('open');}
-function lerArquivoImport(input){const f=input.files[0];if(f)processarArquivo(f);}
-
-function abaParaMes(nome){
-  const n=nome.toLowerCase().trim().replace(/\./g,'');
-  for(const[m,num] of Object.entries(MESES_IMPORT)){
-    if(n.startsWith(m)){
-      const ano=n.match(/(\d{2,4})/);
-      if(ano){let y=parseInt(ano[1]);if(y<100)y+=2000;return`${y}-${num}`;}
-    }
-  }
-  return null;
-}
-
-function parseNumImport(val){
-  if(val===null||val===undefined) return null;
-  if(typeof val==='number') return isNaN(val)?null:val;
-  const s=String(val).trim();
-  if(s.startsWith('=')||s===''||s==='None') return null;
-  // Tratar formatos especiais de percentual: "100/25%", "100 e 35%", "120/40%"
-  // → pegar o último número como percentual real pago
-  const multSlash=s.match(/[\d.]+[\s\/e]+([\d.]+)%?$/i);
-  if(multSlash) return parseFloat(multSlash[1]);
-  let clean=s.replace(/R\$\s*/g,'').replace(/%/g,'').trim();
-  if(clean.includes(',')&&clean.includes('.')) clean=clean.replace(/\./g,'').replace(',','.');
-  else if(clean.includes(',')) clean=clean.replace(',','.');
-  const n=parseFloat(clean);
-  return isNaN(n)?null:n;
-}
-
-function parseDataImport(val, mesAba){
-  if(val instanceof Date){
-    const y=val.getFullYear(),m=String(val.getMonth()+1).padStart(2,'0'),d=String(val.getDate()).padStart(2,'0');
-    return `${y}-${m}-${d}`;
-  }
-  if(val&&typeof val==='string'){
-    const s=val.trim();
-    const m=s.match(/^(\d{1,2})[\/-](\d{1,2})[\/-](\d{2,4})$/);
-    if(m){let y=parseInt(m[3]);if(y<100)y+=2000;return`${y}-${m[2].padStart(2,'0')}-${m[1].padStart(2,'0')}`;}
-  }
-  return mesAba?mesAba+'-01':null;
-}
-
-function processarArquivo(file){
-  document.getElementById('importDropzone').innerHTML=`<div style="font-size:36px;margin-bottom:8px">⏳</div><div style="font-weight:500;color:var(--text-2)">Lendo ${file.name}...</div>`;
-  const reader=new FileReader();
-  reader.onload=e=>{
-    try{
-      // Ler com raw:true para preservar valores numéricos exatos das células
-      const wb=XLSX.read(new Uint8Array(e.target.result),{type:'array',cellDates:true,cellNF:false,cellFormula:false,cellText:false});
-      let todos=[];let abasProcessadas=0;
-
-      wb.SheetNames.forEach(nomAba=>{
-        const mesAba=abaParaMes(nomAba);
-        if(!mesAba) return;
-
-        const ws=wb.Sheets[nomAba];
-        // Remover fórmulas para forçar leitura do valor calculado (campo v)
-        Object.keys(ws).forEach(addr=>{
-          if(ws[addr]&&ws[addr].f){
-            ws[addr]={v:ws[addr].v, t:ws[addr].t}; // manter só value e type
-          }
-        });
-        const rows=XLSX.utils.sheet_to_json(ws,{header:1,defval:null,raw:true});
-
-        // Achar linha do cabeçalho
-        let headerIdx=-1;
-        for(let i=0;i<Math.min(5,rows.length);i++){
-          if(rows[i].some(v=>String(v||'').toLowerCase().includes('segurado'))){headerIdx=i;break;}
-        }
-        if(headerIdx<0) return;
-        abasProcessadas++;
-
-        for(let i=headerIdx+1;i<rows.length;i++){
-          const row=rows[i];
-          if(!row||row.length<8) continue;
-          const segurado=String(row[1]||'').trim();
-          const vendedor=String(row[7]||'').trim();
-          if(!segurado||['-','None','Segurado:',''].includes(segurado)) continue;
-          if(!vendedor||['Vendedor:','None',''].includes(vendedor)) continue;
-          if(segurado.startsWith('=')||vendedor.startsWith('=')) continue;
-          // Ignorar linhas de resumo/metas
-          if(['varejo','vida mensal','extras','meta','executivos','sdr','total','comissão'].some(k=>segurado.toLowerCase().includes(k))) continue;
-
-          const pl=parseNumImport(row[4]);
-          if(pl===null||pl<=0) continue;
-          // Data pode ser None em algumas linhas — usar data da aba como fallback
-
-          let pct=parseNumImport(row[5])||0;
-          // Percentuais como "100/25%" — pegar o segundo valor
-          if(String(row[5]||'').includes('/')){
-            const parts=String(row[5]).split('/');
-            const p2=parseFloat(parts[1]);
-            if(!isNaN(p2)) pct=p2/100;
-          } else if(pct>1) pct=pct/100;
-
-          // Usar comissão SEMPRE da coluna G (valor já calculado na planilha)
-          const rawG = row[6];
-          const comissaoBruta = parseNumImport(rawG);
-          const comissao = (comissaoBruta !== null && !isNaN(comissaoBruta))
-            ? Math.round(comissaoBruta * 100) / 100
-            : 0;
-          const data=parseDataImport(row[0],mesAba)||mesAba+'-01';
-          const ramo=String(row[2]||'').trim()||'Outro';
-          const cia=String(row[3]||'').trim()||'—';
-          const sdr=row[8]?String(row[8]).trim():null;
-
-          todos.push({
-            data, segurado, ramo, cia,
-            premio_liquido: pl,
-            percentual_comissao: pct, // já está em % (ex: 20, 200, 25)
-            comissao, vendedor,
-            sdr_indicacao: sdr&&!['None','EMITIDA','PROP RECUSADA','Cancelada'].includes(sdr)?sdr:null,
-            _aba: nomAba
-          });
-        }
-      });
-
-      importRowsFinal=todos;
-      document.getElementById('importDropzone').innerHTML=`<div style="font-size:36px;margin-bottom:8px">✅</div><div style="font-weight:500;color:var(--green)">${file.name}</div><div style="font-size:12px;color:var(--text-3);margin-top:4px">${abasProcessadas} abas · ${todos.length} registros encontrados</div>`;
-      renderPreviewImport(todos);
-    }catch(err){
-      showToast('Erro ao ler: '+err.message,'error');
-      document.getElementById('importDropzone').innerHTML=`<div style="font-size:36px;margin-bottom:8px">❌</div><div style="font-weight:500;color:var(--danger)">Erro ao ler arquivo</div>`;
-    }
-  };
-  reader.readAsArrayBuffer(file);
-}
-
-function renderPreviewImport(todos){
-  document.getElementById('importMapWrap').style.display='none';
-  document.getElementById('importPreviewCount').textContent=todos.length;
-  document.getElementById('importErrosCount').style.display='none';
-
-  // Agrupar por aba para mostrar resumo
-  const porAba={};
-  todos.forEach(r=>{porAba[r._aba]=(porAba[r._aba]||0)+1;});
-
-  document.getElementById('importPreviewHead').innerHTML=`<tr style="background:var(--bg)">
-    ${['Data','Segurado','Ramo','Seguradora','PL','%','Comissão','Vendedor','SDR'].map(h=>`<th style="padding:8px 10px;font-size:11px;font-weight:600;text-transform:uppercase;color:var(--text-3);border-bottom:1px solid var(--border);white-space:nowrap">${h}</th>`).join('')}
-  </tr>`;
-
-  document.getElementById('importPreviewBody').innerHTML=todos.slice(0,20).map(r=>`
-    <tr>
-      <td style="padding:6px 10px;font-size:12px;border-bottom:1px solid var(--border);white-space:nowrap">${r.data}</td>
-      <td style="padding:6px 10px;font-size:12px;border-bottom:1px solid var(--border);max-width:130px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${r.segurado}</td>
-      <td style="padding:6px 10px;font-size:12px;border-bottom:1px solid var(--border)">${r.ramo}</td>
-      <td style="padding:6px 10px;font-size:12px;border-bottom:1px solid var(--border)">${r.cia}</td>
-      <td style="padding:6px 10px;font-size:12px;border-bottom:1px solid var(--border)">${fmt(r.premio_liquido)}</td>
-      <td style="padding:6px 10px;font-size:12px;border-bottom:1px solid var(--border)">${r.percentual_comissao}%</td>
-      <td style="padding:6px 10px;font-size:12px;border-bottom:1px solid var(--border);color:var(--green);font-weight:600">${fmt(r.comissao)}</td>
-      <td style="padding:6px 10px;font-size:12px;border-bottom:1px solid var(--border)">${r.vendedor}</td>
-      <td style="padding:6px 10px;font-size:12px;border-bottom:1px solid var(--border);color:var(--text-3)">${r.sdr_indicacao||'—'}</td>
-    </tr>`).join('');
-
-  document.getElementById('importPreviewWrap').style.display='block';
-  const btn=document.getElementById('btnImportar');
-  btn.style.display='inline-flex';
-  document.getElementById('btnImportarCount').textContent=todos.length;
-}
-
-async function executarImport(){
-  if(!importRowsFinal.length){showToast('Nenhum registro para importar.','error');return;}
-  const btn=document.getElementById('btnImportar');
-  btn.disabled=true;
-  document.getElementById('importProgressWrap').style.display='block';
-  document.getElementById('importResult').style.display='none';
-
-  const payload=importRowsFinal.map(r=>({
-    data:r.data, segurado:r.segurado, ramo:r.ramo, cia:r.cia,
-    premio_liquido:r.premio_liquido,
-    percentual_comissao:r.percentual_comissao,
-    comissao:r.comissao, // valor direto da coluna G da planilha
-    vendedor:r.vendedor,
-    sdr_indicacao:r.sdr_indicacao||null,
-  }));
-
-  const BATCH=100;
-  let importados=0,erros=0;
-  for(let i=0;i<payload.length;i+=BATCH){
-    const lote=payload.slice(i,i+BATCH);
-    const{error}=await db.from('vendas').insert(lote);
-    if(error) erros+=lote.length; else importados+=lote.length;
-    const pct=Math.min(100,Math.round(((i+BATCH)/payload.length)*100));
-    document.getElementById('importProgressBar').style.width=pct+'%';
-    document.getElementById('importProgressLabel').textContent=`Importando... ${Math.min(i+BATCH,payload.length)} de ${payload.length}`;
-    await new Promise(r=>setTimeout(r,30));
-  }
-
-  btn.disabled=false;
-  const res=document.getElementById('importResult');
-  res.style.display='block';
-  if(erros===0){
-    res.style.cssText='background:var(--green-light);color:var(--green);border:1px solid #bbf7d0;border-radius:var(--radius-sm);padding:12px 16px;font-size:13px;margin-bottom:16px';
-    res.textContent=`✅ ${importados} registros importados com sucesso!`;
-    showToast(`${importados} vendas importadas!`,'success');
-    await carregarVendas();
-    setTimeout(fecharModalImportDireto,2500);
-  }else{
-    res.style.cssText='background:var(--danger-light);color:var(--danger);border:1px solid #f5c6c2;border-radius:var(--radius-sm);padding:12px 16px;font-size:13px;margin-bottom:16px';
-    res.textContent=`⚠️ ${importados} importados, ${erros} com erro.`;
-  }
-}
-
-// ── CRM CARTEIRA ──────────────────────────────────────────────────────
-let todosClientes=[], todasTarefas=[];
-let clienteDetalheId=null;
-let produtosTemp={auto:false,residencial:false,vida:false,saude:false,empresarial:false,cartao:false,outros:false};
-
-const TODOS_PRODUTOS=[
-  {key:'auto',label:'🚗 Auto'},
-  {key:'residencial',label:'🏠 Residencial'},
-  {key:'vida',label:'❤️ Vida'},
-  {key:'saude',label:'🏥 Saúde'},
-  {key:'empresarial',label:'🏢 Empresarial'},
-  {key:'cartao',label:'💳 Cartão'},
-  {key:'outros',label:'📦 Outros'},
-];
-
-async function carregarCRM(){
-  const el=document.getElementById('clientesContainer');
-  if(el) el.innerHTML='<div style="padding:20px;font-size:13px;color:var(--text-2)">Carregando carteira...</div>';
-
-  // Garantir perfil
-  if(!currentProfile?.vendedor && currentUser){
-    const{data}=await db.from('profiles').select('*').eq('id',currentUser.id).single();
-    if(data) currentProfile=data;
-  }
-  const vendedor=(currentProfile?.vendedor||'').trim();
-
-  // Buscar TUDO sem filtro
-  const{data:d1,error:e1}=await db.from('carteira').select('*').order('nome');
-  const{data:d2,error:e2}=await db.from('lembretes').select('*').order('data_lembrete');
-
-  if(el) el.innerHTML=`<div style="padding:16px;font-size:12px;background:#f0f4ff;border-radius:8px;margin-bottom:16px">
-    <b>Debug:</b> perfil=${JSON.stringify(currentProfile?.vendedor)} |
-    carteira total=${(d1||[]).length} | erro=${e1?.message||'nenhum'} |
-    vendedores=${[...new Set((d1||[]).map(x=>x.vendedor))].join(', ')}
-  </div>`;
-
-  todosClientes=d1||[];
-  todasTarefas=d2||[];
-  renderClientes();
-  renderTarefasView();
-  renderOportunidades();
-  // Badge tarefas vencidas
-  const hoje=new Date();
-  const venc=(todasTarefas||[]).filter(t=>t.status==='pendente'&&t.data_lembrete&&new Date(t.data_lembrete)<hoje);
-  const nav=document.getElementById('nav-tarefas_view');
-  if(nav) nav.innerHTML=`<span class="icon">✅</span> Tarefas${venc.length?` <span style="background:#ef4444;color:#fff;border-radius:99px;font-size:10px;padding:1px 6px">${venc.length}</span>`:''}`;
-}
-
-function ramoParaProduto(ramo){
-  const r=(ramo||'').toLowerCase();
-  if(r.includes('auto')||r.includes('moto')) return 'auto';
-  if(r.includes('resid')) return 'residencial';
-  if(r.includes('vida')) return 'vida';
-  if(r.includes('saúde')||r.includes('saude')||r.includes('plano')||r.includes('dental')) return 'saude';
-  if(r.includes('empres')||r.includes('rc ')||r.includes('rco')||r.includes('condom')) return 'empresarial';
-  if(r.includes('cartão')||r.includes('cartao')) return 'cartao';
-  return 'outros';
-}
-
-function produtosDasVendas(nome){
-  const prods={auto:false,residencial:false,vida:false,saude:false,empresarial:false,cartao:false,outros:false};
-  const n=(nome||'').toLowerCase().trim();
-  todasVendas.filter(v=>(v.segurado||'').toLowerCase().trim()===n).forEach(v=>{
-    const p=ramoParaProduto(v.ramo);
-    if(p) prods[p]=true;
-  });
-  return prods;
-}
-
-// ── RENDER CLIENTES ───────────────────────────────────────────────────
-function renderClientes(){
-  const el=document.getElementById('clientesContainer');
-  if(!el) return;
-
-  if(!currentProfile){
-    el.innerHTML='<div style="text-align:center;padding:32px;color:var(--text-3)">Carregando...</div>';
-    return;
-  }
-
-  const busca=(document.getElementById('buscaCliente')?.value||'').toLowerCase();
-  const filtro=(document.getElementById('filtroRamoCliente')?.value)||'';
-  const ordem=(document.getElementById('ordenacaoCliente')?.value)||'ltv_desc';
-
-  // Enriquecer todos os clientes
-  const enriquecer=cl=>{
-    const pv=produtosDasVendas(cl.nome);
-    const vc=todasVendas.filter(v=>(v.segurado||'').toLowerCase().trim()===(cl.nome||'').toLowerCase().trim());
-    const ltv=vc.reduce((s,v)=>s+(+v.comissao||0),0);
-    const r={...cl,
-      tem_auto:!!(cl.tem_auto||pv.auto), tem_residencial:!!(cl.tem_residencial||pv.residencial),
-      tem_vida:!!(cl.tem_vida||pv.vida), tem_saude:!!(cl.tem_saude||pv.saude),
-      tem_empresarial:!!(cl.tem_empresarial||pv.empresarial), tem_cartao:!!(cl.tem_cartao||pv.cartao),
-      tem_outros:!!(cl.tem_outros||pv.outros),
+  if(dashPeriodoAtual==='mes'){
+    const mes=document.getElementById('dashMesSel')?.value||`${agora.getFullYear()}-${String(agora.getMonth()+1).padStart(2,'0')}`;
+    return{
+      vendas:vendasDoMes(mes).filter(filtrar),
+      label:fmtMesLabel(mes),
+      mes,
+      isMes:true,
     };
-    r._ltv=ltv; r._np=TODOS_PRODUTOS.filter(p=>r['tem_'+p.key]).length; r._ult=vc[0]?.data||'';
-    return r;
-  };
-
-  const todos=todosClientes.map(enriquecer);
-
-  // Separar principais e sub-clientes
-  const principais=todos.filter(cl=>!cl.cliente_principal_id);
-  const subs=todos.filter(cl=>!!cl.cliente_principal_id);
-
-  // Aplicar filtros nos principais
-  let lista=principais;
-  if(busca) lista=lista.filter(cl=>{
-    const subsDeste=subs.filter(s=>s.cliente_principal_id===cl.id);
-    return (cl.nome||'').toLowerCase().includes(busca)||
-           subsDeste.some(s=>(s.nome||'').toLowerCase().includes(busca));
-  });
-  if(filtro){
-    const sem=filtro.startsWith('sem_');
-    const campo='tem_'+(sem?filtro.slice(4):filtro);
-    lista=lista.filter(cl=>{
-      const subsDeste=subs.filter(s=>s.cliente_principal_id===cl.id);
-      if(sem) return !cl[campo]&&subsDeste.every(s=>!s[campo]);
-      return !!cl[campo]||subsDeste.some(s=>!!s[campo]);
-    });
   }
 
-  // Calcular LTV consolidado do grupo
-  lista=lista.map(cl=>{
-    const subsDeste=subs.filter(s=>s.cliente_principal_id===cl.id).map(enriquecer);
-    const ltvGrupo=cl._ltv+subsDeste.reduce((s,x)=>s+x._ltv,0);
-    // Produtos do grupo (união)
-    const prodsGrupo={};
-    TODOS_PRODUTOS.forEach(p=>{
-      prodsGrupo[p.key]=cl['tem_'+p.key]||subsDeste.some(s=>s['tem_'+p.key]);
-    });
-    return{...cl,_subs:subsDeste,_ltvGrupo:ltvGrupo,_prodsGrupo:prodsGrupo};
-  });
-
-  // Ordenar
-  lista.sort((a,b)=>{
-    if(ordem==='ltv_asc') return a._ltvGrupo-b._ltvGrupo;
-    if(ordem==='produtos_desc') return b._np-a._np;
-    if(ordem==='produtos_asc') return a._np-b._np;
-    if(ordem==='nome_asc') return(a.nome||'').localeCompare(b.nome||'');
-    if(ordem==='nome_desc') return(b.nome||'').localeCompare(a.nome||'');
-    if(ordem==='recente') return(b._ult||'').localeCompare(a._ult||'');
-    return b._ltvGrupo-a._ltvGrupo;
-  });
-
-  if(!lista.length){
-    el.innerHTML=`<div style="text-align:center;padding:48px 0;color:var(--text-3)">
-      <div style="font-size:36px;margin-bottom:10px">👥</div>
-      <div style="margin-bottom:16px">${todosClientes.length?'Nenhum encontrado':'Nenhum cliente ainda'}</div>
-      <button class="btn btn-primary" onclick="abrirModalCliente()">➕ Adicionar primeiro cliente</button>
-    </div>`;
-    return;
-  }
-
-  el.innerHTML=lista.map(cl=>{
-    const temSubs=cl._subs&&cl._subs.length>0;
-    const initials=(cl.nome||'?').split(' ').map(w=>w[0]).slice(0,2).join('').toUpperCase();
-    const ltvStr=cl._ltvGrupo>0?`<span class="grupo-ltv">LTV ${fmt(cl._ltvGrupo)}</span>`:'';
-    const tars=(todasTarefas||[]).filter(t=>t.cliente_id===cl.id&&t.status==='pendente');
-    const venc=tars.filter(t=>t.data_lembrete&&new Date(t.data_lembrete)<new Date());
-    const badge=tars.length?`<div class="cliente-tarefas-badge" style="${venc.length?'background:#ef4444':''}">${tars.length}</div>`:'';
-
-    // Produtos consolidados do grupo
-    const prods=TODOS_PRODUTOS.map(p=>`<span class="prod-tag ${cl._prodsGrupo[p.key]?'tem':'nao-tem'}">${p.label}</span>`).join('');
-
-    if(temSubs){
-      // Card de grupo com sub-clientes
-      const subsHtml=cl._subs.map(s=>{
-        const stars=(todasTarefas||[]).filter(t=>t.cliente_id===s.id&&t.status==='pendente');
-        return`<div class="subcliente-card" onclick="abrirDetalheCliente('${s.id}')">
-          <span style="font-size:18px">${s.tipo==='PJ'?'🏢':'👤'}</span>
-          <div style="flex:1;min-width:0">
-            <div class="subcliente-nome">${s.nome}</div>
-            <div class="subcliente-info">${s.tipo||'PF'}${s.telefone?' · '+s.telefone:''}</div>
-          </div>
-          <div style="text-align:right">
-            <div class="subcliente-ltv">${s._ltv>0?fmt(s._ltv):''}</div>
-            ${stars.length?`<span style="font-size:10px;color:var(--accent)">📌 ${stars.length}</span>`:''}
-          </div>
-        </div>`;
-      }).join('');
-
-      return`<div class="grupo-card" id="grupo-${cl.id}">
-        ${badge}
-        <div class="grupo-header" onclick="toggleGrupo('${cl.id}')">
-          <div class="grupo-header-left">
-            <div class="grupo-avatar">${initials}</div>
-            <div style="flex:1;min-width:0">
-              <div class="grupo-nome">${cl.nome}</div>
-              <div class="grupo-meta">${cl.tipo||'PF'}${cl.telefone?' · '+cl.telefone:''} · ${cl._subs.length+1} pessoas no grupo</div>
-              <div class="grupo-tags">${prods}</div>
-            </div>
-          </div>
-          <div style="display:flex;align-items:center;gap:12px">
-            ${ltvStr}
-            <span class="grupo-chevron" id="chev-${cl.id}">▼</span>
-          </div>
-        </div>
-        <div class="grupo-body" id="body-${cl.id}">
-          <div class="subcliente-card" onclick="abrirDetalheCliente('${cl.id}')">
-            <span style="font-size:18px">⭐</span>
-            <div style="flex:1;min-width:0">
-              <div class="subcliente-nome">${cl.nome} <span style="font-size:10px;background:var(--accent);color:#fff;padding:1px 6px;border-radius:99px;margin-left:4px">principal</span></div>
-              <div class="subcliente-info">${cl.tipo||'PF'}${cl.telefone?' · '+cl.telefone:''}</div>
-            </div>
-            <div class="subcliente-ltv">${cl._ltv>0?fmt(cl._ltv):''}</div>
-          </div>
-          ${subsHtml}
-          <button class="grupo-add-sub" onclick="abrirModalVincular('${cl.id}','${cl.nome.replace(/'/g,"\\'")}')">
-            ➕ Vincular outro cliente a este grupo
-          </button>
-        </div>
-      </div>`;
-    } else {
-      // Card simples (sem sub-clientes)
-      const pct=Math.round(cl._np/TODOS_PRODUTOS.length*100);
-      return`<div class="solo-card" id="solo-${cl.id}" style="position:relative">
-        ${badge}
-        <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:4px">
-          <div style="display:flex;align-items:center;gap:10px;flex:1;min-width:0" onclick="abrirDetalheCliente('${cl.id}')">
-            <div class="grupo-avatar" style="width:34px;height:34px;font-size:13px">${initials}</div>
-            <div>
-              <div class="cliente-nome" style="margin-bottom:2px">${cl.nome}</div>
-              <div class="cliente-info">${[cl.tipo,cl.telefone,cl.email].filter(Boolean).join(' · ')||'Sem contato'}</div>
-            </div>
-          </div>
-          <div style="display:flex;align-items:center;gap:8px">
-            ${ltvStr}
-            <button onclick="abrirModalVincular(null,'',null,'${cl.id}','${cl.nome.replace(/'/g,"\\'")}');event.stopPropagation()"
-              title="Vincular a um grupo" style="background:none;border:1px solid var(--border);border-radius:4px;padding:3px 8px;font-size:11px;cursor:pointer;color:var(--text-3)">+ grupo</button>
-          </div>
-        </div>
-        <div onclick="abrirDetalheCliente('${cl.id}')">
-          <div class="cliente-produtos">${prods}</div>
-          <div style="font-size:11px;color:var(--text-3);margin-bottom:4px">${cl._np} de ${TODOS_PRODUTOS.length} produtos · ${pct}%</div>
-          <div class="oportunidade-bar"><div class="oportunidade-fill" style="width:${pct}%"></div></div>
-        </div>
-      </div>`;
-    }
-  }).join('');
+  const n=parseInt(dashPeriodoAtual)||6;
+  const meses=getMeses(n);
+  const vendas=meses.flatMap(m=>vendasDoMes(m)).filter(filtrar);
+  return{vendas, label:`Últimos ${n} meses`, mes:null, isMes:false, meses};
 }
 
-function toggleGrupo(id){
-  const body=document.getElementById('body-'+id);
-  const chev=document.getElementById('chev-'+id);
-  const header=document.querySelector(`#grupo-${id} .grupo-header`);
-  if(!body) return;
-  const open=body.classList.toggle('open');
-  if(chev) chev.classList.toggle('open',open);
-  if(header) header.classList.toggle('expanded',open);
-}
-
-
-// ── RENDER OPORTUNIDADES ──────────────────────────────────────────────
-function renderOportunidades(){
-  const el=document.getElementById('oportunidadesGrid');
-  if(!el) return;
-  const lista=todosClientes.map(cl=>{
-    const pv=produtosDasVendas(cl.nome);
-    const m={...cl,tem_auto:!!(cl.tem_auto||pv.auto),tem_residencial:!!(cl.tem_residencial||pv.residencial),tem_vida:!!(cl.tem_vida||pv.vida),tem_saude:!!(cl.tem_saude||pv.saude),tem_empresarial:!!(cl.tem_empresarial||pv.empresarial),tem_cartao:!!(cl.tem_cartao||pv.cartao)};
-    return{...m,faltam:TODOS_PRODUTOS.filter(p=>!m['tem_'+p.key])};
-  }).filter(x=>x.faltam.length>0).sort((a,b)=>b.faltam.length-a.faltam.length);
-  if(!lista.length){el.innerHTML='<div class="empty-state"><div class="icon">🎉</div>Todos os clientes têm todos os produtos!</div>';return;}
-  el.innerHTML=`<div class="card" style="padding:0"><div class="table-wrap"><table style="width:100%;border-collapse:collapse;font-size:13px">
-    <thead><tr>${['Cliente','Tem','Oportunidades',''].map(h=>`<th style="padding:10px 14px;text-align:left;font-size:11px;font-weight:600;text-transform:uppercase;color:var(--text-3);border-bottom:1px solid var(--border)">${h}</th>`).join('')}</tr></thead>
-    <tbody>${lista.map(cl=>`<tr style="border-bottom:1px solid var(--border)">
-      <td style="padding:10px 14px;font-weight:500">${cl.nome}<br><span style="font-size:11px;color:var(--text-3)">${cl.telefone||''}</span></td>
-      <td style="padding:10px 14px">${TODOS_PRODUTOS.filter(p=>cl['tem_'+p.key]).map(p=>`<span class="prod-tag tem" style="margin:2px">${p.label}</span>`).join('')||'—'}</td>
-      <td style="padding:10px 14px">${cl.faltam.map(p=>`<span class="prod-tag nao-tem" style="margin:2px">${p.label}</span>`).join('')}</td>
-      <td style="padding:10px 14px"><button class="btn btn-ghost" style="font-size:11px;padding:5px 10px" onclick="abrirDetalheCliente('${cl.id}')">Ver →</button></td>
-    </tr>`).join('')}</tbody>
-  </table></div></div>`;
-}
-
-// ── DETALHE CLIENTE ───────────────────────────────────────────────────
-function abrirDetalheCliente(id){
-  clienteDetalheId=id;
-  const cl=todosClientes.find(x=>x.id===id);
-  if(!cl) return;
-  const pv=produtosDasVendas(cl.nome);
-  const mg={...cl,tem_auto:!!(cl.tem_auto||pv.auto),tem_residencial:!!(cl.tem_residencial||pv.residencial),tem_vida:!!(cl.tem_vida||pv.vida),tem_saude:!!(cl.tem_saude||pv.saude),tem_empresarial:!!(cl.tem_empresarial||pv.empresarial),tem_cartao:!!(cl.tem_cartao||pv.cartao),tem_outros:!!(cl.tem_outros||pv.outros)};
-  // Mostrar botão desvincular se for sub-cliente
-  const btnDesv=document.getElementById('btnDesvincular');
-  if(btnDesv) btnDesv.style.display=cl.cliente_principal_id?'inline-flex':'none';
-  document.getElementById('detalheNome').textContent=cl.nome;
-  document.getElementById('detalheInfo').textContent=[cl.tipo,cl.documento,cl.telefone,cl.email].filter(Boolean).join(' · ')||'Sem contato';
-  document.getElementById('detalheProdutos').innerHTML=TODOS_PRODUTOS.map(p=>`
-    <div class="produto-chip ${mg['tem_'+p.key]?'tem':'nao-tem'}" onclick="toggleProdutoDetalhe('${id}','${p.key}',${!mg['tem_'+p.key]})">
-      ${p.label}<br><span style="font-size:10px">${mg['tem_'+p.key]?'✅ Possui':'❌ Não tem'}</span>
-    </div>`).join('');
-  const vc=todasVendas.filter(v=>(v.segurado||'').toLowerCase().trim()===cl.nome.toLowerCase().trim()).slice(0,8);
-  document.getElementById('detalheVendas').innerHTML=vc.length
-    ?`<div style="border:1px solid var(--border);border-radius:var(--radius-sm);overflow:hidden"><table style="width:100%;border-collapse:collapse;font-size:12px">
-        <thead><tr>${['Data','Ramo','Seguradora','Comissão'].map(h=>`<th style="padding:7px 10px;background:var(--bg);text-align:left;font-size:10px;font-weight:600;text-transform:uppercase;color:var(--text-3);border-bottom:1px solid var(--border)">${h}</th>`).join('')}</tr></thead>
-        <tbody>${vc.map(v=>`<tr style="border-bottom:1px solid var(--border)"><td style="padding:7px 10px">${fmtData(v.data)}</td><td style="padding:7px 10px">${v.ramo}</td><td style="padding:7px 10px">${v.cia}</td><td style="padding:7px 10px;color:var(--green);font-weight:600">${fmt(v.comissao)}</td></tr>`).join('')}</tbody>
-      </table></div>`
-    :'<div style="font-size:13px;color:var(--text-3);padding:8px 0">Nenhuma venda registrada.</div>';
-  renderTarefasDetalhe(id);
-  document.getElementById('modalDetalhe').classList.add('open');
-}
-
-function renderTarefasDetalhe(cid){
-  const tars=(todasTarefas||[]).filter(t=>t.cliente_id===cid).sort((a,b)=>new Date(a.data_lembrete||0)-new Date(b.data_lembrete||0));
-  const div=document.getElementById('detalheTarefas');
-  if(!tars.length){div.innerHTML='<div style="font-size:13px;color:var(--text-3);padding:8px 0">Nenhuma tarefa ainda.</div>';return;}
-  const hoje=new Date();
-  div.innerHTML=tars.map(t=>{
-    const done=t.status==='concluida';
-    const venc=!done&&t.data_lembrete&&new Date(t.data_lembrete)<hoje;
-    return`<div class="tarefa-item">
-      <div class="tarefa-check ${done?'done':''}" onclick="toggleTarefa('${t.id}','${cid}')">${done?'✓':''}</div>
-      <div style="flex:1">
-        <div class="tarefa-titulo ${done?'done':''}">${t.titulo}</div>
-        ${t.descricao?`<div style="font-size:12px;color:var(--text-3);margin-top:2px">${t.descricao}</div>`:''}
-        ${t.data_lembrete?`<div class="tarefa-data ${venc?'vencida':''}">${venc?'⚠️ Venceu em ':'📅 '}${fmtDataHora(t.data_lembrete)}</div>`:''}
-      </div>
-      <div style="display:flex;gap:4px">
-        <button class="action-btn" onclick="editarTarefa('${t.id}')">✏️</button>
-        <button class="action-btn" onclick="deletarTarefa('${t.id}','${cid}')">🗑️</button>
-      </div>
-    </div>`;
-  }).join('');
-}
-
-async function toggleProdutoDetalhe(cid,prod,val){
-  await db.from('carteira').update({['tem_'+prod]:val}).eq('id',cid);
-  await carregarCRM();
-  abrirDetalheCliente(cid);
-}
-function fecharModalDetalhe(e){
-  if(!e||e.target===document.getElementById('modalDetalhe')){
-    document.getElementById('modalDetalhe').classList.remove('open');
-    clienteDetalheId=null;
-  }
-}
-function editarClienteAtual(){fecharModalDetalhe();if(clienteDetalheId)setTimeout(()=>abrirModalCliente(clienteDetalheId),100);}
-async function deletarClienteAtual(){
-  if(!clienteDetalheId||!confirm('Excluir este cliente?'))return;
-  await db.from('carteira').delete().eq('id',clienteDetalheId);
-  fecharModalDetalhe();
-  await carregarCRM();
-  showToast('Cliente excluído.','success');
-}
-
-// ── MODAL CLIENTE ─────────────────────────────────────────────────────
-function abrirModalCliente(id){
-  produtosTemp={auto:false,residencial:false,vida:false,saude:false,empresarial:false,cartao:false,outros:false};
-  document.getElementById('cli_id').value=id||'';
-  document.getElementById('modalClienteTitulo').textContent=id?'Editar Cliente':'Novo Cliente';
-  const tabsWrap=document.getElementById('cliTabsWrap');
-  if(tabsWrap) tabsWrap.style.display=id?'none':'flex';
-  switchCliTab('manual');
-  if(id){
-    const cl=todosClientes.find(x=>x.id===id);
-    if(cl){
-      document.getElementById('cli_nome').value=cl.nome||'';
-      document.getElementById('cli_tel').value=cl.telefone||'';
-      document.getElementById('cli_email').value=cl.email||'';
-      document.getElementById('cli_doc').value=cl.documento||'';
-      document.getElementById('cli_tipo').value=cl.tipo||'PF';
-      document.getElementById('cli_origem').value=cl.origem||'manual';
-      document.getElementById('cli_obs').value=cl.observacoes||'';
-      produtosTemp={auto:!!cl.tem_auto,residencial:!!cl.tem_residencial,vida:!!cl.tem_vida,saude:!!cl.tem_saude,empresarial:!!cl.tem_empresarial,cartao:!!cl.tem_cartao,outros:!!cl.tem_outros};
-    }
-  }else{
-    ['cli_nome','cli_tel','cli_email','cli_doc','cli_obs'].forEach(x=>{const el=document.getElementById(x);if(el)el.value='';});
-    const t=document.getElementById('cli_tipo');if(t)t.value='PF';
-    const o=document.getElementById('cli_origem');if(o)o.value='manual';
-  }
-  atualizarChips();
-  document.getElementById('modalCliente').classList.add('open');
-}
-function fecharModalCliente(e){if(!e||e.target===document.getElementById('modalCliente'))fecharModalClienteDireto();}
-function fecharModalClienteDireto(){document.getElementById('modalCliente').classList.remove('open');}
-function toggleProduto(p){produtosTemp[p]=!produtosTemp[p];atualizarChips();}
-function atualizarChips(){
-  Object.keys(produtosTemp).forEach(p=>{
-    const el=document.getElementById('chip_'+p);
-    if(el)el.className='produto-chip '+(produtosTemp[p]?'tem':'nao-tem');
-  });
-}
-async function salvarCliente(){
-  const nome=(document.getElementById('cli_nome')?.value||'').trim();
-  if(!nome){showToast('Nome é obrigatório.','error');return;}
-  const vendedor=(currentProfile?.vendedor||'').trim();
-  const id=document.getElementById('cli_id').value;
-  const payload={nome,vendedor,
-    telefone:document.getElementById('cli_tel').value.trim()||null,
-    email:document.getElementById('cli_email').value.trim()||null,
-    documento:document.getElementById('cli_doc').value.trim()||null,
-    tipo:document.getElementById('cli_tipo').value,
-    origem:document.getElementById('cli_origem').value,
-    observacoes:document.getElementById('cli_obs').value.trim()||null,
-    tem_auto:produtosTemp.auto,tem_residencial:produtosTemp.residencial,
-    tem_vida:produtosTemp.vida,tem_saude:produtosTemp.saude,
-    tem_empresarial:produtosTemp.empresarial,tem_cartao:produtosTemp.cartao,
-    tem_outros:produtosTemp.outros,
-  };
-  const{error}=id?await db.from('carteira').update(payload).eq('id',id):await db.from('carteira').insert([payload]);
-  if(error){showToast('Erro: '+error.message,'error');return;}
-  fecharModalClienteDireto();
-  await carregarCRM();
-  showToast(id?'Cliente atualizado!':'Cliente cadastrado!','success');
-}
-
-// ── IMPORTAR DAS VENDAS ───────────────────────────────────────────────
-function switchCliTab(tab){
-  document.getElementById('cliTabManual')?.classList.toggle('active',tab==='manual');
-  document.getElementById('cliTabVendas')?.classList.toggle('active',tab==='vendas');
-  const pm=document.getElementById('cliPanelManual');
-  const pv=document.getElementById('cliPanelVendas');
-  if(pm) pm.style.display=tab==='manual'?'block':'none';
-  if(pv) pv.style.display=tab==='vendas'?'block':'none';
-  if(tab==='vendas') renderClientesDasVendas();
-}
-function renderClientesDasVendas(){
-  const vendedor=(currentProfile?.vendedor||'').trim();
-  const busca=(document.getElementById('buscaCliVenda')?.value||'').toLowerCase();
-  const jaAdicionados=new Set(todosClientes.map(x=>(x.nome||'').toLowerCase().trim()));
-  const mapa={};
-  todasVendas.filter(v=>!vendedor||v.vendedor===vendedor).forEach(v=>{
-    const nome=(v.segurado||'').trim();
-    if(!nome||jaAdicionados.has(nome.toLowerCase())) return;
-    if(!mapa[nome]) mapa[nome]={nome,vendas:[],ramos:new Set()};
-    mapa[nome].vendas.push(v);
-    mapa[nome].ramos.add(v.ramo);
-  });
-  let lista=Object.values(mapa).sort((a,b)=>a.nome.localeCompare(b.nome));
-  if(busca) lista=lista.filter(x=>x.nome.toLowerCase().includes(busca));
-  const div=document.getElementById('listaCliVendas');
-  if(!div) return;
-  if(!lista.length){div.innerHTML=`<div style="text-align:center;padding:24px;color:var(--text-3);font-size:13px">${busca?'Nenhum encontrado':'Todos os clientes já estão na carteira! 🎉'}</div>`;return;}
-  div.innerHTML=lista.map(x=>{
-    const ramos=[...x.ramos].map(r=>`<span class="ramo-badge ${ramoClass(r)}" style="font-size:10.5px">${r}</span>`).join(' ');
-    const ltv=x.vendas.reduce((a,v)=>a+(+v.comissao||0),0);
-    const nome=x.nome.replace(/'/g,"\'");
-    return`<div style="display:flex;align-items:center;justify-content:space-between;padding:12px 14px;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--bg);gap:10px">
-      <div style="flex:1;min-width:0">
-        <div style="font-weight:600;font-size:13px;margin-bottom:4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${x.nome}</div>
-        <div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:4px">${ramos}</div>
-        <div style="font-size:11.5px;color:var(--text-3)">${x.vendas.length} venda${x.vendas.length!==1?'s':''} · LTV ${fmt(ltv)}</div>
-      </div>
-      <button class="btn btn-primary" style="padding:7px 14px;font-size:12px;flex-shrink:0" onclick="adicionarClienteDasVendas('${nome}')">+ Adicionar</button>
-    </div>`;
-  }).join('');
-}
-async function adicionarClienteDasVendas(nome){
-  const vendedor=(currentProfile?.vendedor||'').trim();
-  const pv=produtosDasVendas(nome);
-  const{error}=await db.from('carteira').insert([{nome,vendedor,origem:'venda',tipo:'PF',
-    tem_auto:pv.auto,tem_residencial:pv.residencial,tem_vida:pv.vida,
-    tem_saude:pv.saude,tem_empresarial:pv.empresarial,tem_cartao:pv.cartao,tem_outros:pv.outros}]);
-  if(error){showToast('Erro: '+error.message,'error');return;}
-  showToast(nome+' adicionado!','success');
-  await carregarCRM();
-  renderClientesDasVendas();
-}
-
-// ── TAREFAS ───────────────────────────────────────────────────────────
-function renderTarefasView(){
-  const filtro=document.getElementById('filtroStatusTarefa')?.value||'';
-  const hoje=new Date();
-  let lista=[...(todasTarefas||[])].sort((a,b)=>new Date(a.data_lembrete||'9999')-new Date(b.data_lembrete||'9999'));
-  if(filtro==='vencida') lista=lista.filter(t=>t.status==='pendente'&&t.data_lembrete&&new Date(t.data_lembrete)<hoje);
-  else if(filtro) lista=lista.filter(t=>t.status===filtro);
-  const div=document.getElementById('tarefasViewList');
-  const empty=document.getElementById('tarefasViewEmpty');
-  if(!div) return;
-  if(!lista.length){div.innerHTML='';if(empty)empty.style.display='block';return;}
-  if(empty) empty.style.display='none';
-  div.innerHTML=lista.map(t=>{
-    const cl=todosClientes.find(x=>x.id===t.cliente_id);
-    const done=t.status==='concluida';
-    const venc=!done&&t.data_lembrete&&new Date(t.data_lembrete)<hoje;
-    return`<div class="card" style="padding:14px 18px;margin-bottom:10px;display:flex;align-items:flex-start;gap:12px">
-      <div class="tarefa-check ${done?'done':''}" onclick="toggleTarefaView('${t.id}')">${done?'✓':''}</div>
-      <div style="flex:1">
-        <div class="tarefa-titulo ${done?'done':''}" style="font-size:14px">${t.titulo}</div>
-        ${cl?`<div style="font-size:12px;color:var(--accent);margin-top:2px;cursor:pointer" onclick="abrirDetalheCliente('${cl.id}')">👤 ${cl.nome}</div>`:''}
-        ${t.descricao?`<div style="font-size:12px;color:var(--text-2);margin-top:4px">${t.descricao}</div>`:''}
-        <div style="display:flex;gap:12px;margin-top:6px;flex-wrap:wrap">
-          ${t.data_lembrete?`<span class="tarefa-data ${venc?'vencida':''}">${venc?'⚠️ Venceu ':'📅 '}${fmtDataHora(t.data_lembrete)}</span>`:''}
-          <span style="font-size:11px;color:var(--text-3);background:var(--bg);padding:2px 7px;border-radius:99px">${t.status}</span>
-        </div>
-      </div>
-      <div style="display:flex;gap:4px">
-        <button class="action-btn" onclick="editarTarefa('${t.id}')">✏️</button>
-        <button class="action-btn" onclick="deletarTarefa('${t.id}',null)">🗑️</button>
-      </div>
-    </div>`;
-  }).join('');
-}
-function abrirModalTarefa(cid){
-  document.getElementById('tar_id').value='';
-  document.getElementById('tar_cliente_id').value=cid||'';
-  document.getElementById('modalTarefaTitulo').textContent='Nova Tarefa';
-  ['tar_titulo','tar_desc','tar_data'].forEach(x=>{const el=document.getElementById(x);if(el)el.value='';});
-  if(currentUser?.email){const el=document.getElementById('tar_email');if(el)el.value=currentUser.email;}
-  document.getElementById('tar_status').value='pendente';
-  document.getElementById('modalTarefa').classList.add('open');
-}
-function editarTarefa(id){
-  const t=(todasTarefas||[]).find(x=>x.id===id);if(!t)return;
-  document.getElementById('tar_id').value=t.id;
-  document.getElementById('tar_cliente_id').value=t.cliente_id||'';
-  document.getElementById('modalTarefaTitulo').textContent='Editar Tarefa';
-  document.getElementById('tar_titulo').value=t.titulo||'';
-  document.getElementById('tar_desc').value=t.descricao||'';
-  document.getElementById('tar_data').value=t.data_lembrete?t.data_lembrete.slice(0,16):'';
-  document.getElementById('tar_email').value=t.email_lembrete||'';
-  document.getElementById('tar_status').value=t.status||'pendente';
-  document.getElementById('modalTarefa').classList.add('open');
-}
-function fecharModalTarefa(e){if(!e||e.target===document.getElementById('modalTarefa'))fecharModalTarefaDireto();}
-function fecharModalTarefaDireto(){document.getElementById('modalTarefa').classList.remove('open');}
-async function salvarTarefa(){
-  const titulo=(document.getElementById('tar_titulo')?.value||'').trim();
-  if(!titulo){showToast('Título é obrigatório.','error');return;}
-  const vendedor=(currentProfile?.vendedor||'').trim();
-  const id=document.getElementById('tar_id').value;
-  const cid=document.getElementById('tar_cliente_id').value||null;
-  const dl=document.getElementById('tar_data').value||null;
-  const payload={titulo,vendedor,cliente_id:cid,
-    descricao:document.getElementById('tar_desc').value.trim()||null,
-    data_lembrete:dl?new Date(dl).toISOString():null,
-    email_lembrete:document.getElementById('tar_email').value.trim()||null,
-    status:document.getElementById('tar_status').value,
-  };
-  const{error}=id?await db.from('lembretes').update(payload).eq('id',id):await db.from('lembretes').insert([payload]);
-  if(error){showToast('Erro: '+error.message,'error');return;}
-  fecharModalTarefaDireto();
-  await carregarCRM();
-  if(clienteDetalheId) renderTarefasDetalhe(clienteDetalheId);
-  showToast(id?'Tarefa atualizada!':'Tarefa criada!','success');
-}
-async function toggleTarefa(tid,cid){
-  const t=(todasTarefas||[]).find(x=>x.id===tid);if(!t)return;
-  await db.from('lembretes').update({status:t.status==='concluida'?'pendente':'concluida'}).eq('id',tid);
-  await carregarCRM();
-  if(cid) renderTarefasDetalhe(cid);
-}
-async function toggleTarefaView(tid){
-  const t=(todasTarefas||[]).find(x=>x.id===tid);if(!t)return;
-  await db.from('lembretes').update({status:t.status==='concluida'?'pendente':'concluida'}).eq('id',tid);
-  await carregarCRM();
-}
-async function deletarTarefa(tid,cid){
-  if(!confirm('Excluir tarefa?'))return;
-  await db.from('lembretes').delete().eq('id',tid);
-  await carregarCRM();
-  if(cid) renderTarefasDetalhe(cid);
-  showToast('Tarefa excluída.','success');
-}
-function switchCrmTab(tab){
-  document.getElementById('ctab-clientes')?.classList.toggle('active',tab==='clientes');
-  document.getElementById('ctab-oportunidades')?.classList.toggle('active',tab==='oportunidades');
-  const cc=document.getElementById('crm-clientes');
-  const co=document.getElementById('crm-oportunidades');
-  if(cc) cc.style.display=tab==='clientes'?'block':'none';
-  if(co) co.style.display=tab==='oportunidades'?'block':'none';
-  if(tab==='oportunidades') renderOportunidades();
-}
-function fmtDataHora(d){if(!d)return'—';const dt=new Date(d);return dt.toLocaleDateString('pt-BR')+' '+dt.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});}
-function checarLembretes(){
-  const hoje=new Date().toDateString();
-  (todasTarefas||[]).filter(t=>t.status==='pendente'&&t.data_lembrete&&new Date(t.data_lembrete).toDateString()===hoje).forEach(t=>{
-    const cl=todosClientes.find(x=>x.id===t.cliente_id);
-    showToast('⏰ Lembrete hoje: '+t.titulo+(cl?' — '+cl.nome:''),'');
-  });
-}
-// ── NAV ───────────────────────────────────────────────────────────────
-function verVendasVendedor(vendedor,mes){
-  document.getElementById('mesFiltroHist').value=mes;
-  document.getElementById('filtroVendedorHist').value=vendedor;
-  document.getElementById('buscaHist').value='';
-  showView('historico');
-}
-
-function showView(id){
-  document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
-  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
-  document.querySelectorAll('.mobile-nav-item').forEach(n=>n.classList.remove('active'));
-  document.getElementById('view-'+id).classList.add('active');
-  const nav=document.getElementById('nav-'+id);
-  if(nav) nav.classList.add('active');
-  const mnav=document.getElementById('mnav-'+id);
-  if(mnav) mnav.classList.add('active');
-  if(id==='historico'){
-    document.getElementById('view-historico').querySelector('.page-title').textContent='Histórico de Vendas';
-    document.getElementById('view-historico').querySelector('.page-sub').textContent='Todas as vendas registradas';
-    renderHistorico();
-  }
-  if(id==='analises') renderAnalises();
-  if(id==='indicacoes') renderIndicacoes();
-  if(id==='exportar') renderPrevia();
-  if(id==='metas') renderFormMetas();
-  if(id==='dashboard') renderDashboard();
-  if(id==='renovacoes') renderRenovacoes();
-  if(id==='renov_analise') renderAnaliseRenovacoes();
-  if(id==='renov_kanban') renderKanban();
-  if(id==='ote') renderOTE();
-  if(id==='carteira'){ carregarCRM().then(()=>renderClientes()); }
-  if(id==='tarefas_view'){ carregarCRM().then(()=>renderTarefasView()); }
-  // Scroll para o topo
-  try{
-    const mainEl=document.querySelector('.main');
-    if(mainEl) mainEl.scrollTop=0;
-    else{ window.scrollTo(0,0); document.body.scrollTop=0; }
-  }catch(e){}
-}
-
-// ── DASHBOARD ─────────────────────────────────────────────────────────
 function renderDashboard(){
   const vendedor=(currentProfile?.vendedor||'').trim();
-  const mesAtual=new Date();
-  const mes=`${mesAtual.getFullYear()}-${String(mesAtual.getMonth()+1).padStart(2,'0')}`;
-  const mesAnt=mesAnteriorDe(mes);
+  const agora=new Date();
+
   document.getElementById('dashTitle').textContent=vendedor?`Olá, ${vendedor} 👋`:'Meu Dashboard';
-  document.getElementById('dashMesLabel').textContent=capitalize(mesAtual.toLocaleDateString('pt-BR',{month:'long',year:'numeric'}));
-  const filtrar=v=>!vendedor||v.vendedor.trim()===vendedor;
-  const minhasVendas=vendasDoMes(mes).filter(filtrar);
-  const minhasVendasAnt=vendasDoMes(mesAnt).filter(filtrar);
+
+  const{vendas:minhasVendas, label, mes, isMes}=getDashVendas();
+  document.getElementById('dashMesLabel').textContent=label;
+
+  // Atualizar sub-labels dos cards
+  const subCom=document.getElementById('dashSubComissao');
+  const subVen=document.getElementById('dashSubVendas');
+  if(subCom) subCom.textContent=isMes?'no período selecionado':`nos últimos ${dashPeriodoAtual.replace('m','')} meses`;
+  if(subVen) subVen.textContent=isMes?'apólices no período':`apólices nos últimos ${dashPeriodoAtual.replace('m','')} meses`;
+
   const minhaCom=soma(minhasVendas,'comissao');
   const meuPL=soma(minhasVendas,'premio_liquido');
-  const minhaComAnt=soma(minhasVendasAnt,'comissao');
+
   document.getElementById('dashComissao').textContent=fmt(minhaCom);
   document.getElementById('dashPL').textContent=fmt(meuPL);
   document.getElementById('dashVendas').textContent=minhasVendas.length;
-  if(minhaComAnt>0){
-    const diff=((minhaCom-minhaComAnt)/minhaComAnt*100);
-    const el=document.getElementById('dashDeltaCom');
-    el.className='delta '+(diff>=0?'up':'down');
-    el.textContent=(diff>=0?'▲':'▼')+' '+Math.abs(diff).toFixed(1)+'% vs mês anterior';
+
+  // Delta só faz sentido em modo mês
+  const deltaEl=document.getElementById('dashDeltaCom');
+  if(deltaEl){
+    if(isMes&&mes){
+      const mesAnt=mesAnteriorDe(mes);
+      const filtrar=v=>!vendedor||v.vendedor.trim()===vendedor;
+      const comAnt=soma(vendasDoMes(mesAnt).filter(filtrar),'comissao');
+      if(comAnt>0){
+        const diff=((minhaCom-comAnt)/comAnt*100);
+        deltaEl.className='delta '+(diff>=0?'up':'down');
+        deltaEl.textContent=(diff>=0?'▲':'▼')+' '+Math.abs(diff).toFixed(1)+'% vs mês anterior';
+      } else { deltaEl.textContent=''; }
+    } else { deltaEl.textContent=''; }
   }
+
+  // Posição no ranking (só para mês atual)
+  const mesAtualStr=`${agora.getFullYear()}-${String(agora.getMonth()+1).padStart(2,'0')}`;
   const mapRank={};
-  vendasDoMes(mes).forEach(v=>{const n=(v.vendedor||'').trim();if(n)mapRank[n]=(mapRank[n]||0)+(+v.comissao||0);});
+  vendasDoMes(mesAtualStr).forEach(v=>{const n=(v.vendedor||'').trim();if(n)mapRank[n]=(mapRank[n]||0)+(+v.comissao||0);});
   if(vendedor&&!(vendedor in mapRank)) mapRank[vendedor]=0;
   const sortedRank=Object.entries(mapRank).sort((a,b)=>b[1]-a[1]);
   const pos=vendedor?sortedRank.findIndex(([n])=>n===vendedor):-1;
   const emojis=['🥇','🥈','🥉'];
   document.getElementById('dashPosicao').textContent=pos>=0?(emojis[pos]||(pos+1)+'º'):'—';
-  const metaGeral=todasMetas.find(m=>m.mes===mes&&m.vendedor===vendedor);
+
+  // Meta geral — só para mês específico
   const metaCard=document.getElementById('dashMetaCard');
-  if(metaGeral&&+metaGeral.meta_comissao>0){
-    const meta=+metaGeral.meta_comissao;
-    const pct=Math.min(100,(minhaCom/meta)*100);
-    const falta=Math.max(0,meta-minhaCom);
-    metaCard.style.display='block';
-    document.getElementById('dashMetaPct').textContent=pct.toFixed(0)+'%';
-    document.getElementById('dashMetaFill').style.width=pct+'%';
-    document.getElementById('dashMetaFill').className='meta-bar-fill'+(pct>=100?' done':'');
-    document.getElementById('dashMetaRealizado').textContent=fmt(minhaCom);
-    document.getElementById('dashMetaValor').textContent=fmt(meta);
-    document.getElementById('dashMetaFalta').textContent=pct>=100?'✅ Meta batida!':fmt(falta);
-  }else{metaCard.style.display='none';}
-  const metasRamoV=todasMetasRamo.filter(m=>m.mes===mes&&m.vendedor===vendedor&&+m.meta_comissao>0);
   const ramoCard=document.getElementById('dashMetaRamoCard');
-  if(metasRamoV.length){
-    ramoCard.style.display='block';
-    const ramoReal={};
-    minhasVendas.forEach(v=>{ramoReal[v.ramo]=(ramoReal[v.ramo]||0)+(+v.comissao||0);});
-    document.getElementById('dashMetasRamo').innerHTML=metasRamoV.map(m=>{
-      const atual=ramoReal[m.ramo]||0;
-      const p=Math.min(100,(atual/+m.meta_comissao)*100);
-      return`<div style="margin-bottom:12px">
-        <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px"><span style="font-weight:500">${m.ramo}</span><span style="color:var(--text-3)">${fmt(atual)} / ${fmt(+m.meta_comissao)} (${p.toFixed(0)}%)</span></div>
-        <div class="meta-bar" style="height:8px"><div class="meta-bar-fill ${p>=100?'done':''}" style="width:${p}%;background:${p>=100?'var(--green)':'#6366f1'}"></div></div>
-      </div>`;
-    }).join('');
-  }else{ramoCard.style.display='none';}
+  if(isMes&&mes){
+    const metaGeral=todasMetas.find(m=>m.mes===mes&&m.vendedor===vendedor);
+    if(metaGeral&&+metaGeral.meta_comissao>0){
+      const meta=+metaGeral.meta_comissao;
+      const pct=Math.min(100,(minhaCom/meta)*100);
+      const falta=Math.max(0,meta-minhaCom);
+      metaCard.style.display='block';
+      document.getElementById('dashMetaPct').textContent=pct.toFixed(0)+'%';
+      document.getElementById('dashMetaFill').style.width=pct+'%';
+      document.getElementById('dashMetaFill').className='meta-bar-fill'+(pct>=100?' done':'');
+      document.getElementById('dashMetaRealizado').textContent=fmt(minhaCom);
+      document.getElementById('dashMetaValor').textContent=fmt(meta);
+      document.getElementById('dashMetaFalta').textContent=pct>=100?'✅ Meta batida!':fmt(falta);
+    }else{metaCard.style.display='none';}
+
+    const metasRamoV=todasMetasRamo.filter(m=>m.mes===mes&&m.vendedor===vendedor&&+m.meta_comissao>0);
+    if(metasRamoV.length){
+      ramoCard.style.display='block';
+      const ramoReal={};
+      minhasVendas.forEach(v=>{ramoReal[v.ramo]=(ramoReal[v.ramo]||0)+(+v.comissao||0);});
+      document.getElementById('dashMetasRamo').innerHTML=metasRamoV.map(m=>{
+        const atual=ramoReal[m.ramo]||0;
+        const p=Math.min(100,(atual/+m.meta_comissao)*100);
+        return`<div style="margin-bottom:12px">
+          <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px">
+            <span style="font-weight:500">${m.ramo}</span>
+            <span style="color:var(--text-3)">${fmt(atual)} / ${fmt(+m.meta_comissao)} (${p.toFixed(0)}%)</span>
+          </div>
+          <div class="meta-bar" style="height:8px"><div class="meta-bar-fill ${p>=100?'done':''}" style="width:${p}%;background:${p>=100?'var(--green)':'#6366f1'}"></div></div>
+        </div>`;
+      }).join('');
+    }else{ramoCard.style.display='none';}
+  } else {
+    metaCard.style.display='none';
+    ramoCard.style.display='none';
+  }
+
+  // Pipeline — sempre do mês atual
   const propAbertas=todasPropostas.filter(p=>p.status==='aberta'&&(!vendedor||p.vendedor===vendedor.trim()));
   const divPrev=document.getElementById('dashPrevisao');
   const divPrevTotal=document.getElementById('dashPrevisaoTotal');
@@ -3653,7 +2753,9 @@ function renderDashboard(){
     document.getElementById('dashPrevSub').textContent=`${propAbertas.length} proposta${propAbertas.length!==1?'s':''} em aberto`;
     document.getElementById('dashProjTotal').textContent=fmt(minhaCom+totalPrev);
   }
-  const ultimas=minhasVendas.slice(0,6);
+
+  // Últimas vendas pessoais
+  const ultimas=minhasVendas.slice(0,8);
   const tbody=document.getElementById('tbodyDash');
   const empty=document.getElementById('emptyDash');
   if(!ultimas.length){tbody.innerHTML='';empty.style.display='block';}
