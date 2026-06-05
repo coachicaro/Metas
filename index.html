@@ -468,15 +468,19 @@ input[type=range]{width:100%;accent-color:var(--accent)}
       <p class="page-sub" id="dashSub">Seu desempenho pessoal · <span id="dashMesLabel">—</span></p>
 
       <!-- Seletor de período -->
-      <div class="mes-bar" style="margin-bottom:24px;flex-wrap:wrap;gap:10px">
-        <label style="font-size:12px;font-weight:500;color:var(--text-2)">Período:</label>
-        <div style="display:flex;gap:6px;flex-wrap:wrap">
-          <button class="btn-periodo active" id="dashPer1" onclick="setDashPeriodo('mes')">Mês</button>
+      <div style="margin-bottom:24px">
+        <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+          <label style="font-size:12px;font-weight:500;color:var(--text-2)">Período:</label>
+          <button class="btn-periodo active" id="dashPer1" onclick="setDashPeriodo('mes')">Mês específico</button>
           <button class="btn-periodo" id="dashPer3" onclick="setDashPeriodo('3m')">3 meses</button>
           <button class="btn-periodo" id="dashPer6" onclick="setDashPeriodo('6m')">6 meses</button>
           <button class="btn-periodo" id="dashPer12" onclick="setDashPeriodo('12m')">12 meses</button>
         </div>
-        <select id="dashMesSel" onchange="onDashMesChange()" style="padding:8px 12px;font-size:13px;font-family:'DM Sans',sans-serif;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--surface);outline:none"></select>
+        <div style="margin-top:10px">
+          <select id="dashMesSel" onchange="onDashMesChange()"
+            style="padding:9px 14px;font-size:13px;font-family:'DM Sans',sans-serif;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--surface);color:var(--text);outline:none;cursor:pointer;min-width:180px;position:relative;z-index:10">
+          </select>
+        </div>
       </div>
 
       <!-- Cards pessoais -->
@@ -2608,8 +2612,13 @@ function setDashPeriodo(periodo){
     const btn=document.getElementById('dashPer'+(p==='mes'?'1':p.replace('m','')));
     if(btn) btn.classList.toggle('active',p===periodo);
   });
+  // Select ativo apenas em modo mês
   const sel=document.getElementById('dashMesSel');
-  if(sel) sel.style.display=periodo==='mes'?'inline-block':'none';
+  if(sel){
+    sel.style.display='inline-block';
+    sel.disabled=periodo!=='mes';
+    sel.style.opacity=periodo==='mes'?'1':'0.4';
+  }
   renderDashboard();
 }
 
