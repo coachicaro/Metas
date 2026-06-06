@@ -1639,6 +1639,8 @@ async function iniciarApp(user){
 
   // Só mostrar o dashboard depois que os dados chegaram
   showView('dashboard');
+  // Fix Safari iOS: adicionar touchend na nav mobile
+  initMobileNav();
 }
 
 // ── AUTH ─────────────────────────────────────────────────────────────
@@ -3837,6 +3839,30 @@ function renderOTEHistorico(){
       </div>
     </div>`;
   }).join('');
+}
+
+// ── NAV MOBILE iOS FIX ───────────────────────────────────────────────
+function initMobileNav(){
+  document.querySelectorAll('.mobile-nav-item').forEach(el=>{
+    // Remover listeners antigos
+    el.replaceWith(el.cloneNode(true));
+  });
+  document.querySelectorAll('.mobile-nav-item').forEach(el=>{
+    el.addEventListener('touchstart',function(){
+      this._touchMoved=false;
+    },{passive:true});
+    el.addEventListener('touchmove',function(){
+      this._touchMoved=true;
+    },{passive:true});
+    el.addEventListener('touchend',function(e){
+      if(this._touchMoved) return;
+      e.preventDefault();
+      const onclick=this.getAttribute('onclick');
+      if(onclick){
+        try{ eval(onclick); }catch(err){ console.log(err); }
+      }
+    },{passive:false});
+  });
 }
 
 </script>
