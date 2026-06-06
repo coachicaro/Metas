@@ -2657,6 +2657,12 @@ function renderDashboard(){
   const vendedor=(currentProfile?.vendedor||'').trim();
   const agora=new Date();
 
+  // Garantir que o select está preenchido
+  const selDash=document.getElementById('dashMesSel');
+  if(selDash&&selDash.options.length===0){
+    popularMeses();
+  }
+
   document.getElementById('dashTitle').textContent=vendedor?`Olá, ${vendedor} 👋`:'Meu Dashboard';
 
   const{vendas:minhasVendas, label, mes, isMes}=getDashVendas();
