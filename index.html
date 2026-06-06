@@ -1621,19 +1621,24 @@ async function iniciarApp(user){
   document.getElementById('sidebarNome').textContent=profile?.nome||user.email;
   document.getElementById('sidebarEmail').textContent=user.email;
   if(profile?.vendedor) document.getElementById('f_vendedor').value=profile.vendedor;
-  showView('dashboard');
 
+  // Preparar selects e pré-selecionar mês atual
   popularMeses();
-  // Pré-selecionar mês atual no dashboard
   const _agora=new Date();
   const _mesPad=`${_agora.getFullYear()}-${String(_agora.getMonth()+1).padStart(2,'0')}`;
   const _selD=document.getElementById('dashMesSel');
   if(_selD) _selD.value=_mesPad;
+  document.getElementById('f_data').value=hoje();
+
+  // Carregar dados ANTES de mostrar o dashboard
   setSync('loading');
   await Promise.all([carregarVendas(),carregarPropostas(),carregarMetas(),carregarCRM(),carregarRenovacoes()]);
+  setSync('ok');
   subscribeRealtime();
   checarLembretes();
-  document.getElementById('f_data').value=hoje();
+
+  // Só mostrar o dashboard depois que os dados chegaram
+  showView('dashboard');
 }
 
 // ── AUTH ─────────────────────────────────────────────────────────────
