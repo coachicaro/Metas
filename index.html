@@ -303,9 +303,9 @@ canvas{max-height:260px}
 .empty-state .icon{font-size:36px;margin-bottom:10px}
 
 /* MOBILE NAV */
-.mobile-nav{display:none;position:fixed;bottom:0;left:0;right:0;height:64px;background:var(--accent);border-top:1px solid rgba(255,255,255,.1);z-index:500;align-items:stretch;overflow:hidden}
+.mobile-nav{display:none;position:fixed;bottom:0;left:0;right:0;height:64px;background:var(--accent);border-top:1px solid rgba(255,255,255,.1);z-index:500;align-items:stretch;overflow:hidden;-webkit-tap-highlight-color:transparent}
 .mobile-nav>div::-webkit-scrollbar{display:none}
-.mobile-nav-item{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;color:rgba(255,255,255,.55);cursor:pointer;padding:6px 14px;transition:color .15s;user-select:none;flex:0 0 auto;min-width:64px}
+.mobile-nav-item{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;color:rgba(255,255,255,.55);cursor:pointer;padding:6px 14px;transition:color .15s;user-select:none;flex:0 0 auto;min-width:64px;-webkit-tap-highlight-color:rgba(255,255,255,.1);touch-action:manipulation;background:none;border:none;font-family:inherit}
 .mobile-nav-item.active{color:#fff}
 .mobile-nav-item .mn-icon{font-size:20px;line-height:1}
 .mobile-nav-item .mn-label{font-size:9.5px;font-weight:500;letter-spacing:.04em}
@@ -1125,16 +1125,16 @@ input[type=range]{width:100%;accent-color:var(--accent)}
 <!-- MOBILE NAV -->
 <nav class="mobile-nav" id="mobileNav" style="display:none">
   <div style="display:flex;overflow-x:auto;width:100%;scrollbar-width:none;-ms-overflow-style:none;padding-bottom:env(safe-area-inset-bottom)">
-    <div class="mobile-nav-item active" id="mnav-dashboard" onclick="showView('dashboard')"><span class="mn-icon">🏠</span><span class="mn-label">Dashboard</span></div>
-    <div class="mobile-nav-item" id="mnav-ranking" onclick="showView('ranking')"><span class="mn-icon">🏆</span><span class="mn-label">Ranking</span></div>
-    <div class="mobile-nav-item" id="mnav-analises" onclick="showView('analises')"><span class="mn-icon">📊</span><span class="mn-label">Análises</span></div>
-    <div class="mobile-nav-item" id="mnav-nova" onclick="showView('nova')"><span class="mn-icon">➕</span><span class="mn-label">Venda</span></div>
-    <div class="mobile-nav-item" id="mnav-historico" onclick="showView('historico')"><span class="mn-icon">📋</span><span class="mn-label">Histórico</span></div>
-    <div class="mobile-nav-item" id="mnav-carteira" onclick="showView('carteira')"><span class="mn-icon">👥</span><span class="mn-label">Carteira</span></div>
-    <div class="mobile-nav-item" id="mnav-tarefas_view" onclick="showView('tarefas_view')"><span class="mn-icon">✅</span><span class="mn-label">Tarefas</span></div>
-    <div class="mobile-nav-item" id="mnav-renovacoes" onclick="showView('renovacoes')"><span class="mn-icon">🔄</span><span class="mn-label">Renovações</span></div>
-  <div class="mobile-nav-item" id="mnav-metas" onclick="showView('metas')"><span class="mn-icon">🎯</span><span class="mn-label">Metas</span></div>
-    <div class="mobile-nav-item" id="mnav-exportar" onclick="showView('exportar')"><span class="mn-icon">📤</span><span class="mn-label">Exportar</span></div>
+    <button class="mobile-nav-item active" id="mnav-dashboard" onclick="showView('dashboard')"><span class="mn-icon">🏠</span><span class="mn-label">Dashboard</span></button>
+    <button class="mobile-nav-item" id="mnav-ranking" onclick="showView('ranking')"><span class="mn-icon">🏆</span><span class="mn-label">Ranking</span></button>
+    <button class="mobile-nav-item" id="mnav-analises" onclick="showView('analises')"><span class="mn-icon">📊</span><span class="mn-label">Análises</span></button>
+    <button class="mobile-nav-item" id="mnav-nova" onclick="showView('nova')"><span class="mn-icon">➕</span><span class="mn-label">Venda</span></button>
+    <button class="mobile-nav-item" id="mnav-historico" onclick="showView('historico')"><span class="mn-icon">📋</span><span class="mn-label">Histórico</span></button>
+    <button class="mobile-nav-item" id="mnav-carteira" onclick="showView('carteira')"><span class="mn-icon">👥</span><span class="mn-label">Carteira</span></button>
+    <button class="mobile-nav-item" id="mnav-tarefas_view" onclick="showView('tarefas_view')"><span class="mn-icon">✅</span><span class="mn-label">Tarefas</span></button>
+    <button class="mobile-nav-item" id="mnav-renovacoes" onclick="showView('renovacoes')"><span class="mn-icon">🔄</span><span class="mn-label">Renovações</span></button>
+    <button class="mobile-nav-item" id="mnav-metas" onclick="showView('metas')"><span class="mn-icon">🎯</span><span class="mn-label">Metas</span></button>
+    <button class="mobile-nav-item" id="mnav-exportar" onclick="showView('exportar')"><span class="mn-icon">📤</span><span class="mn-label">Exportar</span></button>
   </div>
 </nav>
 
