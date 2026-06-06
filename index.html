@@ -2739,10 +2739,23 @@ function renderDashboard(){
     } else { deltaEl.textContent=''; }
   }
 
-  // Posição no ranking (só para mês atual)
-  const mesAtualStr=`${agora.getFullYear()}-${String(agora.getMonth()+1).padStart(2,'0')}`;
+  // Posição no ranking — usar o mesmo período selecionado
   const mapRank={};
-  vendasDoMes(mesAtualStr).forEach(v=>{const n=(v.vendedor||'').trim();if(n)mapRank[n]=(mapRank[n]||0)+(+v.comissao||0);});
+  if(isMes&&mes){
+    // Mês específico: todos os vendedores naquele mês
+    vendasDoMes(mes).forEach(v=>{
+      const n=(v.vendedor||'').trim();
+      if(n) mapRank[n]=(mapRank[n]||0)+(+v.comissao||0);
+    });
+  } else {
+    // Período agrupado (3/6/12m): somar todos os meses do período para TODOS os vendedores
+    getMeses(parseInt(dashPeriodoAtual)||6).forEach(m=>{
+      vendasDoMes(m).forEach(v=>{
+        const n=(v.vendedor||'').trim();
+        if(n) mapRank[n]=(mapRank[n]||0)+(+v.comissao||0);
+      });
+    });
+  }
   if(vendedor&&!(vendedor in mapRank)) mapRank[vendedor]=0;
   const sortedRank=Object.entries(mapRank).sort((a,b)=>b[1]-a[1]);
   const pos=vendedor?sortedRank.findIndex(([n])=>n===vendedor):-1;
