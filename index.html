@@ -1600,6 +1600,11 @@ async function iniciarApp(user){
   showView('dashboard');
 
   popularMeses();
+  // Pré-selecionar mês atual no dashboard
+  const _agora=new Date();
+  const _mesPad=`${_agora.getFullYear()}-${String(_agora.getMonth()+1).padStart(2,'0')}`;
+  const _selD=document.getElementById('dashMesSel');
+  if(_selD) _selD.value=_mesPad;
   setSync('loading');
   await Promise.all([carregarVendas(),carregarPropostas(),carregarMetas(),carregarCRM(),carregarRenovacoes()]);
   subscribeRealtime();
@@ -2623,12 +2628,14 @@ function setDashPeriodo(periodo){
 }
 
 function onDashMesChange(){
-  // Garante que está em modo mês e re-renderiza
   dashPeriodoAtual='mes';
   ['mes','3m','6m','12m'].forEach(p=>{
     const btn=document.getElementById('dashPer'+(p==='mes'?'1':p.replace('m','')));
     if(btn) btn.classList.toggle('active',p==='mes');
   });
+  // Garantir que select está habilitado
+  const sel=document.getElementById('dashMesSel');
+  if(sel){ sel.disabled=false; sel.style.opacity='1'; }
   renderDashboard();
 }
 
@@ -2638,7 +2645,10 @@ function getDashVendas(){
   const agora=new Date();
 
   if(dashPeriodoAtual==='mes'){
-    const mes=document.getElementById('dashMesSel')?.value||`${agora.getFullYear()}-${String(agora.getMonth()+1).padStart(2,'0')}`;
+    const agora3=new Date();
+    const mesPadrao=`${agora3.getFullYear()}-${String(agora3.getMonth()+1).padStart(2,'0')}`;
+    const sel2=document.getElementById('dashMesSel');
+    const mes=sel2?.value||mesPadrao;
     return{
       vendas:vendasDoMes(mes).filter(filtrar),
       label:fmtMesLabel(mes),
@@ -2657,10 +2667,14 @@ function renderDashboard(){
   const vendedor=(currentProfile?.vendedor||'').trim();
   const agora=new Date();
 
-  // Garantir que o select está preenchido
+  // Sempre garantir que o select está preenchido e com valor correto
   const selDash=document.getElementById('dashMesSel');
-  if(selDash&&selDash.options.length===0){
-    popularMeses();
+  if(selDash&&selDash.options.length===0) popularMeses();
+  // Se não tiver valor selecionado, selecionar mês atual
+  if(selDash&&!selDash.value){
+    const agora2=new Date();
+    const mesAtual2=`${agora2.getFullYear()}-${String(agora2.getMonth()+1).padStart(2,'0')}`;
+    selDash.value=mesAtual2;
   }
 
   document.getElementById('dashTitle').textContent=vendedor?`Olá, ${vendedor} 👋`:'Meu Dashboard';
