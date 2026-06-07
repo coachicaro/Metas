@@ -1125,16 +1125,16 @@ input[type=range]{width:100%;accent-color:var(--accent)}
 <!-- MOBILE NAV -->
 <nav class="mobile-nav" id="mobileNav" style="display:none">
   <div style="display:flex;overflow-x:auto;width:100%;scrollbar-width:none;-ms-overflow-style:none;padding-bottom:env(safe-area-inset-bottom)">
-    <button class="mobile-nav-item active" id="mnav-dashboard" onclick="showView('dashboard')"><span class="mn-icon">🏠</span><span class="mn-label">Dashboard</span></button>
-    <button class="mobile-nav-item" id="mnav-ranking" onclick="showView('ranking')"><span class="mn-icon">🏆</span><span class="mn-label">Ranking</span></button>
-    <button class="mobile-nav-item" id="mnav-analises" onclick="showView('analises')"><span class="mn-icon">📊</span><span class="mn-label">Análises</span></button>
-    <button class="mobile-nav-item" id="mnav-nova" onclick="showView('nova')"><span class="mn-icon">➕</span><span class="mn-label">Venda</span></button>
-    <button class="mobile-nav-item" id="mnav-historico" onclick="showView('historico')"><span class="mn-icon">📋</span><span class="mn-label">Histórico</span></button>
-    <button class="mobile-nav-item" id="mnav-carteira" onclick="showView('carteira')"><span class="mn-icon">👥</span><span class="mn-label">Carteira</span></button>
-    <button class="mobile-nav-item" id="mnav-tarefas_view" onclick="showView('tarefas_view')"><span class="mn-icon">✅</span><span class="mn-label">Tarefas</span></button>
-    <button class="mobile-nav-item" id="mnav-renovacoes" onclick="showView('renovacoes')"><span class="mn-icon">🔄</span><span class="mn-label">Renovações</span></button>
-    <button class="mobile-nav-item" id="mnav-metas" onclick="showView('metas')"><span class="mn-icon">🎯</span><span class="mn-label">Metas</span></button>
-    <button class="mobile-nav-item" id="mnav-exportar" onclick="showView('exportar')"><span class="mn-icon">📤</span><span class="mn-label">Exportar</span></button>
+    <button class="mobile-nav-item active" id="mnav-dashboard" data-view="dashboard"><span class="mn-icon">🏠</span><span class="mn-label">Dashboard</span></button>
+    <button class="mobile-nav-item" id="mnav-ranking" data-view="ranking"><span class="mn-icon">🏆</span><span class="mn-label">Ranking</span></button>
+    <button class="mobile-nav-item" id="mnav-analises" data-view="analises"><span class="mn-icon">📊</span><span class="mn-label">Análises</span></button>
+    <button class="mobile-nav-item" id="mnav-nova" data-view="nova"><span class="mn-icon">➕</span><span class="mn-label">Venda</span></button>
+    <button class="mobile-nav-item" id="mnav-historico" data-view="historico"><span class="mn-icon">📋</span><span class="mn-label">Histórico</span></button>
+    <button class="mobile-nav-item" id="mnav-carteira" data-view="carteira"><span class="mn-icon">👥</span><span class="mn-label">Carteira</span></button>
+    <button class="mobile-nav-item" id="mnav-tarefas_view" data-view="tarefas_view"><span class="mn-icon">✅</span><span class="mn-label">Tarefas</span></button>
+    <button class="mobile-nav-item" id="mnav-renovacoes" data-view="renovacoes"><span class="mn-icon">🔄</span><span class="mn-label">Renovações</span></button>
+    <button class="mobile-nav-item" id="mnav-metas" data-view="metas"><span class="mn-icon">🎯</span><span class="mn-label">Metas</span></button>
+    <button class="mobile-nav-item" id="mnav-exportar" data-view="exportar"><span class="mn-icon">📤</span><span class="mn-label">Exportar</span></button>
   </div>
 </nav>
 
@@ -3864,6 +3864,41 @@ function initMobileNav(){
     },{passive:false});
   });
 }
+
+// ── NAV MOBILE: listener global para iOS Safari ───────────────────────
+document.addEventListener('DOMContentLoaded', function(){
+  // Listener no documento inteiro — mais confiável no iOS
+  var mobileNav = document.getElementById('mobileNav');
+  if(!mobileNav) return;
+
+  function handleNavClick(e){
+    var el = e.target;
+    // Subir até encontrar o button com data-view
+    while(el && el !== mobileNav){
+      if(el.dataset && el.dataset.view){
+        e.preventDefault();
+        e.stopPropagation();
+        showView(el.dataset.view);
+        return;
+      }
+      el = el.parentElement;
+    }
+  }
+
+  // Usar tanto click quanto touchend para máxima compatibilidade
+  mobileNav.addEventListener('click', handleNavClick, true);
+  mobileNav.addEventListener('touchend', function(e){
+    var el = e.target;
+    while(el && el !== mobileNav){
+      if(el.dataset && el.dataset.view){
+        e.preventDefault();
+        showView(el.dataset.view);
+        return;
+      }
+      el = el.parentElement;
+    }
+  }, {passive: false, capture: true});
+});
 
 </script>
 </body>
