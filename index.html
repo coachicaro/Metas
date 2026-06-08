@@ -79,7 +79,23 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
 .renov-stat-card .value{font-family:'DM Serif Display',serif;font-size:20px;color:var(--text)}
 .renov-stat-card .sub{font-size:11.5px;color:var(--text-3);margin-top:3px}
 .renov-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:24px}
-@media(max-width:768px){.renov-grid{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:768px){
+  .renov-grid{grid-template-columns:repeat(2,1fr)}
+  .app.visible{display:flex;flex-direction:column;height:auto;min-height:100vh;grid-template-columns:unset}
+  .sidebar{display:none!important}
+  .mobile-nav{display:flex!important}
+  .main{height:auto!important;min-height:calc(100vh - 64px);overflow-y:auto;padding-bottom:72px;width:100%;box-sizing:border-box}
+  .kanban-board{grid-template-columns:1fr}
+  .clientes-grid{grid-template-columns:1fr}
+  .summary-grid{grid-template-columns:repeat(2,1fr)}
+  .form-grid{grid-template-columns:1fr}
+  .chart-grid{grid-template-columns:1fr}
+  .rank-cards{grid-template-columns:1fr}
+}
+@media(max-width:480px){
+  .summary-grid{grid-template-columns:1fr}
+  .produto-grid{grid-template-columns:repeat(2,1fr)}
+}
 
 
 /* ── KANBAN ── */
@@ -5480,23 +5496,17 @@ Regras:
 - Tom de WhatsApp mesmo, informal e acolhedor`;
 
   try{
-    const response=await fetch('https://api.anthropic.com/v1/messages',{
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({
-        model:'claude-sonnet-4-20250514',
-        max_tokens:1500,
-        messages:[{role:'user',content:prompt}]
-      })
+    // Usar Supabase Edge Function como proxy para evitar CORS
+    const{data,error}=await db.functions.invoke('claude-proxy',{
+      body:{prompt}
     });
-    const data=await response.json();
-    if(data.error){res.textContent='Erro da API: '+data.error.message;res.className='cobert-resultado carregando';return;}
-    const texto=data.content?.[0]?.text||'Erro ao gerar texto.';
-    res.textContent=texto;
+    if(error) throw new Error(error.message);
+    res.textContent=data?.texto||'Erro ao gerar texto.';
     res.className='cobert-resultado';
   }catch(err){
-    res.textContent='Erro: '+err.message;
-    res.className='cobert-resultado carregando';
+    // Fallback: gerar texto localmente com base nas coberturas
+    res.textContent=gerarTextoLocal(coberturas,tipoSeguro,contexto);
+    res.className='cobert-resultado';
   }finally{
     if(btn){btn.disabled=false;btn.textContent='✨ Gerar texto para WhatsApp';}
   }
@@ -5516,6 +5526,49 @@ async function copiarTexto(tipo){
     document.body.removeChild(ta);
     if(btn){btn.textContent='✅ Copiado!';setTimeout(()=>btn.textContent='📋 Copiar',2000);}
   }
+}
+
+function gerarTextoLocal(coberturas, tipoSeguro, contexto){
+  const linhas=coberturas.split(/[,\n]+/).map(s=>s.trim()).filter(Boolean);
+  const EXPLICACOES_AUTO={
+    'colisão':'🚗 *Colisão* — Bateu o carro? Seja por acidente com outro veículo ou até num poste, essa cobertura paga o conserto ou indeniza o valor do carro.',
+    'furto':'🔒 *Furto e Roubo* — Se roubarem ou furtarem seu carro, a seguradora te indeniza pelo valor de mercado do veículo.',
+    'incêndio':'🔥 *Incêndio* — Pegou fogo no carro por qualquer motivo? A seguradora cobre os danos ou indeniza totalmente.',
+    'natureza':'🌩️ *Danos da Natureza* — Granizo, enchente, raio, vendaval... se a natureza estragar seu carro, tá coberto!',
+    'compreensiva':'✅ *Cobertura Compreensiva* — O pacote completo! Inclui colisão, furto/roubo, incêndio e danos naturais tudo junto.',
+    'rcf-dm':'⚠️ *Danos Materiais a Terceiros (RCF-DM)* — Bateu no carro do outro por sua culpa? A seguradora paga o conserto do veículo da outra pessoa.',
+    'rcf-dc':'🏥 *Danos Corporais a Terceiros (RCF-DC)* — Se alguém se machucar num acidente por sua culpa, cobre os custos médicos e indenizações.',
+    'assistência':'🛠️ *Assistência 24h* — Carro enguiçou? Bateria morreu? Pneu furou? Liga pra assistência e resolve na hora, qualquer hora do dia.',
+    'carro reserva':'🚙 *Carro Reserva* — Enquanto o seu tá na oficina, você fica sem ficar a pé. A seguradora disponibiliza um carro emprestado.',
+    'guincho':'🪝 *Guincho Ilimitado* — Precisou rebocar? Pode chamar sem preocupação com distância, é ilimitado!',
+    'vidros':'🪟 *Vidros, Lanternas e Retrovisores* — Quebrou o para-brisa ou lataria? Essa cobertura resolve sem franquia!',
+  };
+  const EXPLICACOES_RESID={
+    'incêndio':'🔥 *Incêndio, Raio e Explosão* — Se pegar fogo, cair raio ou explodir gás, a seguradora cobre todos os danos à sua casa.',
+    'elétrico':'⚡ *Danos Elétricos* — Raio queimou sua TV, geladeira, computador? Cobre os equipamentos danificados por curto ou variação de tensão.',
+    'roubo':'🔒 *Roubo e Furto Qualificado* — Arrombaram sua casa e levaram seus bens? A seguradora indeniza o que foi roubado.',
+    'água':'💧 *Danos por Água* — Entupiu, vazou, a torneira do vizinho de cima abriu? Cobre os danos por água no seu imóvel.',
+    'vendaval':'🌪️ *Vendaval e Tempestade* — Ventou forte e destelheu, quebrou janela, caiu árvore? Tudo coberto!',
+    'granizo':'🌨️ *Granizo* — Chuva de pedra danificou o telhado, vidros ou fachada? A seguradora cobre.',
+    'inundação':'🌊 *Inundação* — Enchente invadiu a casa? Cobre os danos causados pela água.',
+    'rc familiar':'👨‍👩‍👧 *RC Familiar* — Seu filho quebrou o vidro do vizinho com uma bola? Alguém escorregou na sua calçada? Você tá coberto!',
+    'assistência':'🔧 *Assistência Residencial 24h* — Cano estourou às 2h da manhã? Chama o encanador pelo seguro, sem pagar nada à parte.',
+    'chaveiro':'🔑 *Chaveiro* — Trancou a chave dentro de casa? Chama o chaveiro pelo seguro!',
+    'hotel':'🏨 *Hotel (imóvel inabitável)* — Se sua casa ficou inabitável por algum sinistro, a seguradora paga a hospedagem até você poder voltar.',
+  };
+  const explicacoes=tipoSeguro.includes('Auto')?EXPLICACOES_AUTO:EXPLICACOES_RESID;
+  let texto=`Oi${contexto?' '+contexto.split(',')[0].trim():''}! 😊 Deixa eu te explicar o que cada cobertura do seu seguro significa na prática:\n\n`;
+  linhas.forEach(linha=>{
+    const chave=Object.keys(explicacoes).find(k=>linha.toLowerCase().includes(k));
+    if(chave){
+      const valor=linha.match(/R\$[\s\d.,]+/)?.[0]||'';
+      texto+=explicacoes[chave]+(valor?` Valor segurado: *${valor}*`:'')+`\n\n`;
+    } else {
+      texto+=`📌 *${linha}* — Cobertura incluída na sua proposta.\n\n`;
+    }
+  });
+  texto+=`---\n✅ Com esse seguro você tem tranquilidade pra usar no dia a dia! Qualquer dúvida me chama! 🙌`;
+  return texto;
 }
 
 </script>
