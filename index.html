@@ -2951,13 +2951,15 @@ function abrirModalProposta(){
   document.getElementById('prop_id').value='';
   document.getElementById('modalPropTitulo').textContent='Nova Proposta';
   document.getElementById('prop_data').value=hoje();
-  ['prop_segurado','prop_pl','prop_pct'].forEach(id=>document.getElementById(id).value='');
-  document.getElementById('prop_status').value='aberta';
-  document.getElementById('prop_comissao_preview').textContent='R$ 0,00';
-  document.getElementById('prop_prob').value=50;
-  document.getElementById('prop_prob_val').textContent='50%';
-  document.getElementById('prop_prev_fecha').value='';
-  if(currentProfile?.vendedor) document.getElementById('prop_vendedor').value=currentProfile.vendedor;
+  ['prop_segurado','prop_pl','prop_pct'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+  const st=document.getElementById('prop_status');if(st)st.value='aberta';
+  const cp=document.getElementById('prop_comissao_preview');if(cp)cp.textContent='R$ 0,00';
+  const pp=document.getElementById('prop_prob');if(pp)pp.value=50;
+  const pv=document.getElementById('prop_prob_val');if(pv)pv.textContent='50%';
+  const pf=document.getElementById('prop_prev_fecha');if(pf)pf.value='';
+  const pr=document.getElementById('prop_ramo');if(pr)pr.value='';
+  const pc=document.getElementById('prop_cia');if(pc)pc.value='';
+  if(currentProfile?.vendedor){const pven=document.getElementById('prop_vendedor');if(pven)pven.value=currentProfile.vendedor;}
   document.getElementById('modalProposta').classList.add('open');
 }
 function editarProposta(id){
