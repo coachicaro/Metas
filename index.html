@@ -2462,12 +2462,17 @@ async function salvarProposta(){
   if(!payload.segurado||!payload.ramo||!payload.cia||!payload.vendedor){showToast('Preencha todos os campos obrigatórios.','error');return;}
   const{error}=id?await db.from('propostas').update(payload).eq('id',id):await db.from('propostas').insert([payload]);
   if(error){showToast('Erro: '+error.message,'error');return;}
-  fecharModalPropDireto();showToast(id?'Proposta atualizada!':'Proposta registrada!','success');
+  fecharModalPropDireto();
+  showToast(id?'Proposta atualizada!':'Proposta registrada!','success');
+  await carregarPropostas();
+  renderPropostas();
 }
 async function deletarProposta(id){
   if(!confirm('Excluir proposta?'))return;
   await db.from('propostas').delete().eq('id',id);
   showToast('Proposta excluída.','success');
+  await carregarPropostas();
+  renderPropostas();
 }
 function calcComissaoProp(){
   const pl=parseFloat(document.getElementById('prop_pl').value)||0;
