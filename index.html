@@ -746,7 +746,24 @@ input[type=range]{width:100%;accent-color:var(--accent)}
             <div class="field"><label>Seguradora *</label>
               <select id="f_cia" required><option value="">Selecione...</option><option>Affinity</option><option>Allianz</option><option>Alliro</option><option>Amil</option><option>Azos</option><option>Azul</option><option>Azul por Assinatura</option><option>Bradesco</option><option>DoctorClin</option><option>Embracon</option><option>Essor</option><option>Ezze</option><option>Fairfax</option><option>HDI</option><option>Itaú</option><option>Ituran</option><option>KOVR</option><option>MAG</option><option>Mapfre</option><option>MedSênior</option><option>Mitsui</option><option>Pasi Icatu</option><option>PetLove/Porto</option><option>Porto</option><option>Pottencial</option><option>Racon</option><option>Sombrero</option><option>Suhai</option><option>Tokio Marine</option><option>Yelum</option><option>Zurich</option></select>
             </div>
-            <div class="field"><label>SDR / Indicação</label><input type="text" id="f_sdr" placeholder="Ex: BNI, Orgânico, Indicação..."></div>
+            <div class="field"><label>Origem</label>
+              <div style="display:flex;gap:6px">
+                <select id="f_sdr" style="flex:1;padding:9px 12px;font-size:13px;font-family:'DM Sans',sans-serif;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--surface);color:var(--text);outline:none">
+                  <option value="">Selecione...</option>
+                <option value="Orgânico">Orgânico</option>
+                <option value="Indicação">Indicação</option>
+                <option value="BNI">BNI</option>
+                <option value="Lead LAKS">Lead LAKS</option>
+                <option value="Lead Meta Ads">Lead Meta Ads</option>
+                <option value="Lead Google Ads">Lead Google Ads</option>
+                <option value="Carteira Ativa">Carteira Ativa</option>
+                <option value="Renovação">Renovação</option>
+                <option value="Evento">Evento</option>
+                <option value="Parceria">Parceria</option>
+                  <option value="__nova__">➕ Adicionar nova origem...</option>
+                </select>
+              </div>
+            </div>
           </div>
           <div class="form-grid" style="margin-bottom:20px">
             <div class="field"><label>Prêmio Líquido (R$) *</label><input type="number" id="f_pl" step="0.01" min="0" placeholder="0,00" required oninput="calcComissao()"></div>
@@ -1434,7 +1451,13 @@ input[type=range]{width:100%;accent-color:var(--accent)}
     <div class="form-grid" style="margin-bottom:14px">
       <div class="field"><label>Ramo *</label><select id="edit_ramo"><option>Auto</option><option>Carta Verde</option><option>Cartão Porto</option><option>Celular</option><option>Condomínio</option><option>Consórcio</option><option>Dental PJ</option><option>Empresarial</option><option>Equipamentos</option><option>Fiança locatícia</option><option>Garantia</option><option>Moto</option><option>Painel solar</option><option>Plano de Saúde</option><option>RC Profissional</option><option>RCO</option><option>Residencial</option><option>Residencial Pré-formatado</option><option>Vida Global</option><option>Vida mensal</option><option>Vida mensal PJ</option><option>Viagem</option><option>Outro</option></select></div>
       <div class="field"><label>Seguradora *</label><select id="edit_cia"><option value="">Selecione...</option><option>Affinity</option><option>Allianz</option><option>Alliro</option><option>Amil</option><option>Azos</option><option>Azul</option><option>Azul por Assinatura</option><option>Bradesco</option><option>DoctorClin</option><option>Embracon</option><option>Essor</option><option>Ezze</option><option>Fairfax</option><option>HDI</option><option>Itaú</option><option>Ituran</option><option>KOVR</option><option>MAG</option><option>Mapfre</option><option>MedSênior</option><option>Mitsui</option><option>Pasi Icatu</option><option>PetLove/Porto</option><option>Porto</option><option>Pottencial</option><option>Racon</option><option>Sombrero</option><option>Suhai</option><option>Tokio Marine</option><option>Yelum</option><option>Zurich</option></select></div>
-      <div class="field"><label>SDR</label><input type="text" id="edit_sdr"></div>
+      <div class="field"><label>Origem</label>
+        <select id="edit_sdr" style="padding:9px 12px;font-size:13px;font-family:'DM Sans',sans-serif;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--surface);color:var(--text);outline:none;width:100%">
+          <option value="">Selecione...</option>
+<option value="Orgânico">Orgânico</option><option value="Indicação">Indicação</option><option value="BNI">BNI</option><option value="Lead LAKS">Lead LAKS</option><option value="Lead Meta Ads">Lead Meta Ads</option><option value="Lead Google Ads">Lead Google Ads</option><option value="Carteira Ativa">Carteira Ativa</option><option value="Renovação">Renovação</option><option value="Evento">Evento</option><option value="Parceria">Parceria</option>
+          <option value="__nova__">➕ Adicionar nova origem...</option>
+        </select>
+      </div>
     </div>
     <div class="form-grid" style="margin-bottom:20px">
       <div class="field"><label>Prêmio Líquido *</label><input type="number" id="edit_pl" step="0.01" min="0" oninput="calcComissaoEdit()"></div>
@@ -1639,6 +1662,7 @@ async function iniciarApp(user){
 
   // Só mostrar o dashboard depois que os dados chegaram
   showView('dashboard');
+  initOrigemSelects();
 }
 
 // ── AUTH ─────────────────────────────────────────────────────────────
@@ -2640,7 +2664,17 @@ function abrirEdicao(id){
   document.getElementById('edit_id').value=v.id; // preencher o id!
   ['edit_data','edit_segurado','edit_vendedor','edit_ramo','edit_cia','edit_sdr'].forEach(f=>{
     const key=f.replace('edit_','');
-    document.getElementById(f).value=v[key==='sdr'?'sdr_indicacao':key]||'';
+    const valField=v[key==='sdr'?'sdr_indicacao':key]||'';
+    const elField=document.getElementById(f);
+    if(elField){
+      // Se o valor não está na lista, adicionar como opção temporária
+      if(valField && f==='edit_sdr' && ![...elField.options].some(op=>op.value===valField)){
+        const opt=document.createElement('option');
+        opt.value=valField; opt.textContent=valField;
+        elField.insertBefore(opt, elField.querySelector('option[value="__nova__"]'));
+      }
+      elField.value=valField;
+    }
   });
   document.getElementById('edit_pl').value=v.premio_liquido;
   document.getElementById('edit_pct').value=v.percentual_comissao;
@@ -3886,6 +3920,46 @@ function renderOTEHistorico(){
 }
 
 
+
+// ── ORIGENS ────────────────────────────────────────────────────────────
+let origens_customizadas = JSON.parse(localStorage.getItem('origens_custom')||'[]');
+
+function initOrigemSelects(){
+  ['f_sdr','edit_sdr'].forEach(selId=>{
+    const sel=document.getElementById(selId);
+    if(!sel) return;
+    // Adicionar origens customizadas antes do "Adicionar nova..."
+    origens_customizadas.forEach(o=>{
+      const jaExiste=[...sel.options].some(op=>op.value===o);
+      if(!jaExiste){
+        const opt=document.createElement('option');
+        opt.value=o; opt.textContent=o;
+        sel.insertBefore(opt, sel.querySelector('option[value="__nova__"]'));
+      }
+    });
+    sel.addEventListener('change',function(){
+      if(this.value==='__nova__'){
+        const nova=prompt('Nome da nova origem:');
+        if(nova&&nova.trim()){
+          const nomeNovo=nova.trim();
+          // Adicionar em todos os selects de origem
+          origens_customizadas.push(nomeNovo);
+          localStorage.setItem('origens_custom',JSON.stringify(origens_customizadas));
+          ['f_sdr','edit_sdr'].forEach(id=>{
+            const s=document.getElementById(id);
+            if(!s) return;
+            const opt=document.createElement('option');
+            opt.value=nomeNovo; opt.textContent=nomeNovo;
+            s.insertBefore(opt, s.querySelector('option[value="__nova__"]'));
+          });
+          this.value=nomeNovo;
+        } else {
+          this.value='';
+        }
+      }
+    });
+  });
+}
 
 </script>
 </body>
