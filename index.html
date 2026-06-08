@@ -1144,71 +1144,737 @@ input[type=range]{width:100%;accent-color:var(--accent)}
     <!-- COBERTURAS AUTO -->
     <div class="view" id="view-cobert_auto">
       <div class="page-title">🚗 Coberturas — Seguro Auto</div>
-      <p class="page-sub">Gere textos prontos para WhatsApp explicando cada cobertura ao cliente</p>
+      <p class="page-sub">Gere textos prontos para WhatsApp explicando as coberturas ao cliente</p>
+
+      <!-- Abas de modo -->
+      <div class="auth-tabs" style="margin-bottom:20px" id="cobTabs-auto">
+        <div class="auth-tab active" id="cobTab-lista-auto" onclick="switchCobTab('auto','lista')">☑️ Selecionar coberturas</div>
+        <div class="auth-tab" id="cobTab-texto-auto" onclick="switchCobTab('auto','texto')">📋 Colar texto da proposta</div>
+        <div class="auth-tab" id="cobTab-foto-auto" onclick="switchCobTab('auto','foto')">📸 Colar da tela da seguradora</div>
+      </div>
+
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;align-items:start">
+
+        <!-- Painel esquerdo: entrada -->
         <div>
-          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
-            <div style="font-size:13px;font-weight:600;color:var(--text-2)">Selecione as coberturas:</div>
-            <button class="btn btn-ghost" style="font-size:12px;padding:5px 10px" onclick="limparCoberturas('auto')">🗑️ Limpar</button>
+          <!-- MODO LISTA -->
+          <div id="cobPainel-lista-auto">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+              <div style="font-size:12px;color:var(--text-2)">Marque e insira o valor de cada cobertura:</div>
+              <button onclick="limparCobCheck('auto')" style="font-size:11px;padding:3px 10px;border:1px solid var(--border);border-radius:4px;background:none;cursor:pointer;color:var(--text-3)">Limpar tudo</button>
+            </div>
+            <div style="max-height:480px;overflow-y:auto;border:1px solid var(--border);border-radius:var(--radius-sm)">
+              <div style="margin-bottom:12px">
+          <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--text-3);padding:6px 8px;background:var(--bg);border-radius:4px;margin-bottom:2px">🛡️ Principais</div>
+          <table style="width:100%;border-collapse:collapse"><tr class="cobert-row" data-tipo="auto" data-nome="Colisão">
+              <td style="padding:6px 8px;width:32px">
+                <input type="checkbox" id="auto_Colisão" data-tipo="auto" data-nome="Colisão" onchange="toggleCobertCheck(this)" style="width:16px;height:16px;accent-color:var(--accent);cursor:pointer">
+              </td>
+              <td style="padding:6px 8px">
+                <label for="auto_Colisão" style="cursor:pointer;font-size:13px;font-weight:500;color:var(--text)">Colisão</label>
+              </td>
+              <td style="padding:6px 8px;width:140px">
+                <input type="text" placeholder="R$ valor" data-tipo="auto" data-nome="Colisão" class="cobert-valor" disabled
+                  style="width:100%;padding:4px 8px;font-size:12px;border:1px solid var(--border);border-radius:4px;background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;outline:none"
+                  oninput="this.closest('tr').querySelector('input[type=checkbox]').checked=!!this.value;toggleCobertCheck(this.closest('tr').querySelector('input[type=checkbox]'))">
+              </td>
+            </tr><tr class="cobert-row" data-tipo="auto" data-nome="Furto e Roubo">
+              <td style="padding:6px 8px;width:32px">
+                <input type="checkbox" id="auto_Furto_e_Roubo" data-tipo="auto" data-nome="Furto e Roubo" onchange="toggleCobertCheck(this)" style="width:16px;height:16px;accent-color:var(--accent);cursor:pointer">
+              </td>
+              <td style="padding:6px 8px">
+                <label for="auto_Furto_e_Roubo" style="cursor:pointer;font-size:13px;font-weight:500;color:var(--text)">Furto e Roubo</label>
+              </td>
+              <td style="padding:6px 8px;width:140px">
+                <input type="text" placeholder="R$ valor" data-tipo="auto" data-nome="Furto e Roubo" class="cobert-valor" disabled
+                  style="width:100%;padding:4px 8px;font-size:12px;border:1px solid var(--border);border-radius:4px;background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;outline:none"
+                  oninput="this.closest('tr').querySelector('input[type=checkbox]').checked=!!this.value;toggleCobertCheck(this.closest('tr').querySelector('input[type=checkbox]'))">
+              </td>
+            </tr><tr class="cobert-row" data-tipo="auto" data-nome="Incêndio">
+              <td style="padding:6px 8px;width:32px">
+                <input type="checkbox" id="auto_Incêndio" data-tipo="auto" data-nome="Incêndio" onchange="toggleCobertCheck(this)" style="width:16px;height:16px;accent-color:var(--accent);cursor:pointer">
+              </td>
+              <td style="padding:6px 8px">
+                <label for="auto_Incêndio" style="cursor:pointer;font-size:13px;font-weight:500;color:var(--text)">Incêndio</label>
+              </td>
+              <td style="padding:6px 8px;width:140px">
+                <input type="text" placeholder="R$ valor" data-tipo="auto" data-nome="Incêndio" class="cobert-valor" disabled
+                  style="width:100%;padding:4px 8px;font-size:12px;border:1px solid var(--border);border-radius:4px;background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;outline:none"
+                  oninput="this.closest('tr').querySelector('input[type=checkbox]').checked=!!this.value;toggleCobertCheck(this.closest('tr').querySelector('input[type=checkbox]'))">
+              </td>
+            </tr><tr class="cobert-row" data-tipo="auto" data-nome="Cobertura Total (Compreensiva)">
+              <td style="padding:6px 8px;width:32px">
+                <input type="checkbox" id="auto_Cobertura_Total_Compreensiva" data-tipo="auto" data-nome="Cobertura Total (Compreensiva)" onchange="toggleCobertCheck(this)" style="width:16px;height:16px;accent-color:var(--accent);cursor:pointer">
+              </td>
+              <td style="padding:6px 8px">
+                <label for="auto_Cobertura_Total_Compreensiva" style="cursor:pointer;font-size:13px;font-weight:500;color:var(--text)">Cobertura Total (Compreensiva)</label>
+              </td>
+              <td style="padding:6px 8px;width:140px">
+                <input type="text" placeholder="R$ valor" data-tipo="auto" data-nome="Cobertura Total (Compreensiva)" class="cobert-valor" disabled
+                  style="width:100%;padding:4px 8px;font-size:12px;border:1px solid var(--border);border-radius:4px;background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;outline:none"
+                  oninput="this.closest('tr').querySelector('input[type=checkbox]').checked=!!this.value;toggleCobertCheck(this.closest('tr').querySelector('input[type=checkbox]'))">
+              </td>
+            </tr><tr class="cobert-row" data-tipo="auto" data-nome="Danos Causados pela Natureza">
+              <td style="padding:6px 8px;width:32px">
+                <input type="checkbox" id="auto_Danos_Causados_pela_Natureza" data-tipo="auto" data-nome="Danos Causados pela Natureza" onchange="toggleCobertCheck(this)" style="width:16px;height:16px;accent-color:var(--accent);cursor:pointer">
+              </td>
+              <td style="padding:6px 8px">
+                <label for="auto_Danos_Causados_pela_Natureza" style="cursor:pointer;font-size:13px;font-weight:500;color:var(--text)">Danos Causados pela Natureza</label>
+              </td>
+              <td style="padding:6px 8px;width:140px">
+                <input type="text" placeholder="R$ valor" data-tipo="auto" data-nome="Danos Causados pela Natureza" class="cobert-valor" disabled
+                  style="width:100%;padding:4px 8px;font-size:12px;border:1px solid var(--border);border-radius:4px;background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;outline:none"
+                  oninput="this.closest('tr').querySelector('input[type=checkbox]').checked=!!this.value;toggleCobertCheck(this.closest('tr').querySelector('input[type=checkbox]'))">
+              </td>
+            </tr><tr class="cobert-row" data-tipo="auto" data-nome="Perda Total">
+              <td style="padding:6px 8px;width:32px">
+                <input type="checkbox" id="auto_Perda_Total" data-tipo="auto" data-nome="Perda Total" onchange="toggleCobertCheck(this)" style="width:16px;height:16px;accent-color:var(--accent);cursor:pointer">
+              </td>
+              <td style="padding:6px 8px">
+                <label for="auto_Perda_Total" style="cursor:pointer;font-size:13px;font-weight:500;color:var(--text)">Perda Total</label>
+              </td>
+              <td style="padding:6px 8px;width:140px">
+                <input type="text" placeholder="R$ valor" data-tipo="auto" data-nome="Perda Total" class="cobert-valor" disabled
+                  style="width:100%;padding:4px 8px;font-size:12px;border:1px solid var(--border);border-radius:4px;background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;outline:none"
+                  oninput="this.closest('tr').querySelector('input[type=checkbox]').checked=!!this.value;toggleCobertCheck(this.closest('tr').querySelector('input[type=checkbox]'))">
+              </td>
+            </tr><tr class="cobert-row" data-tipo="auto" data-nome="Perda Parcial">
+              <td style="padding:6px 8px;width:32px">
+                <input type="checkbox" id="auto_Perda_Parcial" data-tipo="auto" data-nome="Perda Parcial" onchange="toggleCobertCheck(this)" style="width:16px;height:16px;accent-color:var(--accent);cursor:pointer">
+              </td>
+              <td style="padding:6px 8px">
+                <label for="auto_Perda_Parcial" style="cursor:pointer;font-size:13px;font-weight:500;color:var(--text)">Perda Parcial</label>
+              </td>
+              <td style="padding:6px 8px;width:140px">
+                <input type="text" placeholder="R$ valor" data-tipo="auto" data-nome="Perda Parcial" class="cobert-valor" disabled
+                  style="width:100%;padding:4px 8px;font-size:12px;border:1px solid var(--border);border-radius:4px;background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;outline:none"
+                  oninput="this.closest('tr').querySelector('input[type=checkbox]').checked=!!this.value;toggleCobertCheck(this.closest('tr').querySelector('input[type=checkbox]'))">
+              </td>
+            </tr></table>
+        </div><div style="margin-bottom:12px">
+          <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--text-3);padding:6px 8px;background:var(--bg);border-radius:4px;margin-bottom:2px">👥 Responsabilidade Civil</div>
+          <table style="width:100%;border-collapse:collapse"><tr class="cobert-row" data-tipo="auto" data-nome="Danos Materiais a Terceiros (RCF-DM)">
+              <td style="padding:6px 8px;width:32px">
+                <input type="checkbox" id="auto_Danos_Materiais_a_Terceiros_RCF-DM" data-tipo="auto" data-nome="Danos Materiais a Terceiros (RCF-DM)" onchange="toggleCobertCheck(this)" style="width:16px;height:16px;accent-color:var(--accent);cursor:pointer">
+              </td>
+              <td style="padding:6px 8px">
+                <label for="auto_Danos_Materiais_a_Terceiros_RCF-DM" style="cursor:pointer;font-size:13px;font-weight:500;color:var(--text)">Danos Materiais a Terceiros (RCF-DM)</label>
+              </td>
+              <td style="padding:6px 8px;width:140px">
+                <input type="text" placeholder="R$ valor" data-tipo="auto" data-nome="Danos Materiais a Terceiros (RCF-DM)" class="cobert-valor" disabled
+                  style="width:100%;padding:4px 8px;font-size:12px;border:1px solid var(--border);border-radius:4px;background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;outline:none"
+                  oninput="this.closest('tr').querySelector('input[type=checkbox]').checked=!!this.value;toggleCobertCheck(this.closest('tr').querySelector('input[type=checkbox]'))">
+              </td>
+            </tr><tr class="cobert-row" data-tipo="auto" data-nome="Danos Corporais a Terceiros (RCF-DC)">
+              <td style="padding:6px 8px;width:32px">
+                <input type="checkbox" id="auto_Danos_Corporais_a_Terceiros_RCF-DC" data-tipo="auto" data-nome="Danos Corporais a Terceiros (RCF-DC)" onchange="toggleCobertCheck(this)" style="width:16px;height:16px;accent-color:var(--accent);cursor:pointer">
+              </td>
+              <td style="padding:6px 8px">
+                <label for="auto_Danos_Corporais_a_Terceiros_RCF-DC" style="cursor:pointer;font-size:13px;font-weight:500;color:var(--text)">Danos Corporais a Terceiros (RCF-DC)</label>
+              </td>
+              <td style="padding:6px 8px;width:140px">
+                <input type="text" placeholder="R$ valor" data-tipo="auto" data-nome="Danos Corporais a Terceiros (RCF-DC)" class="cobert-valor" disabled
+                  style="width:100%;padding:4px 8px;font-size:12px;border:1px solid var(--border);border-radius:4px;background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;outline:none"
+                  oninput="this.closest('tr').querySelector('input[type=checkbox]').checked=!!this.value;toggleCobertCheck(this.closest('tr').querySelector('input[type=checkbox]'))">
+              </td>
+            </tr><tr class="cobert-row" data-tipo="auto" data-nome="Danos Morais a Terceiros">
+              <td style="padding:6px 8px;width:32px">
+                <input type="checkbox" id="auto_Danos_Morais_a_Terceiros" data-tipo="auto" data-nome="Danos Morais a Terceiros" onchange="toggleCobertCheck(this)" style="width:16px;height:16px;accent-color:var(--accent);cursor:pointer">
+              </td>
+              <td style="padding:6px 8px">
+                <label for="auto_Danos_Morais_a_Terceiros" style="cursor:pointer;font-size:13px;font-weight:500;color:var(--text)">Danos Morais a Terceiros</label>
+              </td>
+              <td style="padding:6px 8px;width:140px">
+                <input type="text" placeholder="R$ valor" data-tipo="auto" data-nome="Danos Morais a Terceiros" class="cobert-valor" disabled
+                  style="width:100%;padding:4px 8px;font-size:12px;border:1px solid var(--border);border-radius:4px;background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;outline:none"
+                  oninput="this.closest('tr').querySelector('input[type=checkbox]').checked=!!this.value;toggleCobertCheck(this.closest('tr').querySelector('input[type=checkbox]'))">
+              </td>
+            </tr><tr class="cobert-row" data-tipo="auto" data-nome="APP — Acidentes Pessoais de Passageiros">
+              <td style="padding:6px 8px;width:32px">
+                <input type="checkbox" id="auto_APP__Acidentes_Pessoais_de_Passageiros" data-tipo="auto" data-nome="APP — Acidentes Pessoais de Passageiros" onchange="toggleCobertCheck(this)" style="width:16px;height:16px;accent-color:var(--accent);cursor:pointer">
+              </td>
+              <td style="padding:6px 8px">
+                <label for="auto_APP__Acidentes_Pessoais_de_Passageiros" style="cursor:pointer;font-size:13px;font-weight:500;color:var(--text)">APP — Acidentes Pessoais de Passageiros</label>
+              </td>
+              <td style="padding:6px 8px;width:140px">
+                <input type="text" placeholder="R$ valor" data-tipo="auto" data-nome="APP — Acidentes Pessoais de Passageiros" class="cobert-valor" disabled
+                  style="width:100%;padding:4px 8px;font-size:12px;border:1px solid var(--border);border-radius:4px;background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;outline:none"
+                  oninput="this.closest('tr').querySelector('input[type=checkbox]').checked=!!this.value;toggleCobertCheck(this.closest('tr').querySelector('input[type=checkbox]'))">
+              </td>
+            </tr></table>
+        </div><div style="margin-bottom:12px">
+          <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--text-3);padding:6px 8px;background:var(--bg);border-radius:4px;margin-bottom:2px">🔧 Assistências</div>
+          <table style="width:100%;border-collapse:collapse"><tr class="cobert-row" data-tipo="auto" data-nome="Assistência 24h">
+              <td style="padding:6px 8px;width:32px">
+                <input type="checkbox" id="auto_Assistência_24h" data-tipo="auto" data-nome="Assistência 24h" onchange="toggleCobertCheck(this)" style="width:16px;height:16px;accent-color:var(--accent);cursor:pointer">
+              </td>
+              <td style="padding:6px 8px">
+                <label for="auto_Assistência_24h" style="cursor:pointer;font-size:13px;font-weight:500;color:var(--text)">Assistência 24h</label>
+              </td>
+              <td style="padding:6px 8px;width:140px">
+                <input type="text" placeholder="R$ valor" data-tipo="auto" data-nome="Assistência 24h" class="cobert-valor" disabled
+                  style="width:100%;padding:4px 8px;font-size:12px;border:1px solid var(--border);border-radius:4px;background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;outline:none"
+                  oninput="this.closest('tr').querySelector('input[type=checkbox]').checked=!!this.value;toggleCobertCheck(this.closest('tr').querySelector('input[type=checkbox]'))">
+              </td>
+            </tr><tr class="cobert-row" data-tipo="auto" data-nome="Carro Reserva">
+              <td style="padding:6px 8px;width:32px">
+                <input type="checkbox" id="auto_Carro_Reserva" data-tipo="auto" data-nome="Carro Reserva" onchange="toggleCobertCheck(this)" style="width:16px;height:16px;accent-color:var(--accent);cursor:pointer">
+              </td>
+              <td style="padding:6px 8px">
+                <label for="auto_Carro_Reserva" style="cursor:pointer;font-size:13px;font-weight:500;color:var(--text)">Carro Reserva</label>
+              </td>
+              <td style="padding:6px 8px;width:140px">
+                <input type="text" placeholder="R$ valor" data-tipo="auto" data-nome="Carro Reserva" class="cobert-valor" disabled
+                  style="width:100%;padding:4px 8px;font-size:12px;border:1px solid var(--border);border-radius:4px;background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;outline:none"
+                  oninput="this.closest('tr').querySelector('input[type=checkbox]').checked=!!this.value;toggleCobertCheck(this.closest('tr').querySelector('input[type=checkbox]'))">
+              </td>
+            </tr><tr class="cobert-row" data-tipo="auto" data-nome="Guincho Ilimitado">
+              <td style="padding:6px 8px;width:32px">
+                <input type="checkbox" id="auto_Guincho_Ilimitado" data-tipo="auto" data-nome="Guincho Ilimitado" onchange="toggleCobertCheck(this)" style="width:16px;height:16px;accent-color:var(--accent);cursor:pointer">
+              </td>
+              <td style="padding:6px 8px">
+                <label for="auto_Guincho_Ilimitado" style="cursor:pointer;font-size:13px;font-weight:500;color:var(--text)">Guincho Ilimitado</label>
+              </td>
+              <td style="padding:6px 8px;width:140px">
+                <input type="text" placeholder="R$ valor" data-tipo="auto" data-nome="Guincho Ilimitado" class="cobert-valor" disabled
+                  style="width:100%;padding:4px 8px;font-size:12px;border:1px solid var(--border);border-radius:4px;background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;outline:none"
+                  oninput="this.closest('tr').querySelector('input[type=checkbox]').checked=!!this.value;toggleCobertCheck(this.closest('tr').querySelector('input[type=checkbox]'))">
+              </td>
+            </tr><tr class="cobert-row" data-tipo="auto" data-nome="Chaveiro">
+              <td style="padding:6px 8px;width:32px">
+                <input type="checkbox" id="auto_Chaveiro" data-tipo="auto" data-nome="Chaveiro" onchange="toggleCobertCheck(this)" style="width:16px;height:16px;accent-color:var(--accent);cursor:pointer">
+              </td>
+              <td style="padding:6px 8px">
+                <label for="auto_Chaveiro" style="cursor:pointer;font-size:13px;font-weight:500;color:var(--text)">Chaveiro</label>
+              </td>
+              <td style="padding:6px 8px;width:140px">
+                <input type="text" placeholder="R$ valor" data-tipo="auto" data-nome="Chaveiro" class="cobert-valor" disabled
+                  style="width:100%;padding:4px 8px;font-size:12px;border:1px solid var(--border);border-radius:4px;background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;outline:none"
+                  oninput="this.closest('tr').querySelector('input[type=checkbox]').checked=!!this.value;toggleCobertCheck(this.closest('tr').querySelector('input[type=checkbox]'))">
+              </td>
+            </tr><tr class="cobert-row" data-tipo="auto" data-nome="Táxi / App">
+              <td style="padding:6px 8px;width:32px">
+                <input type="checkbox" id="auto_Táxi___App" data-tipo="auto" data-nome="Táxi / App" onchange="toggleCobertCheck(this)" style="width:16px;height:16px;accent-color:var(--accent);cursor:pointer">
+              </td>
+              <td style="padding:6px 8px">
+                <label for="auto_Táxi___App" style="cursor:pointer;font-size:13px;font-weight:500;color:var(--text)">Táxi / App</label>
+              </td>
+              <td style="padding:6px 8px;width:140px">
+                <input type="text" placeholder="R$ valor" data-tipo="auto" data-nome="Táxi / App" class="cobert-valor" disabled
+                  style="width:100%;padding:4px 8px;font-size:12px;border:1px solid var(--border);border-radius:4px;background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;outline:none"
+                  oninput="this.closest('tr').querySelector('input[type=checkbox]').checked=!!this.value;toggleCobertCheck(this.closest('tr').querySelector('input[type=checkbox]'))">
+              </td>
+            </tr><tr class="cobert-row" data-tipo="auto" data-nome="Vidros, Lanternas e Retrovisores">
+              <td style="padding:6px 8px;width:32px">
+                <input type="checkbox" id="auto_Vidros_Lanternas_e_Retrovisores" data-tipo="auto" data-nome="Vidros, Lanternas e Retrovisores" onchange="toggleCobertCheck(this)" style="width:16px;height:16px;accent-color:var(--accent);cursor:pointer">
+              </td>
+              <td style="padding:6px 8px">
+                <label for="auto_Vidros_Lanternas_e_Retrovisores" style="cursor:pointer;font-size:13px;font-weight:500;color:var(--text)">Vidros, Lanternas e Retrovisores</label>
+              </td>
+              <td style="padding:6px 8px;width:140px">
+                <input type="text" placeholder="R$ valor" data-tipo="auto" data-nome="Vidros, Lanternas e Retrovisores" class="cobert-valor" disabled
+                  style="width:100%;padding:4px 8px;font-size:12px;border:1px solid var(--border);border-radius:4px;background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;outline:none"
+                  oninput="this.closest('tr').querySelector('input[type=checkbox]').checked=!!this.value;toggleCobertCheck(this.closest('tr').querySelector('input[type=checkbox]'))">
+              </td>
+            </tr></table>
+        </div><div style="margin-bottom:12px">
+          <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--text-3);padding:6px 8px;background:var(--bg);border-radius:4px;margin-bottom:2px">⚡ Extras</div>
+          <table style="width:100%;border-collapse:collapse"><tr class="cobert-row" data-tipo="auto" data-nome="Rastreador">
+              <td style="padding:6px 8px;width:32px">
+                <input type="checkbox" id="auto_Rastreador" data-tipo="auto" data-nome="Rastreador" onchange="toggleCobertCheck(this)" style="width:16px;height:16px;accent-color:var(--accent);cursor:pointer">
+              </td>
+              <td style="padding:6px 8px">
+                <label for="auto_Rastreador" style="cursor:pointer;font-size:13px;font-weight:500;color:var(--text)">Rastreador</label>
+              </td>
+              <td style="padding:6px 8px;width:140px">
+                <input type="text" placeholder="R$ valor" data-tipo="auto" data-nome="Rastreador" class="cobert-valor" disabled
+                  style="width:100%;padding:4px 8px;font-size:12px;border:1px solid var(--border);border-radius:4px;background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;outline:none"
+                  oninput="this.closest('tr').querySelector('input[type=checkbox]').checked=!!this.value;toggleCobertCheck(this.closest('tr').querySelector('input[type=checkbox]'))">
+              </td>
+            </tr><tr class="cobert-row" data-tipo="auto" data-nome="Proteção de Multas">
+              <td style="padding:6px 8px;width:32px">
+                <input type="checkbox" id="auto_Proteção_de_Multas" data-tipo="auto" data-nome="Proteção de Multas" onchange="toggleCobertCheck(this)" style="width:16px;height:16px;accent-color:var(--accent);cursor:pointer">
+              </td>
+              <td style="padding:6px 8px">
+                <label for="auto_Proteção_de_Multas" style="cursor:pointer;font-size:13px;font-weight:500;color:var(--text)">Proteção de Multas</label>
+              </td>
+              <td style="padding:6px 8px;width:140px">
+                <input type="text" placeholder="R$ valor" data-tipo="auto" data-nome="Proteção de Multas" class="cobert-valor" disabled
+                  style="width:100%;padding:4px 8px;font-size:12px;border:1px solid var(--border);border-radius:4px;background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;outline:none"
+                  oninput="this.closest('tr').querySelector('input[type=checkbox]').checked=!!this.value;toggleCobertCheck(this.closest('tr').querySelector('input[type=checkbox]'))">
+              </td>
+            </tr><tr class="cobert-row" data-tipo="auto" data-nome="Pneu Furado">
+              <td style="padding:6px 8px;width:32px">
+                <input type="checkbox" id="auto_Pneu_Furado" data-tipo="auto" data-nome="Pneu Furado" onchange="toggleCobertCheck(this)" style="width:16px;height:16px;accent-color:var(--accent);cursor:pointer">
+              </td>
+              <td style="padding:6px 8px">
+                <label for="auto_Pneu_Furado" style="cursor:pointer;font-size:13px;font-weight:500;color:var(--text)">Pneu Furado</label>
+              </td>
+              <td style="padding:6px 8px;width:140px">
+                <input type="text" placeholder="R$ valor" data-tipo="auto" data-nome="Pneu Furado" class="cobert-valor" disabled
+                  style="width:100%;padding:4px 8px;font-size:12px;border:1px solid var(--border);border-radius:4px;background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;outline:none"
+                  oninput="this.closest('tr').querySelector('input[type=checkbox]').checked=!!this.value;toggleCobertCheck(this.closest('tr').querySelector('input[type=checkbox]'))">
+              </td>
+            </tr><tr class="cobert-row" data-tipo="auto" data-nome="Carta Verde">
+              <td style="padding:6px 8px;width:32px">
+                <input type="checkbox" id="auto_Carta_Verde" data-tipo="auto" data-nome="Carta Verde" onchange="toggleCobertCheck(this)" style="width:16px;height:16px;accent-color:var(--accent);cursor:pointer">
+              </td>
+              <td style="padding:6px 8px">
+                <label for="auto_Carta_Verde" style="cursor:pointer;font-size:13px;font-weight:500;color:var(--text)">Carta Verde</label>
+              </td>
+              <td style="padding:6px 8px;width:140px">
+                <input type="text" placeholder="R$ valor" data-tipo="auto" data-nome="Carta Verde" class="cobert-valor" disabled
+                  style="width:100%;padding:4px 8px;font-size:12px;border:1px solid var(--border);border-radius:4px;background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;outline:none"
+                  oninput="this.closest('tr').querySelector('input[type=checkbox]').checked=!!this.value;toggleCobertCheck(this.closest('tr').querySelector('input[type=checkbox]'))">
+              </td>
+            </tr><tr class="cobert-row" data-tipo="auto" data-nome="Danos Elétricos">
+              <td style="padding:6px 8px;width:32px">
+                <input type="checkbox" id="auto_Danos_Elétricos" data-tipo="auto" data-nome="Danos Elétricos" onchange="toggleCobertCheck(this)" style="width:16px;height:16px;accent-color:var(--accent);cursor:pointer">
+              </td>
+              <td style="padding:6px 8px">
+                <label for="auto_Danos_Elétricos" style="cursor:pointer;font-size:13px;font-weight:500;color:var(--text)">Danos Elétricos</label>
+              </td>
+              <td style="padding:6px 8px;width:140px">
+                <input type="text" placeholder="R$ valor" data-tipo="auto" data-nome="Danos Elétricos" class="cobert-valor" disabled
+                  style="width:100%;padding:4px 8px;font-size:12px;border:1px solid var(--border);border-radius:4px;background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;outline:none"
+                  oninput="this.closest('tr').querySelector('input[type=checkbox]').checked=!!this.value;toggleCobertCheck(this.closest('tr').querySelector('input[type=checkbox]'))">
+              </td>
+            </tr></table>
+        </div>
+            </div>
           </div>
-          <div class="cobert-grupos" id="grupos-auto"><div class="cobert-grupo"><div class="cobert-grupo-titulo">🛡️ Coberturas Principais</div><div><span class="cobert-chip" onclick="toggleCobert(this,'auto')">Colisão</span><span class="cobert-chip" onclick="toggleCobert(this,'auto')">Furto e Roubo</span><span class="cobert-chip" onclick="toggleCobert(this,'auto')">Incêndio</span><span class="cobert-chip" onclick="toggleCobert(this,'auto')">Danos Causados pela Natureza</span><span class="cobert-chip" onclick="toggleCobert(this,'auto')">Cobertura Total (Compreensiva)</span><span class="cobert-chip" onclick="toggleCobert(this,'auto')">Perda Total</span><span class="cobert-chip" onclick="toggleCobert(this,'auto')">Perda Parcial</span></div></div><div class="cobert-grupo"><div class="cobert-grupo-titulo">👥 Responsabilidade Civil</div><div><span class="cobert-chip" onclick="toggleCobert(this,'auto')">Danos Materiais a Terceiros (RCF-DM)</span><span class="cobert-chip" onclick="toggleCobert(this,'auto')">Danos Corporais a Terceiros (RCF-DC)</span><span class="cobert-chip" onclick="toggleCobert(this,'auto')">Danos Morais a Terceiros</span><span class="cobert-chip" onclick="toggleCobert(this,'auto')">APP — Acidentes Pessoais de Passageiros</span></div></div><div class="cobert-grupo"><div class="cobert-grupo-titulo">🔧 Serviços e Assistências</div><div><span class="cobert-chip" onclick="toggleCobert(this,'auto')">Assistência 24h</span><span class="cobert-chip" onclick="toggleCobert(this,'auto')">Carro Reserva</span><span class="cobert-chip" onclick="toggleCobert(this,'auto')">Guincho Ilimitado</span><span class="cobert-chip" onclick="toggleCobert(this,'auto')">Chaveiro</span><span class="cobert-chip" onclick="toggleCobert(this,'auto')">Táxi / App</span><span class="cobert-chip" onclick="toggleCobert(this,'auto')">Vidros, Lanternas e Retrovisores</span></div></div><div class="cobert-grupo"><div class="cobert-grupo-titulo">⚡ Coberturas Extras</div><div><span class="cobert-chip" onclick="toggleCobert(this,'auto')">Rastreador</span><span class="cobert-chip" onclick="toggleCobert(this,'auto')">Proteção de Multas</span><span class="cobert-chip" onclick="toggleCobert(this,'auto')">Higienização</span><span class="cobert-chip" onclick="toggleCobert(this,'auto')">Pneu Furado</span><span class="cobert-chip" onclick="toggleCobert(this,'auto')">Carta Verde</span><span class="cobert-chip" onclick="toggleCobert(this,'auto')">Danos Elétricos</span></div></div></div>
-          <div style="margin-top:16px">
-            <label style="font-size:12px;font-weight:600;color:var(--text-2);display:block;margin-bottom:6px">Ou cole as coberturas em texto (da proposta da seguradora):</label>
-            <textarea id="cobert-texto-auto" rows="4" placeholder="Ex: Colisão, Furto e Roubo, RCF-DM R$ 100.000, Assistência 24h..."
-              style="width:100%;padding:10px 12px;font-size:13px;font-family:'DM Sans',sans-serif;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--bg);outline:none;resize:vertical;color:var(--text);box-sizing:border-box"></textarea>
+
+          <!-- MODO TEXTO -->
+          <div id="cobPainel-texto-auto" style="display:none">
+            <div style="font-size:12px;color:var(--text-2);margin-bottom:8px">Cole aqui as coberturas (pode ser de qualquer formato):</div>
+            <textarea id="cobTexto-auto" rows="12" placeholder="Ex:&#10;Colisão - R$ 50.000&#10;Furto e Roubo - R$ 50.000&#10;RCF-DM - R$ 100.000&#10;Assistência 24h"
+              style="width:100%;padding:10px 12px;font-size:13px;font-family:'DM Sans',sans-serif;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--bg);color:var(--text);outline:none;resize:vertical;box-sizing:border-box"></textarea>
           </div>
-          <div style="margin-top:12px">
-            <label style="font-size:12px;font-weight:600;color:var(--text-2);display:block;margin-bottom:6px">Contexto do cliente (opcional):</label>
-            <input type="text" id="cobert-contexto-auto" placeholder="Ex: João, família com crianças, carro popular..."
-              style="width:100%;padding:9px 12px;font-size:13px;font-family:'DM Sans',sans-serif;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--bg);outline:none;color:var(--text);box-sizing:border-box">
+
+          <!-- MODO FOTO/PRINT -->
+          <div id="cobPainel-foto-auto" style="display:none">
+            <div style="font-size:12px;color:var(--text-2);margin-bottom:8px">Cole o texto extraído da tela da seguradora (print, PDF ou qualquer formato):</div>
+            <textarea id="cobFoto-auto" rows="12" placeholder="Cole aqui o texto copiado direto da proposta da seguradora, mesmo que esteja bagunçado. A IA vai identificar as coberturas automaticamente."
+              style="width:100%;padding:10px 12px;font-size:13px;font-family:'DM Sans',sans-serif;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--bg);color:var(--text);outline:none;resize:vertical;box-sizing:border-box"></textarea>
+            <div style="font-size:11px;color:var(--text-3);margin-top:6px">💡 Dica: no iPhone, selecione o texto na tela da seguradora, copie e cole aqui.</div>
           </div>
-          <button class="btn btn-primary" style="width:100%;margin-top:16px;padding:12px;font-size:14px" onclick="gerarTextoCoberturas('auto')">
+
+          <!-- Contexto (sempre visível) -->
+          <div style="margin-top:14px">
+            <div style="font-size:12px;font-weight:600;color:var(--text-2);margin-bottom:6px">Contexto do cliente (opcional):</div>
+            <input type="text" id="cobContexto-auto" placeholder="Ex: João, 35 anos, família com crianças, carro popular..."
+              style="width:100%;padding:9px 12px;font-size:13px;font-family:'DM Sans',sans-serif;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--bg);color:var(--text);outline:none;box-sizing:border-box">
+          </div>
+
+          <button class="btn btn-primary" style="width:100%;margin-top:14px;padding:12px;font-size:14px" id="cobBtnGerar-auto" onclick="gerarTextoCoberturas('auto')">
             ✨ Gerar texto para WhatsApp
           </button>
         </div>
+
+        <!-- Painel direito: resultado -->
         <div>
           <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
             <div style="font-size:13px;font-weight:600;color:var(--text-2)">Texto gerado:</div>
-            <button class="btn btn-ghost" style="font-size:12px;padding:5px 12px" onclick="copiarTexto('auto')" id="btn-copiar-auto">📋 Copiar</button>
+            <button onclick="copiarTexto('auto')" id="btn-copiar-auto" class="btn btn-ghost" style="font-size:12px;padding:5px 12px">📋 Copiar</button>
           </div>
-          <div class="cobert-resultado carregando" id="cobert-resultado-auto">Selecione as coberturas e clique em "Gerar texto" ✨</div>
+          <div class="cobert-resultado carregando" id="cobert-resultado-auto" style="min-height:300px">Selecione as coberturas e clique em "Gerar texto" ✨</div>
         </div>
       </div>
     </div>
+
     <!-- COBERTURAS RESID -->
     <div class="view" id="view-cobert_resid">
       <div class="page-title">🏠 Coberturas — Seguro Residencial</div>
-      <p class="page-sub">Gere textos prontos para WhatsApp explicando cada cobertura ao cliente</p>
+      <p class="page-sub">Gere textos prontos para WhatsApp explicando as coberturas ao cliente</p>
+
+      <!-- Abas de modo -->
+      <div class="auth-tabs" style="margin-bottom:20px" id="cobTabs-resid">
+        <div class="auth-tab active" id="cobTab-lista-resid" onclick="switchCobTab('resid','lista')">☑️ Selecionar coberturas</div>
+        <div class="auth-tab" id="cobTab-texto-resid" onclick="switchCobTab('resid','texto')">📋 Colar texto da proposta</div>
+        <div class="auth-tab" id="cobTab-foto-resid" onclick="switchCobTab('resid','foto')">📸 Colar da tela da seguradora</div>
+      </div>
+
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;align-items:start">
+
+        <!-- Painel esquerdo: entrada -->
         <div>
-          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
-            <div style="font-size:13px;font-weight:600;color:var(--text-2)">Selecione as coberturas:</div>
-            <button class="btn btn-ghost" style="font-size:12px;padding:5px 10px" onclick="limparCoberturas('resid')">🗑️ Limpar</button>
+          <!-- MODO LISTA -->
+          <div id="cobPainel-lista-resid">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+              <div style="font-size:12px;color:var(--text-2)">Marque e insira o valor de cada cobertura:</div>
+              <button onclick="limparCobCheck('resid')" style="font-size:11px;padding:3px 10px;border:1px solid var(--border);border-radius:4px;background:none;cursor:pointer;color:var(--text-3)">Limpar tudo</button>
+            </div>
+            <div style="max-height:480px;overflow-y:auto;border:1px solid var(--border);border-radius:var(--radius-sm)">
+              <div style="margin-bottom:12px">
+          <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--text-3);padding:6px 8px;background:var(--bg);border-radius:4px;margin-bottom:2px">🏠 Estrutura e Conteúdo</div>
+          <table style="width:100%;border-collapse:collapse"><tr class="cobert-row" data-tipo="resid" data-nome="Incêndio, Raio e Explosão">
+              <td style="padding:6px 8px;width:32px">
+                <input type="checkbox" id="resid_Incêndio_Raio_e_Explosão" data-tipo="resid" data-nome="Incêndio, Raio e Explosão" onchange="toggleCobertCheck(this)" style="width:16px;height:16px;accent-color:var(--accent);cursor:pointer">
+              </td>
+              <td style="padding:6px 8px">
+                <label for="resid_Incêndio_Raio_e_Explosão" style="cursor:pointer;font-size:13px;font-weight:500;color:var(--text)">Incêndio, Raio e Explosão</label>
+              </td>
+              <td style="padding:6px 8px;width:140px">
+                <input type="text" placeholder="R$ valor" data-tipo="resid" data-nome="Incêndio, Raio e Explosão" class="cobert-valor" disabled
+                  style="width:100%;padding:4px 8px;font-size:12px;border:1px solid var(--border);border-radius:4px;background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;outline:none"
+                  oninput="this.closest('tr').querySelector('input[type=checkbox]').checked=!!this.value;toggleCobertCheck(this.closest('tr').querySelector('input[type=checkbox]'))">
+              </td>
+            </tr><tr class="cobert-row" data-tipo="resid" data-nome="Danos Elétricos">
+              <td style="padding:6px 8px;width:32px">
+                <input type="checkbox" id="resid_Danos_Elétricos" data-tipo="resid" data-nome="Danos Elétricos" onchange="toggleCobertCheck(this)" style="width:16px;height:16px;accent-color:var(--accent);cursor:pointer">
+              </td>
+              <td style="padding:6px 8px">
+                <label for="resid_Danos_Elétricos" style="cursor:pointer;font-size:13px;font-weight:500;color:var(--text)">Danos Elétricos</label>
+              </td>
+              <td style="padding:6px 8px;width:140px">
+                <input type="text" placeholder="R$ valor" data-tipo="resid" data-nome="Danos Elétricos" class="cobert-valor" disabled
+                  style="width:100%;padding:4px 8px;font-size:12px;border:1px solid var(--border);border-radius:4px;background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;outline:none"
+                  oninput="this.closest('tr').querySelector('input[type=checkbox]').checked=!!this.value;toggleCobertCheck(this.closest('tr').querySelector('input[type=checkbox]'))">
+              </td>
+            </tr><tr class="cobert-row" data-tipo="resid" data-nome="Roubo e Furto Qualificado">
+              <td style="padding:6px 8px;width:32px">
+                <input type="checkbox" id="resid_Roubo_e_Furto_Qualificado" data-tipo="resid" data-nome="Roubo e Furto Qualificado" onchange="toggleCobertCheck(this)" style="width:16px;height:16px;accent-color:var(--accent);cursor:pointer">
+              </td>
+              <td style="padding:6px 8px">
+                <label for="resid_Roubo_e_Furto_Qualificado" style="cursor:pointer;font-size:13px;font-weight:500;color:var(--text)">Roubo e Furto Qualificado</label>
+              </td>
+              <td style="padding:6px 8px;width:140px">
+                <input type="text" placeholder="R$ valor" data-tipo="resid" data-nome="Roubo e Furto Qualificado" class="cobert-valor" disabled
+                  style="width:100%;padding:4px 8px;font-size:12px;border:1px solid var(--border);border-radius:4px;background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;outline:none"
+                  oninput="this.closest('tr').querySelector('input[type=checkbox]').checked=!!this.value;toggleCobertCheck(this.closest('tr').querySelector('input[type=checkbox]'))">
+              </td>
+            </tr><tr class="cobert-row" data-tipo="resid" data-nome="Danos por Água">
+              <td style="padding:6px 8px;width:32px">
+                <input type="checkbox" id="resid_Danos_por_Água" data-tipo="resid" data-nome="Danos por Água" onchange="toggleCobertCheck(this)" style="width:16px;height:16px;accent-color:var(--accent);cursor:pointer">
+              </td>
+              <td style="padding:6px 8px">
+                <label for="resid_Danos_por_Água" style="cursor:pointer;font-size:13px;font-weight:500;color:var(--text)">Danos por Água</label>
+              </td>
+              <td style="padding:6px 8px;width:140px">
+                <input type="text" placeholder="R$ valor" data-tipo="resid" data-nome="Danos por Água" class="cobert-valor" disabled
+                  style="width:100%;padding:4px 8px;font-size:12px;border:1px solid var(--border);border-radius:4px;background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;outline:none"
+                  oninput="this.closest('tr').querySelector('input[type=checkbox]').checked=!!this.value;toggleCobertCheck(this.closest('tr').querySelector('input[type=checkbox]'))">
+              </td>
+            </tr><tr class="cobert-row" data-tipo="resid" data-nome="Queda de Aeronave">
+              <td style="padding:6px 8px;width:32px">
+                <input type="checkbox" id="resid_Queda_de_Aeronave" data-tipo="resid" data-nome="Queda de Aeronave" onchange="toggleCobertCheck(this)" style="width:16px;height:16px;accent-color:var(--accent);cursor:pointer">
+              </td>
+              <td style="padding:6px 8px">
+                <label for="resid_Queda_de_Aeronave" style="cursor:pointer;font-size:13px;font-weight:500;color:var(--text)">Queda de Aeronave</label>
+              </td>
+              <td style="padding:6px 8px;width:140px">
+                <input type="text" placeholder="R$ valor" data-tipo="resid" data-nome="Queda de Aeronave" class="cobert-valor" disabled
+                  style="width:100%;padding:4px 8px;font-size:12px;border:1px solid var(--border);border-radius:4px;background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;outline:none"
+                  oninput="this.closest('tr').querySelector('input[type=checkbox]').checked=!!this.value;toggleCobertCheck(this.closest('tr').querySelector('input[type=checkbox]'))">
+              </td>
+            </tr><tr class="cobert-row" data-tipo="resid" data-nome="Impacto de Veículos">
+              <td style="padding:6px 8px;width:32px">
+                <input type="checkbox" id="resid_Impacto_de_Veículos" data-tipo="resid" data-nome="Impacto de Veículos" onchange="toggleCobertCheck(this)" style="width:16px;height:16px;accent-color:var(--accent);cursor:pointer">
+              </td>
+              <td style="padding:6px 8px">
+                <label for="resid_Impacto_de_Veículos" style="cursor:pointer;font-size:13px;font-weight:500;color:var(--text)">Impacto de Veículos</label>
+              </td>
+              <td style="padding:6px 8px;width:140px">
+                <input type="text" placeholder="R$ valor" data-tipo="resid" data-nome="Impacto de Veículos" class="cobert-valor" disabled
+                  style="width:100%;padding:4px 8px;font-size:12px;border:1px solid var(--border);border-radius:4px;background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;outline:none"
+                  oninput="this.closest('tr').querySelector('input[type=checkbox]').checked=!!this.value;toggleCobertCheck(this.closest('tr').querySelector('input[type=checkbox]'))">
+              </td>
+            </tr></table>
+        </div><div style="margin-bottom:12px">
+          <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--text-3);padding:6px 8px;background:var(--bg);border-radius:4px;margin-bottom:2px">🌪️ Eventos Naturais</div>
+          <table style="width:100%;border-collapse:collapse"><tr class="cobert-row" data-tipo="resid" data-nome="Vendaval e Tempestade">
+              <td style="padding:6px 8px;width:32px">
+                <input type="checkbox" id="resid_Vendaval_e_Tempestade" data-tipo="resid" data-nome="Vendaval e Tempestade" onchange="toggleCobertCheck(this)" style="width:16px;height:16px;accent-color:var(--accent);cursor:pointer">
+              </td>
+              <td style="padding:6px 8px">
+                <label for="resid_Vendaval_e_Tempestade" style="cursor:pointer;font-size:13px;font-weight:500;color:var(--text)">Vendaval e Tempestade</label>
+              </td>
+              <td style="padding:6px 8px;width:140px">
+                <input type="text" placeholder="R$ valor" data-tipo="resid" data-nome="Vendaval e Tempestade" class="cobert-valor" disabled
+                  style="width:100%;padding:4px 8px;font-size:12px;border:1px solid var(--border);border-radius:4px;background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;outline:none"
+                  oninput="this.closest('tr').querySelector('input[type=checkbox]').checked=!!this.value;toggleCobertCheck(this.closest('tr').querySelector('input[type=checkbox]'))">
+              </td>
+            </tr><tr class="cobert-row" data-tipo="resid" data-nome="Granizo">
+              <td style="padding:6px 8px;width:32px">
+                <input type="checkbox" id="resid_Granizo" data-tipo="resid" data-nome="Granizo" onchange="toggleCobertCheck(this)" style="width:16px;height:16px;accent-color:var(--accent);cursor:pointer">
+              </td>
+              <td style="padding:6px 8px">
+                <label for="resid_Granizo" style="cursor:pointer;font-size:13px;font-weight:500;color:var(--text)">Granizo</label>
+              </td>
+              <td style="padding:6px 8px;width:140px">
+                <input type="text" placeholder="R$ valor" data-tipo="resid" data-nome="Granizo" class="cobert-valor" disabled
+                  style="width:100%;padding:4px 8px;font-size:12px;border:1px solid var(--border);border-radius:4px;background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;outline:none"
+                  oninput="this.closest('tr').querySelector('input[type=checkbox]').checked=!!this.value;toggleCobertCheck(this.closest('tr').querySelector('input[type=checkbox]'))">
+              </td>
+            </tr><tr class="cobert-row" data-tipo="resid" data-nome="Inundação e Enchente">
+              <td style="padding:6px 8px;width:32px">
+                <input type="checkbox" id="resid_Inundação_e_Enchente" data-tipo="resid" data-nome="Inundação e Enchente" onchange="toggleCobertCheck(this)" style="width:16px;height:16px;accent-color:var(--accent);cursor:pointer">
+              </td>
+              <td style="padding:6px 8px">
+                <label for="resid_Inundação_e_Enchente" style="cursor:pointer;font-size:13px;font-weight:500;color:var(--text)">Inundação e Enchente</label>
+              </td>
+              <td style="padding:6px 8px;width:140px">
+                <input type="text" placeholder="R$ valor" data-tipo="resid" data-nome="Inundação e Enchente" class="cobert-valor" disabled
+                  style="width:100%;padding:4px 8px;font-size:12px;border:1px solid var(--border);border-radius:4px;background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;outline:none"
+                  oninput="this.closest('tr').querySelector('input[type=checkbox]').checked=!!this.value;toggleCobertCheck(this.closest('tr').querySelector('input[type=checkbox]'))">
+              </td>
+            </tr><tr class="cobert-row" data-tipo="resid" data-nome="Deslizamento de Terra">
+              <td style="padding:6px 8px;width:32px">
+                <input type="checkbox" id="resid_Deslizamento_de_Terra" data-tipo="resid" data-nome="Deslizamento de Terra" onchange="toggleCobertCheck(this)" style="width:16px;height:16px;accent-color:var(--accent);cursor:pointer">
+              </td>
+              <td style="padding:6px 8px">
+                <label for="resid_Deslizamento_de_Terra" style="cursor:pointer;font-size:13px;font-weight:500;color:var(--text)">Deslizamento de Terra</label>
+              </td>
+              <td style="padding:6px 8px;width:140px">
+                <input type="text" placeholder="R$ valor" data-tipo="resid" data-nome="Deslizamento de Terra" class="cobert-valor" disabled
+                  style="width:100%;padding:4px 8px;font-size:12px;border:1px solid var(--border);border-radius:4px;background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;outline:none"
+                  oninput="this.closest('tr').querySelector('input[type=checkbox]').checked=!!this.value;toggleCobertCheck(this.closest('tr').querySelector('input[type=checkbox]'))">
+              </td>
+            </tr><tr class="cobert-row" data-tipo="resid" data-nome="Queda de Árvore">
+              <td style="padding:6px 8px;width:32px">
+                <input type="checkbox" id="resid_Queda_de_Árvore" data-tipo="resid" data-nome="Queda de Árvore" onchange="toggleCobertCheck(this)" style="width:16px;height:16px;accent-color:var(--accent);cursor:pointer">
+              </td>
+              <td style="padding:6px 8px">
+                <label for="resid_Queda_de_Árvore" style="cursor:pointer;font-size:13px;font-weight:500;color:var(--text)">Queda de Árvore</label>
+              </td>
+              <td style="padding:6px 8px;width:140px">
+                <input type="text" placeholder="R$ valor" data-tipo="resid" data-nome="Queda de Árvore" class="cobert-valor" disabled
+                  style="width:100%;padding:4px 8px;font-size:12px;border:1px solid var(--border);border-radius:4px;background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;outline:none"
+                  oninput="this.closest('tr').querySelector('input[type=checkbox]').checked=!!this.value;toggleCobertCheck(this.closest('tr').querySelector('input[type=checkbox]'))">
+              </td>
+            </tr></table>
+        </div><div style="margin-bottom:12px">
+          <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--text-3);padding:6px 8px;background:var(--bg);border-radius:4px;margin-bottom:2px">👨‍👩‍👧 Responsabilidade Civil</div>
+          <table style="width:100%;border-collapse:collapse"><tr class="cobert-row" data-tipo="resid" data-nome="RC Familiar">
+              <td style="padding:6px 8px;width:32px">
+                <input type="checkbox" id="resid_RC_Familiar" data-tipo="resid" data-nome="RC Familiar" onchange="toggleCobertCheck(this)" style="width:16px;height:16px;accent-color:var(--accent);cursor:pointer">
+              </td>
+              <td style="padding:6px 8px">
+                <label for="resid_RC_Familiar" style="cursor:pointer;font-size:13px;font-weight:500;color:var(--text)">RC Familiar</label>
+              </td>
+              <td style="padding:6px 8px;width:140px">
+                <input type="text" placeholder="R$ valor" data-tipo="resid" data-nome="RC Familiar" class="cobert-valor" disabled
+                  style="width:100%;padding:4px 8px;font-size:12px;border:1px solid var(--border);border-radius:4px;background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;outline:none"
+                  oninput="this.closest('tr').querySelector('input[type=checkbox]').checked=!!this.value;toggleCobertCheck(this.closest('tr').querySelector('input[type=checkbox]'))">
+              </td>
+            </tr><tr class="cobert-row" data-tipo="resid" data-nome="Danos a Terceiros no Imóvel">
+              <td style="padding:6px 8px;width:32px">
+                <input type="checkbox" id="resid_Danos_a_Terceiros_no_Imóvel" data-tipo="resid" data-nome="Danos a Terceiros no Imóvel" onchange="toggleCobertCheck(this)" style="width:16px;height:16px;accent-color:var(--accent);cursor:pointer">
+              </td>
+              <td style="padding:6px 8px">
+                <label for="resid_Danos_a_Terceiros_no_Imóvel" style="cursor:pointer;font-size:13px;font-weight:500;color:var(--text)">Danos a Terceiros no Imóvel</label>
+              </td>
+              <td style="padding:6px 8px;width:140px">
+                <input type="text" placeholder="R$ valor" data-tipo="resid" data-nome="Danos a Terceiros no Imóvel" class="cobert-valor" disabled
+                  style="width:100%;padding:4px 8px;font-size:12px;border:1px solid var(--border);border-radius:4px;background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;outline:none"
+                  oninput="this.closest('tr').querySelector('input[type=checkbox]').checked=!!this.value;toggleCobertCheck(this.closest('tr').querySelector('input[type=checkbox]'))">
+              </td>
+            </tr><tr class="cobert-row" data-tipo="resid" data-nome="RC Empregador Doméstico">
+              <td style="padding:6px 8px;width:32px">
+                <input type="checkbox" id="resid_RC_Empregador_Doméstico" data-tipo="resid" data-nome="RC Empregador Doméstico" onchange="toggleCobertCheck(this)" style="width:16px;height:16px;accent-color:var(--accent);cursor:pointer">
+              </td>
+              <td style="padding:6px 8px">
+                <label for="resid_RC_Empregador_Doméstico" style="cursor:pointer;font-size:13px;font-weight:500;color:var(--text)">RC Empregador Doméstico</label>
+              </td>
+              <td style="padding:6px 8px;width:140px">
+                <input type="text" placeholder="R$ valor" data-tipo="resid" data-nome="RC Empregador Doméstico" class="cobert-valor" disabled
+                  style="width:100%;padding:4px 8px;font-size:12px;border:1px solid var(--border);border-radius:4px;background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;outline:none"
+                  oninput="this.closest('tr').querySelector('input[type=checkbox]').checked=!!this.value;toggleCobertCheck(this.closest('tr').querySelector('input[type=checkbox]'))">
+              </td>
+            </tr></table>
+        </div><div style="margin-bottom:12px">
+          <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--text-3);padding:6px 8px;background:var(--bg);border-radius:4px;margin-bottom:2px">🔧 Assistências</div>
+          <table style="width:100%;border-collapse:collapse"><tr class="cobert-row" data-tipo="resid" data-nome="Assistência 24h">
+              <td style="padding:6px 8px;width:32px">
+                <input type="checkbox" id="resid_Assistência_24h" data-tipo="resid" data-nome="Assistência 24h" onchange="toggleCobertCheck(this)" style="width:16px;height:16px;accent-color:var(--accent);cursor:pointer">
+              </td>
+              <td style="padding:6px 8px">
+                <label for="resid_Assistência_24h" style="cursor:pointer;font-size:13px;font-weight:500;color:var(--text)">Assistência 24h</label>
+              </td>
+              <td style="padding:6px 8px;width:140px">
+                <input type="text" placeholder="R$ valor" data-tipo="resid" data-nome="Assistência 24h" class="cobert-valor" disabled
+                  style="width:100%;padding:4px 8px;font-size:12px;border:1px solid var(--border);border-radius:4px;background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;outline:none"
+                  oninput="this.closest('tr').querySelector('input[type=checkbox]').checked=!!this.value;toggleCobertCheck(this.closest('tr').querySelector('input[type=checkbox]'))">
+              </td>
+            </tr><tr class="cobert-row" data-tipo="resid" data-nome="Chaveiro">
+              <td style="padding:6px 8px;width:32px">
+                <input type="checkbox" id="resid_Chaveiro" data-tipo="resid" data-nome="Chaveiro" onchange="toggleCobertCheck(this)" style="width:16px;height:16px;accent-color:var(--accent);cursor:pointer">
+              </td>
+              <td style="padding:6px 8px">
+                <label for="resid_Chaveiro" style="cursor:pointer;font-size:13px;font-weight:500;color:var(--text)">Chaveiro</label>
+              </td>
+              <td style="padding:6px 8px;width:140px">
+                <input type="text" placeholder="R$ valor" data-tipo="resid" data-nome="Chaveiro" class="cobert-valor" disabled
+                  style="width:100%;padding:4px 8px;font-size:12px;border:1px solid var(--border);border-radius:4px;background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;outline:none"
+                  oninput="this.closest('tr').querySelector('input[type=checkbox]').checked=!!this.value;toggleCobertCheck(this.closest('tr').querySelector('input[type=checkbox]'))">
+              </td>
+            </tr><tr class="cobert-row" data-tipo="resid" data-nome="Encanador">
+              <td style="padding:6px 8px;width:32px">
+                <input type="checkbox" id="resid_Encanador" data-tipo="resid" data-nome="Encanador" onchange="toggleCobertCheck(this)" style="width:16px;height:16px;accent-color:var(--accent);cursor:pointer">
+              </td>
+              <td style="padding:6px 8px">
+                <label for="resid_Encanador" style="cursor:pointer;font-size:13px;font-weight:500;color:var(--text)">Encanador</label>
+              </td>
+              <td style="padding:6px 8px;width:140px">
+                <input type="text" placeholder="R$ valor" data-tipo="resid" data-nome="Encanador" class="cobert-valor" disabled
+                  style="width:100%;padding:4px 8px;font-size:12px;border:1px solid var(--border);border-radius:4px;background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;outline:none"
+                  oninput="this.closest('tr').querySelector('input[type=checkbox]').checked=!!this.value;toggleCobertCheck(this.closest('tr').querySelector('input[type=checkbox]'))">
+              </td>
+            </tr><tr class="cobert-row" data-tipo="resid" data-nome="Eletricista">
+              <td style="padding:6px 8px;width:32px">
+                <input type="checkbox" id="resid_Eletricista" data-tipo="resid" data-nome="Eletricista" onchange="toggleCobertCheck(this)" style="width:16px;height:16px;accent-color:var(--accent);cursor:pointer">
+              </td>
+              <td style="padding:6px 8px">
+                <label for="resid_Eletricista" style="cursor:pointer;font-size:13px;font-weight:500;color:var(--text)">Eletricista</label>
+              </td>
+              <td style="padding:6px 8px;width:140px">
+                <input type="text" placeholder="R$ valor" data-tipo="resid" data-nome="Eletricista" class="cobert-valor" disabled
+                  style="width:100%;padding:4px 8px;font-size:12px;border:1px solid var(--border);border-radius:4px;background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;outline:none"
+                  oninput="this.closest('tr').querySelector('input[type=checkbox]').checked=!!this.value;toggleCobertCheck(this.closest('tr').querySelector('input[type=checkbox]'))">
+              </td>
+            </tr><tr class="cobert-row" data-tipo="resid" data-nome="Vidraceiro">
+              <td style="padding:6px 8px;width:32px">
+                <input type="checkbox" id="resid_Vidraceiro" data-tipo="resid" data-nome="Vidraceiro" onchange="toggleCobertCheck(this)" style="width:16px;height:16px;accent-color:var(--accent);cursor:pointer">
+              </td>
+              <td style="padding:6px 8px">
+                <label for="resid_Vidraceiro" style="cursor:pointer;font-size:13px;font-weight:500;color:var(--text)">Vidraceiro</label>
+              </td>
+              <td style="padding:6px 8px;width:140px">
+                <input type="text" placeholder="R$ valor" data-tipo="resid" data-nome="Vidraceiro" class="cobert-valor" disabled
+                  style="width:100%;padding:4px 8px;font-size:12px;border:1px solid var(--border);border-radius:4px;background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;outline:none"
+                  oninput="this.closest('tr').querySelector('input[type=checkbox]').checked=!!this.value;toggleCobertCheck(this.closest('tr').querySelector('input[type=checkbox]'))">
+              </td>
+            </tr><tr class="cobert-row" data-tipo="resid" data-nome="Hotel (imóvel inabitável)">
+              <td style="padding:6px 8px;width:32px">
+                <input type="checkbox" id="resid_Hotel_imóvel_inabitável" data-tipo="resid" data-nome="Hotel (imóvel inabitável)" onchange="toggleCobertCheck(this)" style="width:16px;height:16px;accent-color:var(--accent);cursor:pointer">
+              </td>
+              <td style="padding:6px 8px">
+                <label for="resid_Hotel_imóvel_inabitável" style="cursor:pointer;font-size:13px;font-weight:500;color:var(--text)">Hotel (imóvel inabitável)</label>
+              </td>
+              <td style="padding:6px 8px;width:140px">
+                <input type="text" placeholder="R$ valor" data-tipo="resid" data-nome="Hotel (imóvel inabitável)" class="cobert-valor" disabled
+                  style="width:100%;padding:4px 8px;font-size:12px;border:1px solid var(--border);border-radius:4px;background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;outline:none"
+                  oninput="this.closest('tr').querySelector('input[type=checkbox]').checked=!!this.value;toggleCobertCheck(this.closest('tr').querySelector('input[type=checkbox]'))">
+              </td>
+            </tr></table>
+        </div><div style="margin-bottom:12px">
+          <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--text-3);padding:6px 8px;background:var(--bg);border-radius:4px;margin-bottom:2px">💼 Extras</div>
+          <table style="width:100%;border-collapse:collapse"><tr class="cobert-row" data-tipo="resid" data-nome="RC Condomínio">
+              <td style="padding:6px 8px;width:32px">
+                <input type="checkbox" id="resid_RC_Condomínio" data-tipo="resid" data-nome="RC Condomínio" onchange="toggleCobertCheck(this)" style="width:16px;height:16px;accent-color:var(--accent);cursor:pointer">
+              </td>
+              <td style="padding:6px 8px">
+                <label for="resid_RC_Condomínio" style="cursor:pointer;font-size:13px;font-weight:500;color:var(--text)">RC Condomínio</label>
+              </td>
+              <td style="padding:6px 8px;width:140px">
+                <input type="text" placeholder="R$ valor" data-tipo="resid" data-nome="RC Condomínio" class="cobert-valor" disabled
+                  style="width:100%;padding:4px 8px;font-size:12px;border:1px solid var(--border);border-radius:4px;background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;outline:none"
+                  oninput="this.closest('tr').querySelector('input[type=checkbox]').checked=!!this.value;toggleCobertCheck(this.closest('tr').querySelector('input[type=checkbox]'))">
+              </td>
+            </tr><tr class="cobert-row" data-tipo="resid" data-nome="Aluguel Temporário">
+              <td style="padding:6px 8px;width:32px">
+                <input type="checkbox" id="resid_Aluguel_Temporário" data-tipo="resid" data-nome="Aluguel Temporário" onchange="toggleCobertCheck(this)" style="width:16px;height:16px;accent-color:var(--accent);cursor:pointer">
+              </td>
+              <td style="padding:6px 8px">
+                <label for="resid_Aluguel_Temporário" style="cursor:pointer;font-size:13px;font-weight:500;color:var(--text)">Aluguel Temporário</label>
+              </td>
+              <td style="padding:6px 8px;width:140px">
+                <input type="text" placeholder="R$ valor" data-tipo="resid" data-nome="Aluguel Temporário" class="cobert-valor" disabled
+                  style="width:100%;padding:4px 8px;font-size:12px;border:1px solid var(--border);border-radius:4px;background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;outline:none"
+                  oninput="this.closest('tr').querySelector('input[type=checkbox]').checked=!!this.value;toggleCobertCheck(this.closest('tr').querySelector('input[type=checkbox]'))">
+              </td>
+            </tr><tr class="cobert-row" data-tipo="resid" data-nome="Bicicleta">
+              <td style="padding:6px 8px;width:32px">
+                <input type="checkbox" id="resid_Bicicleta" data-tipo="resid" data-nome="Bicicleta" onchange="toggleCobertCheck(this)" style="width:16px;height:16px;accent-color:var(--accent);cursor:pointer">
+              </td>
+              <td style="padding:6px 8px">
+                <label for="resid_Bicicleta" style="cursor:pointer;font-size:13px;font-weight:500;color:var(--text)">Bicicleta</label>
+              </td>
+              <td style="padding:6px 8px;width:140px">
+                <input type="text" placeholder="R$ valor" data-tipo="resid" data-nome="Bicicleta" class="cobert-valor" disabled
+                  style="width:100%;padding:4px 8px;font-size:12px;border:1px solid var(--border);border-radius:4px;background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;outline:none"
+                  oninput="this.closest('tr').querySelector('input[type=checkbox]').checked=!!this.value;toggleCobertCheck(this.closest('tr').querySelector('input[type=checkbox]'))">
+              </td>
+            </tr><tr class="cobert-row" data-tipo="resid" data-nome="Portáteis e Eletrônicos">
+              <td style="padding:6px 8px;width:32px">
+                <input type="checkbox" id="resid_Portáteis_e_Eletrônicos" data-tipo="resid" data-nome="Portáteis e Eletrônicos" onchange="toggleCobertCheck(this)" style="width:16px;height:16px;accent-color:var(--accent);cursor:pointer">
+              </td>
+              <td style="padding:6px 8px">
+                <label for="resid_Portáteis_e_Eletrônicos" style="cursor:pointer;font-size:13px;font-weight:500;color:var(--text)">Portáteis e Eletrônicos</label>
+              </td>
+              <td style="padding:6px 8px;width:140px">
+                <input type="text" placeholder="R$ valor" data-tipo="resid" data-nome="Portáteis e Eletrônicos" class="cobert-valor" disabled
+                  style="width:100%;padding:4px 8px;font-size:12px;border:1px solid var(--border);border-radius:4px;background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;outline:none"
+                  oninput="this.closest('tr').querySelector('input[type=checkbox]').checked=!!this.value;toggleCobertCheck(this.closest('tr').querySelector('input[type=checkbox]'))">
+              </td>
+            </tr><tr class="cobert-row" data-tipo="resid" data-nome="Joias e Obras de Arte">
+              <td style="padding:6px 8px;width:32px">
+                <input type="checkbox" id="resid_Joias_e_Obras_de_Arte" data-tipo="resid" data-nome="Joias e Obras de Arte" onchange="toggleCobertCheck(this)" style="width:16px;height:16px;accent-color:var(--accent);cursor:pointer">
+              </td>
+              <td style="padding:6px 8px">
+                <label for="resid_Joias_e_Obras_de_Arte" style="cursor:pointer;font-size:13px;font-weight:500;color:var(--text)">Joias e Obras de Arte</label>
+              </td>
+              <td style="padding:6px 8px;width:140px">
+                <input type="text" placeholder="R$ valor" data-tipo="resid" data-nome="Joias e Obras de Arte" class="cobert-valor" disabled
+                  style="width:100%;padding:4px 8px;font-size:12px;border:1px solid var(--border);border-radius:4px;background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;outline:none"
+                  oninput="this.closest('tr').querySelector('input[type=checkbox]').checked=!!this.value;toggleCobertCheck(this.closest('tr').querySelector('input[type=checkbox]'))">
+              </td>
+            </tr><tr class="cobert-row" data-tipo="resid" data-nome="Perda de Aluguel">
+              <td style="padding:6px 8px;width:32px">
+                <input type="checkbox" id="resid_Perda_de_Aluguel" data-tipo="resid" data-nome="Perda de Aluguel" onchange="toggleCobertCheck(this)" style="width:16px;height:16px;accent-color:var(--accent);cursor:pointer">
+              </td>
+              <td style="padding:6px 8px">
+                <label for="resid_Perda_de_Aluguel" style="cursor:pointer;font-size:13px;font-weight:500;color:var(--text)">Perda de Aluguel</label>
+              </td>
+              <td style="padding:6px 8px;width:140px">
+                <input type="text" placeholder="R$ valor" data-tipo="resid" data-nome="Perda de Aluguel" class="cobert-valor" disabled
+                  style="width:100%;padding:4px 8px;font-size:12px;border:1px solid var(--border);border-radius:4px;background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;outline:none"
+                  oninput="this.closest('tr').querySelector('input[type=checkbox]').checked=!!this.value;toggleCobertCheck(this.closest('tr').querySelector('input[type=checkbox]'))">
+              </td>
+            </tr></table>
+        </div>
+            </div>
           </div>
-          <div class="cobert-grupos" id="grupos-resid"><div class="cobert-grupo"><div class="cobert-grupo-titulo">🏠 Estrutura e Conteúdo</div><div><span class="cobert-chip" onclick="toggleCobert(this,'resid')">Incêndio, Raio e Explosão</span><span class="cobert-chip" onclick="toggleCobert(this,'resid')">Danos Elétricos</span><span class="cobert-chip" onclick="toggleCobert(this,'resid')">Roubo e Furto Qualificado</span><span class="cobert-chip" onclick="toggleCobert(this,'resid')">Danos por Água</span><span class="cobert-chip" onclick="toggleCobert(this,'resid')">Queda de Aeronave</span><span class="cobert-chip" onclick="toggleCobert(this,'resid')">Impacto de Veículos</span></div></div><div class="cobert-grupo"><div class="cobert-grupo-titulo">🌪️ Eventos Naturais</div><div><span class="cobert-chip" onclick="toggleCobert(this,'resid')">Vendaval e Tempestade</span><span class="cobert-chip" onclick="toggleCobert(this,'resid')">Granizo</span><span class="cobert-chip" onclick="toggleCobert(this,'resid')">Inundação e Enchente</span><span class="cobert-chip" onclick="toggleCobert(this,'resid')">Deslizamento de Terra</span><span class="cobert-chip" onclick="toggleCobert(this,'resid')">Queda de Árvore</span></div></div><div class="cobert-grupo"><div class="cobert-grupo-titulo">👨‍👩‍👧 Responsabilidade Civil</div><div><span class="cobert-chip" onclick="toggleCobert(this,'resid')">RC Familiar</span><span class="cobert-chip" onclick="toggleCobert(this,'resid')">Danos a Terceiros no Imóvel</span><span class="cobert-chip" onclick="toggleCobert(this,'resid')">RC Empregador Doméstico</span></div></div><div class="cobert-grupo"><div class="cobert-grupo-titulo">🔧 Assistências</div><div><span class="cobert-chip" onclick="toggleCobert(this,'resid')">Assistência 24h</span><span class="cobert-chip" onclick="toggleCobert(this,'resid')">Chaveiro</span><span class="cobert-chip" onclick="toggleCobert(this,'resid')">Encanador</span><span class="cobert-chip" onclick="toggleCobert(this,'resid')">Eletricista</span><span class="cobert-chip" onclick="toggleCobert(this,'resid')">Vidraceiro</span><span class="cobert-chip" onclick="toggleCobert(this,'resid')">Desentupimento</span><span class="cobert-chip" onclick="toggleCobert(this,'resid')">Hotel (imóvel inabitável)</span></div></div><div class="cobert-grupo"><div class="cobert-grupo-titulo">💼 Extras</div><div><span class="cobert-chip" onclick="toggleCobert(this,'resid')">RC Condomínio</span><span class="cobert-chip" onclick="toggleCobert(this,'resid')">Aluguel Temporário</span><span class="cobert-chip" onclick="toggleCobert(this,'resid')">Bicicleta</span><span class="cobert-chip" onclick="toggleCobert(this,'resid')">Portáteis e Eletrônicos</span><span class="cobert-chip" onclick="toggleCobert(this,'resid')">Joias e Obras de Arte</span><span class="cobert-chip" onclick="toggleCobert(this,'resid')">Perda de Aluguel</span></div></div></div>
-          <div style="margin-top:16px">
-            <label style="font-size:12px;font-weight:600;color:var(--text-2);display:block;margin-bottom:6px">Ou cole as coberturas em texto (da proposta da seguradora):</label>
-            <textarea id="cobert-texto-resid" rows="4" placeholder="Ex: Colisão, Furto e Roubo, RCF-DM R$ 100.000, Assistência 24h..."
-              style="width:100%;padding:10px 12px;font-size:13px;font-family:'DM Sans',sans-serif;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--bg);outline:none;resize:vertical;color:var(--text);box-sizing:border-box"></textarea>
+
+          <!-- MODO TEXTO -->
+          <div id="cobPainel-texto-resid" style="display:none">
+            <div style="font-size:12px;color:var(--text-2);margin-bottom:8px">Cole aqui as coberturas (pode ser de qualquer formato):</div>
+            <textarea id="cobTexto-resid" rows="12" placeholder="Ex:&#10;Colisão - R$ 50.000&#10;Furto e Roubo - R$ 50.000&#10;RCF-DM - R$ 100.000&#10;Assistência 24h"
+              style="width:100%;padding:10px 12px;font-size:13px;font-family:'DM Sans',sans-serif;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--bg);color:var(--text);outline:none;resize:vertical;box-sizing:border-box"></textarea>
           </div>
-          <div style="margin-top:12px">
-            <label style="font-size:12px;font-weight:600;color:var(--text-2);display:block;margin-bottom:6px">Contexto do cliente (opcional):</label>
-            <input type="text" id="cobert-contexto-resid" placeholder="Ex: João, família com crianças, carro popular..."
-              style="width:100%;padding:9px 12px;font-size:13px;font-family:'DM Sans',sans-serif;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--bg);outline:none;color:var(--text);box-sizing:border-box">
+
+          <!-- MODO FOTO/PRINT -->
+          <div id="cobPainel-foto-resid" style="display:none">
+            <div style="font-size:12px;color:var(--text-2);margin-bottom:8px">Cole o texto extraído da tela da seguradora (print, PDF ou qualquer formato):</div>
+            <textarea id="cobFoto-resid" rows="12" placeholder="Cole aqui o texto copiado direto da proposta da seguradora, mesmo que esteja bagunçado. A IA vai identificar as coberturas automaticamente."
+              style="width:100%;padding:10px 12px;font-size:13px;font-family:'DM Sans',sans-serif;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--bg);color:var(--text);outline:none;resize:vertical;box-sizing:border-box"></textarea>
+            <div style="font-size:11px;color:var(--text-3);margin-top:6px">💡 Dica: no iPhone, selecione o texto na tela da seguradora, copie e cole aqui.</div>
           </div>
-          <button class="btn btn-primary" style="width:100%;margin-top:16px;padding:12px;font-size:14px" onclick="gerarTextoCoberturas('resid')">
+
+          <!-- Contexto (sempre visível) -->
+          <div style="margin-top:14px">
+            <div style="font-size:12px;font-weight:600;color:var(--text-2);margin-bottom:6px">Contexto do cliente (opcional):</div>
+            <input type="text" id="cobContexto-resid" placeholder="Ex: João, 35 anos, família com crianças, carro popular..."
+              style="width:100%;padding:9px 12px;font-size:13px;font-family:'DM Sans',sans-serif;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--bg);color:var(--text);outline:none;box-sizing:border-box">
+          </div>
+
+          <button class="btn btn-primary" style="width:100%;margin-top:14px;padding:12px;font-size:14px" id="cobBtnGerar-resid" onclick="gerarTextoCoberturas('resid')">
             ✨ Gerar texto para WhatsApp
           </button>
         </div>
+
+        <!-- Painel direito: resultado -->
         <div>
           <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
             <div style="font-size:13px;font-weight:600;color:var(--text-2)">Texto gerado:</div>
-            <button class="btn btn-ghost" style="font-size:12px;padding:5px 12px" onclick="copiarTexto('resid')" id="btn-copiar-resid">📋 Copiar</button>
+            <button onclick="copiarTexto('resid')" id="btn-copiar-resid" class="btn btn-ghost" style="font-size:12px;padding:5px 12px">📋 Copiar</button>
           </div>
-          <div class="cobert-resultado carregando" id="cobert-resultado-resid">Selecione as coberturas e clique em "Gerar texto" ✨</div>
+          <div class="cobert-resultado carregando" id="cobert-resultado-resid" style="min-height:300px">Selecione as coberturas e clique em "Gerar texto" ✨</div>
         </div>
       </div>
     </div>
+
+
   </main>
 </div>
 
@@ -4727,6 +5393,126 @@ async function copiarTexto(tipo){
     ta.style.position='fixed';ta.style.opacity='0';
     document.body.appendChild(ta);ta.select();
     document.execCommand('copy');
+    document.body.removeChild(ta);
+    if(btn){btn.textContent='✅ Copiado!';setTimeout(()=>btn.textContent='📋 Copiar',2000);}
+  }
+}
+
+// ── COBERTURAS ─────────────────────────────────────────────────────────
+const _cobertModo={auto:'lista',resid:'lista'};
+
+function switchCobTab(tipo, modo){
+  _cobertModo[tipo]=modo;
+  ['lista','texto','foto'].forEach(m=>{
+    document.getElementById(`cobTab-${m}-${tipo}`)?.classList.toggle('active',m===modo);
+    const p=document.getElementById(`cobPainel-${m}-${tipo}`);
+    if(p) p.style.display=m===modo?'block':'none';
+  });
+}
+
+function toggleCobertCheck(checkbox){
+  const tipo=checkbox.dataset.tipo;
+  const nome=checkbox.dataset.nome;
+  const row=checkbox.closest('tr');
+  const valorInput=row?.querySelector('.cobert-valor');
+  if(valorInput) valorInput.disabled=!checkbox.checked;
+}
+
+function limparCobCheck(tipo){
+  document.querySelectorAll(`input[type=checkbox][data-tipo="${tipo}"]`).forEach(cb=>{
+    cb.checked=false;
+    const row=cb.closest('tr');
+    const vi=row?.querySelector('.cobert-valor');
+    if(vi){vi.value='';vi.disabled=true;}
+  });
+}
+
+function getCoberturasSelecionadas(tipo){
+  const modo=_cobertModo[tipo];
+  if(modo==='lista'){
+    const itens=[];
+    document.querySelectorAll(`input[type=checkbox][data-tipo="${tipo}"]:checked`).forEach(cb=>{
+      const row=cb.closest('tr');
+      const valor=row?.querySelector('.cobert-valor')?.value||'';
+      itens.push(valor?`${cb.dataset.nome} (${valor})`:cb.dataset.nome);
+    });
+    return itens.join(', ');
+  }
+  if(modo==='texto') return document.getElementById(`cobTexto-${tipo}`)?.value||'';
+  if(modo==='foto') return document.getElementById(`cobFoto-${tipo}`)?.value||'';
+  return '';
+}
+
+async function gerarTextoCoberturas(tipo){
+  const btn=document.getElementById(`cobBtnGerar-${tipo}`);
+  const res=document.getElementById(`cobert-resultado-${tipo}`);
+  if(!res) return;
+
+  const coberturas=getCoberturasSelecionadas(tipo);
+  const contexto=document.getElementById(`cobContexto-${tipo}`)?.value||'';
+  const tipoSeguro=tipo==='auto'?'Seguro de Automóvel':'Seguro Residencial';
+
+  if(!coberturas.trim()){
+    showToast('Selecione ou cole as coberturas primeiro!','error');
+    return;
+  }
+
+  res.className='cobert-resultado carregando';
+  res.textContent='✨ Gerando texto...';
+  if(btn){btn.disabled=true;btn.textContent='⏳ Gerando...';}
+
+  const prompt=`Você é um corretor de seguros brasileiro, simpático e descontraído.
+Seu cliente acabou de receber uma proposta de ${tipoSeguro} com as seguintes coberturas:
+
+${coberturas}
+
+${contexto?`Contexto do cliente: ${contexto}`:''}
+
+Crie uma mensagem de WhatsApp explicando cada cobertura de forma simples, prática e informal.
+
+Regras:
+- Use emojis relevantes para deixar mais visual
+- Explique NA PRÁTICA o que cada cobertura protege (conte uma situação do dia a dia)
+- Se tiver valor informado, mencione o valor
+- Seja direto, sem juridiquês, como se fosse uma mensagem de amigo
+- No final, faça um resumo do benefício geral
+- Máximo 2-3 linhas por cobertura
+- Tom de WhatsApp mesmo, informal e acolhedor`;
+
+  try{
+    const response=await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        model:'claude-sonnet-4-20250514',
+        max_tokens:1500,
+        messages:[{role:'user',content:prompt}]
+      })
+    });
+    const data=await response.json();
+    if(data.error){res.textContent='Erro da API: '+data.error.message;res.className='cobert-resultado carregando';return;}
+    const texto=data.content?.[0]?.text||'Erro ao gerar texto.';
+    res.textContent=texto;
+    res.className='cobert-resultado';
+  }catch(err){
+    res.textContent='Erro: '+err.message;
+    res.className='cobert-resultado carregando';
+  }finally{
+    if(btn){btn.disabled=false;btn.textContent='✨ Gerar texto para WhatsApp';}
+  }
+}
+
+async function copiarTexto(tipo){
+  const res=document.getElementById(`cobert-resultado-${tipo}`);
+  const btn=document.getElementById(`btn-copiar-${tipo}`);
+  if(!res?.textContent?.trim())return;
+  try{
+    await navigator.clipboard.writeText(res.textContent);
+    if(btn){btn.textContent='✅ Copiado!';setTimeout(()=>btn.textContent='📋 Copiar',2000);}
+  }catch(e){
+    const ta=document.createElement('textarea');
+    ta.value=res.textContent;ta.style.position='fixed';ta.style.opacity='0';
+    document.body.appendChild(ta);ta.select();document.execCommand('copy');
     document.body.removeChild(ta);
     if(btn){btn.textContent='✅ Copiado!';setTimeout(()=>btn.textContent='📋 Copiar',2000);}
   }
