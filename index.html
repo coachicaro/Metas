@@ -448,6 +448,9 @@ input[type=range]{width:100%;accent-color:var(--accent)}
       <div class="nav-item" onclick="showView('renovacoes')" id="nav-renovacoes"><span class="icon">🔄</span> Controle</div>
       <div class="nav-item" onclick="showView('renov_analise')" id="nav-renov_analise"><span class="icon">📈</span> Análise</div>
       <div class="nav-item" onclick="showView('renov_kanban')" id="nav-renov_kanban"><span class="icon">🗂️</span> Kanban</div>
+      <div class="nav-section">Explicar Coberturas</div>
+      <div class="nav-item" onclick="showView('cobert_auto')" id="nav-cobert_auto"><span class="icon">🚗</span> Seguro Auto</div>
+      <div class="nav-item" onclick="showView('cobert_resid')" id="nav-cobert_resid"><span class="icon">🏠</span> Seguro Residencial</div>
       <div class="nav-section">Gestão</div>
       <div class="nav-item" onclick="showView('ote')" id="nav-ote"><span class="icon">💰</span> OTE — Silvia</div>
       <div class="nav-item" onclick="showView('metas')" id="nav-metas"><span class="icon">🎯</span> Definir Metas</div>
@@ -1899,7 +1902,7 @@ function showView(id){
   if(id==='renov_analise') renderAnaliseRenovacoes();
   if(id==='renov_kanban') renderKanban();
   if(id==='ote') renderOTE();
-  if(id==='cobert_auto'||id==='cobert_resid') {}
+  if(id==='cobert_auto'||id==='cobert_resid') { /* ready */ }
 }
 
 
