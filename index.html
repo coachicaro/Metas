@@ -2982,26 +2982,31 @@ function editarProposta(id){
   document.getElementById('modalProposta').classList.add('open');
 }
 async function salvarProposta(){
-  const id=document.getElementById('prop_id').value;
+  const id=document.getElementById('prop_id')?.value||'';
+  const segurado=(document.getElementById('prop_segurado')?.value||'').trim();
+  const ramo=document.getElementById('prop_ramo')?.value||'';
+  const cia=document.getElementById('prop_cia')?.value||'';
+  const vendedor=document.getElementById('prop_vendedor')?.value||'';
+  if(!segurado||!ramo||!cia||!vendedor){showToast('Preencha todos os campos obrigatórios.','error');return;}
   const payload={
-    data:document.getElementById('prop_data').value,
-    segurado:document.getElementById('prop_segurado').value.trim(),
-    ramo:document.getElementById('prop_ramo').value,
-    cia:document.getElementById('prop_cia').value,
-    premio_liquido:parseFloat(document.getElementById('prop_pl').value)||0,
-    percentual_comissao:parseFloat(document.getElementById('prop_pct').value)||0,
-    vendedor:document.getElementById('prop_vendedor').value,
-    status:document.getElementById('prop_status').value,
-    probabilidade:parseInt(document.getElementById('prop_prob').value)||50,
-    previsao_fechamento:document.getElementById('prop_prev_fecha').value||null,
+    data:document.getElementById('prop_data')?.value||hoje(),
+    segurado, ramo, cia, vendedor,
+    premio_liquido:parseFloat(document.getElementById('prop_pl')?.value)||0,
+    percentual_comissao:parseFloat(document.getElementById('prop_pct')?.value)||0,
+    status:document.getElementById('prop_status')?.value||'aberta',
+    probabilidade:parseInt(document.getElementById('prop_prob')?.value||'50')||50,
+    previsao_fechamento:document.getElementById('prop_prev_fecha')?.value||null,
   };
-  if(!payload.segurado||!payload.ramo||!payload.cia||!payload.vendedor){showToast('Preencha todos os campos obrigatórios.','error');return;}
-  const{error}=id?await db.from('propostas').update(payload).eq('id',id):await db.from('propostas').insert([payload]);
-  if(error){showToast('Erro: '+error.message,'error');return;}
-  fecharModalPropDireto();
-  showToast(id?'Proposta atualizada!':'Proposta registrada!','success');
-  await carregarPropostas();
-  renderPropostas();
+  try{
+    const{error}=id
+      ?await db.from('propostas').update(payload).eq('id',id)
+      :await db.from('propostas').insert([payload]);
+    if(error){showToast('Erro: '+error.message,'error');return;}
+    fecharModalPropDireto();
+    showToast(id?'Proposta atualizada!':'Proposta registrada!','success');
+    await carregarPropostas();
+    renderPropostas();
+  }catch(err){showToast('Erro inesperado: '+err.message,'error');}
 }
 async function deletarProposta(id){
   if(!confirm('Excluir proposta?'))return;
