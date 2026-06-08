@@ -1054,8 +1054,6 @@ input[type=range]{width:100%;accent-color:var(--accent)}
       <div class="kanban-board" id="kanbanBoard"></div>
     </div>
 
-  </main>
-</div>
 
     <!-- OTE SILVIA -->
     <div class="view" id="view-ote">
@@ -1138,6 +1136,9 @@ input[type=range]{width:100%;accent-color:var(--accent)}
         </div>
       </div>
     </div>
+
+  </main>
+</div>
 
 <!-- MOBILE NAV -->
 <nav class="mobile-nav" id="mobileNav" style="display:none">
@@ -1829,6 +1830,539 @@ function showView(id){
   if(id==='renov_analise') renderAnaliseRenovacoes();
   if(id==='renov_kanban') renderKanban();
   if(id==='ote') renderOTE();
+}
+
+
+// ── CRM COMPLETO ──────────────────────────────────────────────────────
+let todosClientes=[], todasTarefas=[];
+let clienteDetalheId=null;
+let produtosTemp={auto:false,residencial:false,vida:false,saude:false,empresarial:false,cartao:false,outros:false};
+const TODOS_PRODUTOS=[
+  {key:'auto',label:'🚗 Auto'},{key:'residencial',label:'🏠 Residencial'},
+  {key:'vida',label:'❤️ Vida'},{key:'saude',label:'🏥 Saúde'},
+  {key:'empresarial',label:'🏢 Empresarial'},{key:'cartao',label:'💳 Cartão'},
+  {key:'outros',label:'📦 Outros'},
+];
+
+async function carregarCRM(){
+  if(!currentProfile?.vendedor&&currentUser){
+    const{data}=await db.from('profiles').select('*').eq('id',currentUser.id).single();
+    if(data)currentProfile=data;
+  }
+  const vendedor=(currentProfile?.vendedor||'').trim();
+  if(!vendedor){renderClientes();renderTarefasView();return;}
+  const[r1,r2]=await Promise.all([
+    db.from('carteira').select('*').eq('vendedor',vendedor).order('nome'),
+    db.from('lembretes').select('*').eq('vendedor',vendedor).order('data_lembrete')
+  ]);
+  todosClientes=r1.data||[];
+  todasTarefas=r2.data||[];
+  renderClientes();renderTarefasView();
+  const hoje=new Date();
+  const venc=(todasTarefas||[]).filter(t=>t.status==='pendente'&&t.data_lembrete&&new Date(t.data_lembrete)<hoje);
+  const nav=document.getElementById('nav-tarefas_view');
+  if(nav)nav.innerHTML=`<span class="icon">✅</span> Tarefas${venc.length?` <span style="background:#ef4444;color:#fff;border-radius:99px;font-size:10px;padding:1px 6px">${venc.length}</span>`:''}`;
+}
+
+function ramoParaProduto(ramo){
+  const r=(ramo||'').toLowerCase();
+  if(r.includes('auto')||r.includes('moto'))return'auto';
+  if(r.includes('resid'))return'residencial';
+  if(r.includes('vida'))return'vida';
+  if(r.includes('saúde')||r.includes('saude')||r.includes('plano')||r.includes('dental'))return'saude';
+  if(r.includes('empres')||r.includes('rc ')||r.includes('rco')||r.includes('condom'))return'empresarial';
+  if(r.includes('cartão')||r.includes('cartao'))return'cartao';
+  return'outros';
+}
+
+function produtosDasVendas(nome){
+  const prods={auto:false,residencial:false,vida:false,saude:false,empresarial:false,cartao:false,outros:false};
+  const n=(nome||'').toLowerCase().trim();
+  todasVendas.filter(v=>(v.segurado||'').toLowerCase().trim()===n).forEach(v=>{prods[ramoParaProduto(v.ramo)]=true;});
+  return prods;
+}
+
+function fmtDataHora(d){
+  if(!d)return'—';
+  const dt=new Date(d);
+  return dt.toLocaleDateString('pt-BR')+' '+dt.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
+}
+
+function checarLembretes(){
+  const hoje=new Date().toDateString();
+  (todasTarefas||[]).filter(t=>t.status==='pendente'&&t.data_lembrete&&new Date(t.data_lembrete).toDateString()===hoje).forEach(t=>{
+    const cl=todosClientes.find(x=>x.id===t.cliente_id);
+    showToast('⏰ '+t.titulo+(cl?' — '+cl.nome:''),'');
+  });
+}
+
+function renderClientes(){
+  const el=document.getElementById('clientesContainer');
+  if(!el)return;
+  const busca=(document.getElementById('buscaCliente')?.value||'').toLowerCase();
+  const filtro=(document.getElementById('filtroRamoCliente')?.value)||'';
+  const ordem=(document.getElementById('ordenacaoCliente')?.value)||'ltv_desc';
+  const enriquecer=cl=>{
+    const pv=produtosDasVendas(cl.nome);
+    const vc=todasVendas.filter(v=>(v.segurado||'').toLowerCase().trim()===(cl.nome||'').toLowerCase().trim());
+    const ltv=vc.reduce((s,v)=>s+(+v.comissao||0),0);
+    const r={...cl,
+      tem_auto:!!(cl.tem_auto||pv.auto),tem_residencial:!!(cl.tem_residencial||pv.residencial),
+      tem_vida:!!(cl.tem_vida||pv.vida),tem_saude:!!(cl.tem_saude||pv.saude),
+      tem_empresarial:!!(cl.tem_empresarial||pv.empresarial),tem_cartao:!!(cl.tem_cartao||pv.cartao),
+      tem_outros:!!(cl.tem_outros||pv.outros),
+    };
+    r._ltv=ltv;r._np=TODOS_PRODUTOS.filter(p=>r['tem_'+p.key]).length;r._ult=vc[0]?.data||'';
+    return r;
+  };
+  const todos=todosClientes.map(enriquecer);
+  const principais=todos.filter(cl=>!cl.cliente_principal_id);
+  const subs=todos.filter(cl=>!!cl.cliente_principal_id);
+  let lista=principais;
+  if(busca)lista=lista.filter(cl=>(cl.nome||'').toLowerCase().includes(busca)||subs.filter(s=>s.cliente_principal_id===cl.id).some(s=>(s.nome||'').toLowerCase().includes(busca)));
+  if(filtro){
+    const sem=filtro.startsWith('sem_');
+    const campo='tem_'+(sem?filtro.slice(4):filtro);
+    lista=lista.filter(cl=>sem?!cl[campo]:!!cl[campo]);
+  }
+  lista=lista.map(cl=>{
+    const subsDeste=subs.filter(s=>s.cliente_principal_id===cl.id);
+    const ltvGrupo=cl._ltv+subsDeste.reduce((s,x)=>s+x._ltv,0);
+    const prodsGrupo={};
+    TODOS_PRODUTOS.forEach(p=>{prodsGrupo[p.key]=cl['tem_'+p.key]||subsDeste.some(s=>s['tem_'+p.key]);});
+    return{...cl,_subs:subsDeste,_ltvGrupo:ltvGrupo,_prodsGrupo:prodsGrupo};
+  });
+  lista.sort((a,b)=>{
+    if(ordem==='ltv_asc')return a._ltvGrupo-b._ltvGrupo;
+    if(ordem==='produtos_desc')return b._np-a._np;
+    if(ordem==='produtos_asc')return a._np-b._np;
+    if(ordem==='nome_asc')return(a.nome||'').localeCompare(b.nome||'');
+    if(ordem==='nome_desc')return(b.nome||'').localeCompare(a.nome||'');
+    if(ordem==='recente')return(b._ult||'').localeCompare(a._ult||'');
+    return b._ltvGrupo-a._ltvGrupo;
+  });
+  if(!lista.length){
+    el.innerHTML=`<div style="text-align:center;padding:48px 0;color:var(--text-3)"><div style="font-size:36px;margin-bottom:10px">👥</div><div style="margin-bottom:16px">${todosClientes.length?'Nenhum encontrado':'Nenhum cliente ainda'}</div><button class="btn btn-primary" onclick="abrirModalCliente()">➕ Adicionar primeiro cliente</button></div>`;
+    return;
+  }
+  el.innerHTML=lista.map(cl=>{
+    const temSubs=cl._subs&&cl._subs.length>0;
+    const initials=(cl.nome||'?').split(' ').map(w=>w[0]).slice(0,2).join('').toUpperCase();
+    const ltvStr=cl._ltvGrupo>0?`<span style="font-size:11px;font-weight:700;color:var(--accent)">LTV ${fmt(cl._ltvGrupo)}</span>`:'';
+    const tars=(todasTarefas||[]).filter(t=>t.cliente_id===cl.id&&t.status==='pendente');
+    const badge=tars.length?`<div class="cliente-tarefas-badge">${tars.length}</div>`:'';
+    const prods=TODOS_PRODUTOS.map(p=>`<span class="prod-tag ${cl._prodsGrupo[p.key]?'tem':'nao-tem'}">${p.label}</span>`).join('');
+    if(temSubs){
+      const subsHtml=cl._subs.map(s=>`<div class="subcliente-card" onclick="abrirDetalheCliente('${s.id}')">
+        <span>${s.tipo==='PJ'?'🏢':'👤'}</span>
+        <div style="flex:1"><div class="subcliente-nome">${s.nome}</div><div class="subcliente-info">${s.tipo||'PF'}${s.telefone?' · '+s.telefone:''}</div></div>
+        <div class="subcliente-ltv">${s._ltv>0?fmt(s._ltv):''}</div>
+      </div>`).join('');
+      return`<div class="grupo-card" id="grupo-${cl.id}">${badge}
+        <div class="grupo-header" onclick="toggleGrupo('${cl.id}')">
+          <div class="grupo-header-left">
+            <div class="grupo-avatar">${initials}</div>
+            <div style="flex:1;min-width:0">
+              <div class="grupo-nome">${cl.nome}</div>
+              <div class="grupo-meta">${cl._subs.length+1} pessoas · ${cl.tipo||'PF'}</div>
+              <div class="grupo-tags">${prods}</div>
+            </div>
+          </div>
+          <div style="display:flex;align-items:center;gap:12px">${ltvStr}<span class="grupo-chevron" id="chev-${cl.id}">▼</span></div>
+        </div>
+        <div class="grupo-body" id="body-${cl.id}">
+          <div class="subcliente-card" onclick="abrirDetalheCliente('${cl.id}')">
+            <span>⭐</span>
+            <div style="flex:1"><div class="subcliente-nome">${cl.nome} <span style="font-size:10px;background:var(--accent);color:#fff;padding:1px 6px;border-radius:99px">principal</span></div></div>
+            <div class="subcliente-ltv">${cl._ltv>0?fmt(cl._ltv):''}</div>
+          </div>
+          ${subsHtml}
+          <button class="grupo-add-sub" onclick="abrirModalVincular('${cl.id}','${cl.nome.replace(/'/g,"\\'")}')">➕ Vincular outro cliente</button>
+        </div>
+      </div>`;
+    }
+    const pct=Math.round(cl._np/TODOS_PRODUTOS.length*100);
+    return`<div class="solo-card" style="position:relative">${badge}
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:4px">
+        <div style="display:flex;align-items:center;gap:10px;flex:1;min-width:0" onclick="abrirDetalheCliente('${cl.id}')">
+          <div class="grupo-avatar" style="width:34px;height:34px;font-size:13px">${initials}</div>
+          <div><div class="cliente-nome" style="margin-bottom:2px">${cl.nome}</div><div class="cliente-info">${[cl.tipo,cl.telefone,cl.email].filter(Boolean).join(' · ')||'Sem contato'}</div></div>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px">
+          ${ltvStr}
+          <button onclick="abrirModalVincular(null,'',null,'${cl.id}','${cl.nome.replace(/'/g,"\\'")}');event.stopPropagation()" style="background:none;border:1px solid var(--border);border-radius:4px;padding:3px 8px;font-size:11px;cursor:pointer;color:var(--text-3)">+ grupo</button>
+        </div>
+      </div>
+      <div onclick="abrirDetalheCliente('${cl.id}')">
+        <div class="cliente-produtos">${prods}</div>
+        <div style="font-size:11px;color:var(--text-3);margin-bottom:4px">${cl._np} de ${TODOS_PRODUTOS.length} produtos · ${pct}%</div>
+        <div class="oportunidade-bar"><div class="oportunidade-fill" style="width:${pct}%"></div></div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function toggleGrupo(id){
+  const body=document.getElementById('body-'+id);
+  const chev=document.getElementById('chev-'+id);
+  const header=document.querySelector(`#grupo-${id} .grupo-header`);
+  if(!body)return;
+  const open=body.classList.toggle('open');
+  if(chev)chev.classList.toggle('open',open);
+  if(header)header.classList.toggle('expanded',open);
+}
+
+function renderOportunidades(){
+  const el=document.getElementById('oportunidadesGrid');
+  if(!el)return;
+  const lista=todosClientes.map(cl=>{
+    const pv=produtosDasVendas(cl.nome);
+    const m={...cl,tem_auto:!!(cl.tem_auto||pv.auto),tem_residencial:!!(cl.tem_residencial||pv.residencial),tem_vida:!!(cl.tem_vida||pv.vida),tem_saude:!!(cl.tem_saude||pv.saude),tem_empresarial:!!(cl.tem_empresarial||pv.empresarial),tem_cartao:!!(cl.tem_cartao||pv.cartao)};
+    return{...m,faltam:TODOS_PRODUTOS.filter(p=>!m['tem_'+p.key])};
+  }).filter(x=>x.faltam.length>0).sort((a,b)=>b.faltam.length-a.faltam.length);
+  if(!lista.length){el.innerHTML='<div class="empty-state"><div class="icon">🎉</div>Todos têm todos os produtos!</div>';return;}
+  el.innerHTML=`<div class="card" style="padding:0"><div class="table-wrap"><table style="width:100%;border-collapse:collapse;font-size:13px">
+    <thead><tr>${['Cliente','Tem','Oportunidades',''].map(h=>`<th style="padding:10px 14px;text-align:left;font-size:11px;font-weight:600;text-transform:uppercase;color:var(--text-3);border-bottom:1px solid var(--border)">${h}</th>`).join('')}</tr></thead>
+    <tbody>${lista.map(cl=>`<tr style="border-bottom:1px solid var(--border)">
+      <td style="padding:10px 14px;font-weight:500">${cl.nome}</td>
+      <td style="padding:10px 14px">${TODOS_PRODUTOS.filter(p=>cl['tem_'+p.key]).map(p=>`<span class="prod-tag tem" style="margin:2px">${p.label}</span>`).join('')||'—'}</td>
+      <td style="padding:10px 14px">${cl.faltam.map(p=>`<span class="prod-tag nao-tem" style="margin:2px">${p.label}</span>`).join('')}</td>
+      <td style="padding:10px 14px"><button class="btn btn-ghost" style="font-size:11px;padding:5px 10px" onclick="abrirDetalheCliente('${cl.id}')">Ver →</button></td>
+    </tr>`).join('')}</tbody>
+  </table></div></div>`;
+}
+
+function abrirDetalheCliente(id){
+  clienteDetalheId=id;
+  const cl=todosClientes.find(x=>x.id===id);
+  if(!cl)return;
+  const pv=produtosDasVendas(cl.nome);
+  const mg={...cl,tem_auto:!!(cl.tem_auto||pv.auto),tem_residencial:!!(cl.tem_residencial||pv.residencial),tem_vida:!!(cl.tem_vida||pv.vida),tem_saude:!!(cl.tem_saude||pv.saude),tem_empresarial:!!(cl.tem_empresarial||pv.empresarial),tem_cartao:!!(cl.tem_cartao||pv.cartao),tem_outros:!!(cl.tem_outros||pv.outros)};
+  document.getElementById('detalheNome').textContent=cl.nome;
+  document.getElementById('detalheInfo').textContent=[cl.tipo,cl.documento,cl.telefone,cl.email].filter(Boolean).join(' · ')||'Sem contato';
+  const btnDesv=document.getElementById('btnDesvincular');
+  if(btnDesv)btnDesv.style.display=cl.cliente_principal_id?'inline-flex':'none';
+  document.getElementById('detalheProdutos').innerHTML=TODOS_PRODUTOS.map(p=>`
+    <div class="produto-chip ${mg['tem_'+p.key]?'tem':'nao-tem'}" onclick="toggleProdutoDetalhe('${id}','${p.key}',${!mg['tem_'+p.key]})">
+      ${p.label}<br><span style="font-size:10px">${mg['tem_'+p.key]?'✅ Possui':'❌ Não tem'}</span>
+    </div>`).join('');
+  const vc=todasVendas.filter(v=>(v.segurado||'').toLowerCase().trim()===cl.nome.toLowerCase().trim()).slice(0,8);
+  document.getElementById('detalheVendas').innerHTML=vc.length
+    ?`<div style="border:1px solid var(--border);border-radius:var(--radius-sm);overflow:hidden"><table style="width:100%;border-collapse:collapse;font-size:12px">
+        <thead><tr>${['Data','Ramo','Seguradora','Comissão'].map(h=>`<th style="padding:7px 10px;background:var(--bg);text-align:left;font-size:10px;font-weight:600;color:var(--text-3);border-bottom:1px solid var(--border)">${h}</th>`).join('')}</tr></thead>
+        <tbody>${vc.map(v=>`<tr><td style="padding:7px 10px">${fmtData(v.data)}</td><td style="padding:7px 10px">${v.ramo}</td><td style="padding:7px 10px">${v.cia}</td><td style="padding:7px 10px;color:var(--green);font-weight:600">${fmt(v.comissao)}</td></tr>`).join('')}</tbody>
+      </table></div>`
+    :'<div style="font-size:13px;color:var(--text-3);padding:8px 0">Nenhuma venda registrada.</div>';
+  renderTarefasDetalhe(id);
+  document.getElementById('modalDetalhe').classList.add('open');
+}
+
+function renderTarefasDetalhe(cid){
+  const tars=(todasTarefas||[]).filter(t=>t.cliente_id===cid).sort((a,b)=>new Date(a.data_lembrete||0)-new Date(b.data_lembrete||0));
+  const div=document.getElementById('detalheTarefas');
+  if(!tars.length){div.innerHTML='<div style="font-size:13px;color:var(--text-3);padding:8px 0">Nenhuma tarefa ainda.</div>';return;}
+  const hoje=new Date();
+  div.innerHTML=tars.map(t=>{
+    const done=t.status==='concluida';
+    const venc=!done&&t.data_lembrete&&new Date(t.data_lembrete)<hoje;
+    return`<div class="tarefa-item">
+      <div class="tarefa-check ${done?'done':''}" onclick="toggleTarefa('${t.id}','${cid}')">${done?'✓':''}</div>
+      <div style="flex:1">
+        <div class="tarefa-titulo ${done?'done':''}">${t.titulo}</div>
+        ${t.descricao?`<div style="font-size:12px;color:var(--text-3)">${t.descricao}</div>`:''}
+        ${t.data_lembrete?`<div class="tarefa-data ${venc?'vencida':''}">${venc?'⚠️ ':'📅 '}${fmtDataHora(t.data_lembrete)}</div>`:''}
+      </div>
+      <div style="display:flex;gap:4px">
+        <button class="action-btn" onclick="editarTarefa('${t.id}')">✏️</button>
+        <button class="action-btn" onclick="deletarTarefa('${t.id}','${cid}')">🗑️</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+async function toggleProdutoDetalhe(cid,prod,val){
+  await db.from('carteira').update({['tem_'+prod]:val}).eq('id',cid);
+  await carregarCRM();abrirDetalheCliente(cid);
+}
+
+function fecharModalDetalhe(e){
+  if(!e||e.target===document.getElementById('modalDetalhe')){
+    document.getElementById('modalDetalhe').classList.remove('open');
+    clienteDetalheId=null;
+  }
+}
+
+function editarClienteAtual(){fecharModalDetalhe();if(clienteDetalheId)setTimeout(()=>abrirModalCliente(clienteDetalheId),100);}
+
+async function deletarClienteAtual(){
+  if(!clienteDetalheId||!confirm('Excluir?'))return;
+  await db.from('carteira').delete().eq('id',clienteDetalheId);
+  fecharModalDetalhe();await carregarCRM();showToast('Cliente excluído.','success');
+}
+
+function abrirModalCliente(id){
+  produtosTemp={auto:false,residencial:false,vida:false,saude:false,empresarial:false,cartao:false,outros:false};
+  document.getElementById('cli_id').value=id||'';
+  document.getElementById('modalClienteTitulo').textContent=id?'Editar Cliente':'Novo Cliente';
+  const tabsWrap=document.getElementById('cliTabsWrap');
+  if(tabsWrap)tabsWrap.style.display=id?'none':'flex';
+  switchCliTab('manual');
+  if(id){
+    const cl=todosClientes.find(x=>x.id===id);
+    if(cl){
+      document.getElementById('cli_nome').value=cl.nome||'';
+      document.getElementById('cli_tel').value=cl.telefone||'';
+      document.getElementById('cli_email').value=cl.email||'';
+      document.getElementById('cli_doc').value=cl.documento||'';
+      document.getElementById('cli_tipo').value=cl.tipo||'PF';
+      document.getElementById('cli_origem').value=cl.origem||'manual';
+      document.getElementById('cli_obs').value=cl.observacoes||'';
+      produtosTemp={auto:!!cl.tem_auto,residencial:!!cl.tem_residencial,vida:!!cl.tem_vida,saude:!!cl.tem_saude,empresarial:!!cl.tem_empresarial,cartao:!!cl.tem_cartao,outros:!!cl.tem_outros};
+    }
+  }else{
+    ['cli_nome','cli_tel','cli_email','cli_doc','cli_obs'].forEach(x=>{const el=document.getElementById(x);if(el)el.value='';});
+  }
+  atualizarChips();
+  document.getElementById('modalCliente').classList.add('open');
+}
+
+function fecharModalCliente(e){if(!e||e.target===document.getElementById('modalCliente'))fecharModalClienteDireto();}
+function fecharModalClienteDireto(){document.getElementById('modalCliente').classList.remove('open');}
+function toggleProduto(p){produtosTemp[p]=!produtosTemp[p];atualizarChips();}
+function atualizarChips(){
+  Object.keys(produtosTemp).forEach(p=>{
+    const el=document.getElementById('chip_'+p);
+    if(el)el.className='produto-chip '+(produtosTemp[p]?'tem':'nao-tem');
+  });
+}
+
+async function salvarCliente(){
+  const nome=(document.getElementById('cli_nome')?.value||'').trim();
+  if(!nome){showToast('Nome é obrigatório.','error');return;}
+  const vendedor=(currentProfile?.vendedor||'').trim();
+  const id=document.getElementById('cli_id').value;
+  const payload={nome,vendedor,
+    telefone:document.getElementById('cli_tel').value.trim()||null,
+    email:document.getElementById('cli_email').value.trim()||null,
+    documento:document.getElementById('cli_doc').value.trim()||null,
+    tipo:document.getElementById('cli_tipo').value,
+    origem:document.getElementById('cli_origem').value,
+    observacoes:document.getElementById('cli_obs').value.trim()||null,
+    tem_auto:produtosTemp.auto,tem_residencial:produtosTemp.residencial,
+    tem_vida:produtosTemp.vida,tem_saude:produtosTemp.saude,
+    tem_empresarial:produtosTemp.empresarial,tem_cartao:produtosTemp.cartao,
+    tem_outros:produtosTemp.outros,
+  };
+  const{error}=id?await db.from('carteira').update(payload).eq('id',id):await db.from('carteira').insert([payload]);
+  if(error){showToast('Erro: '+error.message,'error');return;}
+  fecharModalClienteDireto();await carregarCRM();
+  showToast(id?'Cliente atualizado!':'Cliente cadastrado!','success');
+}
+
+function switchCliTab(tab){
+  document.getElementById('cliTabManual')?.classList.toggle('active',tab==='manual');
+  document.getElementById('cliTabVendas')?.classList.toggle('active',tab==='vendas');
+  const pm=document.getElementById('cliPanelManual');
+  const pv=document.getElementById('cliPanelVendas');
+  if(pm)pm.style.display=tab==='manual'?'block':'none';
+  if(pv)pv.style.display=tab==='vendas'?'block':'none';
+  if(tab==='vendas')renderClientesDasVendas();
+}
+
+function renderClientesDasVendas(){
+  const vendedor=(currentProfile?.vendedor||'').trim();
+  const busca=(document.getElementById('buscaCliVenda')?.value||'').toLowerCase();
+  const jaAdicionados=new Set(todosClientes.map(x=>(x.nome||'').toLowerCase().trim()));
+  const mapa={};
+  todasVendas.filter(v=>!vendedor||v.vendedor===vendedor).forEach(v=>{
+    const nome=(v.segurado||'').trim();
+    if(!nome||jaAdicionados.has(nome.toLowerCase()))return;
+    if(!mapa[nome])mapa[nome]={nome,vendas:[],ramos:new Set()};
+    mapa[nome].vendas.push(v);mapa[nome].ramos.add(v.ramo);
+  });
+  let lista=Object.values(mapa).sort((a,b)=>a.nome.localeCompare(b.nome));
+  if(busca)lista=lista.filter(x=>x.nome.toLowerCase().includes(busca));
+  const div=document.getElementById('listaCliVendas');
+  if(!div)return;
+  if(!lista.length){div.innerHTML=`<div style="text-align:center;padding:24px;color:var(--text-3)">${busca?'Nenhum encontrado':'Todos já estão na carteira! 🎉'}</div>`;return;}
+  div.innerHTML=lista.map(x=>{
+    const ramos=[...x.ramos].map(r=>`<span class="ramo-badge ${ramoClass(r)}" style="font-size:10.5px">${r}</span>`).join(' ');
+    const ltv=x.vendas.reduce((a,v)=>a+(+v.comissao||0),0);
+    const nome=x.nome.replace(/'/g,"\\'");
+    return`<div style="display:flex;align-items:center;justify-content:space-between;padding:12px 14px;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--bg);gap:10px">
+      <div style="flex:1;min-width:0">
+        <div style="font-weight:600;font-size:13px;margin-bottom:4px">${x.nome}</div>
+        <div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:4px">${ramos}</div>
+        <div style="font-size:11.5px;color:var(--text-3)">${x.vendas.length} venda${x.vendas.length!==1?'s':''} · LTV ${fmt(ltv)}</div>
+      </div>
+      <button class="btn btn-primary" style="padding:7px 14px;font-size:12px;flex-shrink:0" onclick="adicionarClienteDasVendas('${nome}')">+ Adicionar</button>
+    </div>`;
+  }).join('');
+}
+
+async function adicionarClienteDasVendas(nome){
+  const vendedor=(currentProfile?.vendedor||'').trim();
+  const pv=produtosDasVendas(nome);
+  const{error}=await db.from('carteira').insert([{nome,vendedor,origem:'venda',tipo:'PF',
+    tem_auto:pv.auto,tem_residencial:pv.residencial,tem_vida:pv.vida,
+    tem_saude:pv.saude,tem_empresarial:pv.empresarial,tem_cartao:pv.cartao,tem_outros:pv.outros}]);
+  if(error){showToast('Erro: '+error.message,'error');return;}
+  showToast(nome+' adicionado!','success');await carregarCRM();renderClientesDasVendas();
+}
+
+function renderTarefasView(){
+  const filtro=document.getElementById('filtroStatusTarefa')?.value||'';
+  const hoje=new Date();
+  let lista=[...(todasTarefas||[])].sort((a,b)=>new Date(a.data_lembrete||'9999')-new Date(b.data_lembrete||'9999'));
+  if(filtro==='vencida')lista=lista.filter(t=>t.status==='pendente'&&t.data_lembrete&&new Date(t.data_lembrete)<hoje);
+  else if(filtro)lista=lista.filter(t=>t.status===filtro);
+  const div=document.getElementById('tarefasViewList');
+  const empty=document.getElementById('tarefasViewEmpty');
+  if(!div)return;
+  if(!lista.length){div.innerHTML='';if(empty)empty.style.display='block';return;}
+  if(empty)empty.style.display='none';
+  div.innerHTML=lista.map(t=>{
+    const cl=todosClientes.find(x=>x.id===t.cliente_id);
+    const done=t.status==='concluida';
+    const venc=!done&&t.data_lembrete&&new Date(t.data_lembrete)<hoje;
+    return`<div class="card" style="padding:14px 18px;margin-bottom:10px;display:flex;align-items:flex-start;gap:12px">
+      <div class="tarefa-check ${done?'done':''}" onclick="toggleTarefaView('${t.id}')">${done?'✓':''}</div>
+      <div style="flex:1">
+        <div class="tarefa-titulo ${done?'done':''}" style="font-size:14px">${t.titulo}</div>
+        ${cl?`<div style="font-size:12px;color:var(--accent);cursor:pointer" onclick="abrirDetalheCliente('${cl.id}')">👤 ${cl.nome}</div>`:''}
+        ${t.descricao?`<div style="font-size:12px;color:var(--text-2);margin-top:4px">${t.descricao}</div>`:''}
+        <div style="display:flex;gap:12px;margin-top:6px;flex-wrap:wrap">
+          ${t.data_lembrete?`<span class="tarefa-data ${venc?'vencida':''}">${venc?'⚠️ ':'📅 '}${fmtDataHora(t.data_lembrete)}</span>`:''}
+          <span style="font-size:11px;color:var(--text-3);background:var(--bg);padding:2px 7px;border-radius:99px">${t.status}</span>
+        </div>
+      </div>
+      <div style="display:flex;gap:4px">
+        <button class="action-btn" onclick="editarTarefa('${t.id}')">✏️</button>
+        <button class="action-btn" onclick="deletarTarefa('${t.id}',null)">🗑️</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function abrirModalTarefa(cid){
+  document.getElementById('tar_id').value='';
+  document.getElementById('tar_cliente_id').value=cid||'';
+  document.getElementById('modalTarefaTitulo').textContent='Nova Tarefa';
+  ['tar_titulo','tar_desc','tar_data'].forEach(x=>{const el=document.getElementById(x);if(el)el.value='';});
+  if(currentUser?.email){const el=document.getElementById('tar_email');if(el)el.value=currentUser.email;}
+  document.getElementById('tar_status').value='pendente';
+  document.getElementById('modalTarefa').classList.add('open');
+}
+
+function editarTarefa(id){
+  const t=(todasTarefas||[]).find(x=>x.id===id);if(!t)return;
+  document.getElementById('tar_id').value=t.id;
+  document.getElementById('tar_cliente_id').value=t.cliente_id||'';
+  document.getElementById('modalTarefaTitulo').textContent='Editar Tarefa';
+  document.getElementById('tar_titulo').value=t.titulo||'';
+  document.getElementById('tar_desc').value=t.descricao||'';
+  document.getElementById('tar_data').value=t.data_lembrete?t.data_lembrete.slice(0,16):'';
+  document.getElementById('tar_email').value=t.email_lembrete||'';
+  document.getElementById('tar_status').value=t.status||'pendente';
+  document.getElementById('modalTarefa').classList.add('open');
+}
+
+function fecharModalTarefa(e){if(!e||e.target===document.getElementById('modalTarefa'))fecharModalTarefaDireto();}
+function fecharModalTarefaDireto(){document.getElementById('modalTarefa').classList.remove('open');}
+
+async function salvarTarefa(){
+  const titulo=(document.getElementById('tar_titulo')?.value||'').trim();
+  if(!titulo){showToast('Título é obrigatório.','error');return;}
+  const vendedor=(currentProfile?.vendedor||'').trim();
+  const id=document.getElementById('tar_id').value;
+  const cid=document.getElementById('tar_cliente_id').value||null;
+  const dl=document.getElementById('tar_data').value||null;
+  const payload={titulo,vendedor,cliente_id:cid,
+    descricao:document.getElementById('tar_desc').value.trim()||null,
+    data_lembrete:dl?new Date(dl).toISOString():null,
+    email_lembrete:document.getElementById('tar_email').value.trim()||null,
+    status:document.getElementById('tar_status').value,
+  };
+  const{error}=id?await db.from('lembretes').update(payload).eq('id',id):await db.from('lembretes').insert([payload]);
+  if(error){showToast('Erro: '+error.message,'error');return;}
+  fecharModalTarefaDireto();await carregarCRM();
+  if(clienteDetalheId)renderTarefasDetalhe(clienteDetalheId);
+  showToast(id?'Tarefa atualizada!':'Tarefa criada!','success');
+}
+
+async function toggleTarefa(tid,cid){
+  const t=(todasTarefas||[]).find(x=>x.id===tid);if(!t)return;
+  await db.from('lembretes').update({status:t.status==='concluida'?'pendente':'concluida'}).eq('id',tid);
+  await carregarCRM();if(cid)renderTarefasDetalhe(cid);
+}
+
+async function toggleTarefaView(tid){
+  const t=(todasTarefas||[]).find(x=>x.id===tid);if(!t)return;
+  await db.from('lembretes').update({status:t.status==='concluida'?'pendente':'concluida'}).eq('id',tid);
+  await carregarCRM();
+}
+
+async function deletarTarefa(tid,cid){
+  if(!confirm('Excluir tarefa?'))return;
+  await db.from('lembretes').delete().eq('id',tid);
+  await carregarCRM();if(cid)renderTarefasDetalhe(cid);
+  showToast('Tarefa excluída.','success');
+}
+
+function switchCrmTab(tab){
+  document.getElementById('ctab-clientes')?.classList.toggle('active',tab==='clientes');
+  document.getElementById('ctab-oportunidades')?.classList.toggle('active',tab==='oportunidades');
+  const cc=document.getElementById('crm-clientes');
+  const co=document.getElementById('crm-oportunidades');
+  if(cc)cc.style.display=tab==='clientes'?'block':'none';
+  if(co)co.style.display=tab==='oportunidades'?'block':'none';
+  if(tab==='oportunidades')renderOportunidades();
+}
+
+// Vincular clientes
+let _vincularPrincipalId=null,_vincularSubId=null;
+function abrirModalVincular(principalId,principalNome,_x,subId,subNome){
+  _vincularPrincipalId=principalId||null;_vincularSubId=subId||null;
+  document.getElementById('vincularPrincipalId').value=principalId||'';
+  document.getElementById('vincularPrincipalNome').textContent=principalNome||subNome||'';
+  document.getElementById('vincularBusca').value='';
+  renderListaVincular();
+  document.getElementById('modalVincular').classList.add('open');
+}
+function fecharModalVincular(e){if(!e||e.target===document.getElementById('modalVincular'))fecharModalVincularDireto();}
+function fecharModalVincularDireto(){document.getElementById('modalVincular').classList.remove('open');}
+function renderListaVincular(){
+  const busca=(document.getElementById('vincularBusca')?.value||'').toLowerCase();
+  const lista=document.getElementById('vincularLista');
+  if(!lista)return;
+  let opcoes=todosClientes.filter(cl=>{
+    if(_vincularPrincipalId)return !cl.cliente_principal_id&&cl.id!==_vincularPrincipalId;
+    return !cl.cliente_principal_id&&cl.id!==_vincularSubId;
+  });
+  if(busca)opcoes=opcoes.filter(cl=>(cl.nome||'').toLowerCase().includes(busca));
+  if(!opcoes.length){lista.innerHTML='<div style="text-align:center;padding:20px;color:var(--text-3)">Nenhum disponível</div>';return;}
+  lista.innerHTML=opcoes.map(cl=>`
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 12px;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--bg);margin-bottom:6px">
+      <div><div style="font-weight:500;font-size:13px">${cl.nome}</div><div style="font-size:11.5px;color:var(--text-3)">${cl.tipo||'PF'}</div></div>
+      <button class="btn btn-primary" style="padding:5px 14px;font-size:12px" onclick="executarVinculo('${cl.id}')">Vincular</button>
+    </div>`).join('');
+}
+async function executarVinculo(clienteId){
+  const principalId=_vincularPrincipalId||clienteId;
+  const subId=_vincularPrincipalId?clienteId:_vincularSubId;
+  const{error}=await db.from('carteira').update({cliente_principal_id:principalId,is_principal:false}).eq('id',subId);
+  if(error){showToast('Erro: '+error.message,'error');return;}
+  fecharModalVincularDireto();await carregarCRM();showToast('Cliente vinculado!','success');
+}
+async function desvincularCliente(subId){
+  if(!confirm('Remover do grupo?'))return;
+  const{error}=await db.from('carteira').update({cliente_principal_id:null,is_principal:true}).eq('id',subId);
+  if(error){showToast('Erro: '+error.message,'error');return;}
+  await carregarCRM();showToast('Removido do grupo.','success');
+}
+function desvincularClienteDetalhe(){
+  if(!clienteDetalheId)return;
+  desvincularCliente(clienteDetalheId);fecharModalDetalhe();
 }
 
 function renderRanking(){
@@ -3039,7 +3573,15 @@ function renderRenovacoes(){
       <td class="val-green">${fmt(r.comissao_atual)}</td>
       <td>${variStr}</td>
       <td style="display:flex;gap:4px;flex-wrap:wrap">${tagEndosso}${tagSinistro}</td>
-      <td><span class="status-badge status-${r.status}">${capitalize(r.status)}</span></td>
+      <td>
+        <select onchange="trocarStatusRenov('${r.id}',this.value)"
+          style="padding:3px 6px;font-size:11px;border:1px solid var(--border);border-radius:4px;background:var(--bg);font-family:'DM Sans',sans-serif">
+          <option value="pendente" ${r.status==='pendente'?'selected':''}>⏳ Pendente</option>
+          <option value="renovada" ${r.status==='renovada'?'selected':''}>✅ Renovada</option>
+          <option value="perdida" ${r.status==='perdida'?'selected':''}>❌ Perdida</option>
+          <option value="cancelada" ${r.status==='cancelada'?'selected':''}>🚫 Cancelada</option>
+        </select>
+      </td>
       <td style="white-space:nowrap">
         <select onchange="trocarVendedorRenov('${r.id}',this.value)" style="padding:3px 6px;font-size:11px;border:1px solid var(--border);border-radius:4px;background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;margin-right:4px">
           <option value="Silvia" ${r.vendedor==='Silvia'?'selected':''}>Silvia</option>
@@ -3254,10 +3796,29 @@ async function salvarRenovacao(){
 async function trocarVendedorRenov(id, vendedor){
   const{error}=await db.from('renovacoes').update({vendedor}).eq('id',id);
   if(error){showToast('Erro: '+error.message,'error');return;}
-  // Atualizar localmente sem reload completo
   const r=todasRenovacoes.find(x=>x.id===id);
   if(r) r.vendedor=vendedor;
   showToast(`Atribuído para ${vendedor}!`,'success');
+}
+
+async function trocarStatusRenov(id, novoStatus){
+  // Mapear status → kanban_status
+  const kanbanMap={
+    'renovada':'fechada',
+    'perdida':'nao_iniciada',
+    'pendente':'nao_iniciada',
+    'cancelada':'nao_iniciada',
+  };
+  const novoKanban=kanbanMap[novoStatus]||'nao_iniciada';
+  const{error}=await db.from('renovacoes').update({
+    status:novoStatus,
+    kanban_status:novoKanban
+  }).eq('id',id);
+  if(error){showToast('Erro: '+error.message,'error');return;}
+  const r=todasRenovacoes.find(x=>x.id===id);
+  if(r){ r.status=novoStatus; r.kanban_status=novoKanban; }
+  renderRenovacoes();
+  renderKanban();
 }
 async function editarRenovacao(id){abrirModalRenovacao(id);}
 
@@ -3438,8 +3999,16 @@ async function executarImportRenov(){
   const BATCH=100;
   let importados=0,erros=0;
   for(let i=0;i<renovImportRows.length;i+=BATCH){
-    const vend=document.getElementById('renovImportVendedor')?.value||'';
-    const lote=renovImportRows.slice(i,i+BATCH).map(r=>({...r,vendedor:r.vendedor||vend}));
+    const vend=document.getElementById('renovImportVendedor')?.value||'Silvia';
+    const lote=renovImportRows.slice(i,i+BATCH).map(r=>({
+      cliente:r.cliente, apolice:r.apolice, ramo:r.ramo, cia:r.cia,
+      mes_renovacao:r.mes_renovacao, data_vencimento:r.data_vencimento||null,
+      comissao_anterior:r.comissao_anterior||0, comissao_atual:r.comissao_atual||0,
+      premio_anterior:r.premio_anterior||0, premio_atual:r.premio_atual||0,
+      status:r.status||'pendente', kanban_status:r.kanban_status||'nao_iniciada',
+      tem_endosso:r.tem_endosso||false, tem_sinistro:r.tem_sinistro||false,
+      tipo_endosso:r.tipo_endosso||null, vendedor:r.vendedor||vend,
+    }));
     const{error}=await db.from('renovacoes').insert(lote);
     if(error) erros+=lote.length; else importados+=lote.length;
     const pct=Math.min(100,Math.round(((i+BATCH)/renovImportRows.length)*100));
@@ -3538,13 +4107,25 @@ async function dropKanban(event, novoStatus){
 
 async function moverKanban(id, novoStatus){
   const r=todasRenovacoes.find(x=>x.id===id);
-  if(!r||r.kanban_status===novoStatus) return;
-  const{error}=await db.from('renovacoes').update({kanban_status:novoStatus}).eq('id',id);
+  if(!r) return;
+  // Mapear kanban_status para status de renovação
+  const statusMap={
+    'fechada':'renovada',
+    'nao_iniciada':'pendente',
+    'cotada':'pendente',
+    'negociacao':'pendente',
+    'aguardando_transmissao':'pendente',
+  };
+  const novoStatusRenov=statusMap[novoStatus]||r.status;
+  const{error}=await db.from('renovacoes').update({
+    kanban_status:novoStatus,
+    status:novoStatusRenov
+  }).eq('id',id);
   if(error){showToast('Erro: '+error.message,'error');return;}
   r.kanban_status=novoStatus;
-  // Se fechou no kanban, atualizar status também
-  if(novoStatus==='fechada') r.status='renovada';
+  r.status=novoStatusRenov;
   renderKanban();
+  renderRenovacoes();
   showToast('Card movido!','success');
 }
 
@@ -3701,8 +4282,7 @@ async function executarImportHistoricoRenov(){
 }
 
 // ── VINCULAR SUB-CLIENTE ──────────────────────────────────────────────
-let _vincularPrincipalId=null;
-let _vincularSubId=null; // quando se quer vincular um cliente existente a um grupo
+// vincular vars declaradas acima
 
 function abrirModalVincular(principalId, principalNome, _x, subId, subNome){
   // Modo 1: principalId definido = adicionar sub ao grupo existente
