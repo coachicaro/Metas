@@ -5621,45 +5621,60 @@ async function copiarTexto(tipo){
 }
 
 function gerarTextoLocal(coberturas, tipoSeguro, contexto){
-  const linhas=coberturas.split(/[,\n]+/).map(s=>s.trim()).filter(Boolean);
-  const EXPLICACOES_AUTO={
-    'colisão':'🚗 *Colisão* — Bateu o carro? Seja por acidente com outro veículo ou até num poste, essa cobertura paga o conserto ou indeniza o valor do carro.',
-    'furto':'🔒 *Furto e Roubo* — Se roubarem ou furtarem seu carro, a seguradora te indeniza pelo valor de mercado do veículo.',
-    'incêndio':'🔥 *Incêndio* — Pegou fogo no carro por qualquer motivo? A seguradora cobre os danos ou indeniza totalmente.',
-    'natureza':'🌩️ *Danos da Natureza* — Granizo, enchente, raio, vendaval... se a natureza estragar seu carro, tá coberto!',
-    'compreensiva':'✅ *Cobertura Compreensiva* — O pacote completo! Inclui colisão, furto/roubo, incêndio e danos naturais tudo junto.',
-    'rcf-dm':'⚠️ *Danos Materiais a Terceiros (RCF-DM)* — Bateu no carro do outro por sua culpa? A seguradora paga o conserto do veículo da outra pessoa.',
-    'rcf-dc':'🏥 *Danos Corporais a Terceiros (RCF-DC)* — Se alguém se machucar num acidente por sua culpa, cobre os custos médicos e indenizações.',
-    'assistência':'🛠️ *Assistência 24h* — Carro enguiçou? Bateria morreu? Pneu furou? Liga pra assistência e resolve na hora, qualquer hora do dia.',
-    'carro reserva':'🚙 *Carro Reserva* — Enquanto o seu tá na oficina, você fica sem ficar a pé. A seguradora disponibiliza um carro emprestado.',
-    'guincho':'🪝 *Guincho Ilimitado* — Precisou rebocar? Pode chamar sem preocupação com distância, é ilimitado!',
-    'vidros':'🪟 *Vidros, Lanternas e Retrovisores* — Quebrou o para-brisa ou lataria? Essa cobertura resolve sem franquia!',
+  // Limpar e agrupar linhas — ignorar linhas que são só números ou valores
+  const linhas=coberturas
+    .split(/\n/)
+    .map(s=>s.trim())
+    .filter(s=>s.length>2 && !/^[\d.,\s%R$]+$/.test(s) && !/^\d+$/.test(s));
+
+  // Juntar valor que vem na linha seguinte ao nome da cobertura
+  const coberturasParsed=[];
+  for(let i=0;i<linhas.length;i++){
+    const linha=linhas[i];
+    // Tentar extrair nome e valor da mesma linha (ex: "Casco 100% FIPE" ou "RCF-DM R$ 500.000")
+    const valorInline=linha.match(/R\$\s?[\d.,]+/)?.[0]||linha.match(/[\d.,]+\s?%/)?.[0]||'';
+    const nome=linha.replace(/R\$\s?[\d.,]+/,'').replace(/[\d.,]+\s?%/,'').trim();
+    if(nome.length>2) coberturasParsed.push({nome, valor:valorInline});
+  }
+
+  const DB={
+    'casco':      {e:'🚗',txt:'Bateu, foi roubado ou pegou fogo? O Casco cobre o seu carro em todos esses casos. Se tiver perda total, a seguradora te paga o valor do veículo.'},
+    'colisão':    {e:'🚗',txt:'Bateu o carro — seja num acidente, numa mureta, em outro veículo? Essa cobertura paga o conserto ou indeniza o valor do carro.'},
+    'furto':      {e:'🔒',txt:'Roubaram ou furtaram seu carro? A seguradora te indeniza pelo valor de mercado.'},
+    'incêndio':   {e:'🔥',txt:'Pegou fogo no carro por qualquer motivo? Cobre os danos ou indeniza totalmente.'},
+    'rcf':        {e:'⚠️',txt:'Causou um acidente e danificou o carro do outro? Ou alguém se machucou? Essa cobertura paga as indenizações pra você.'},
+    'danos materiais':{e:'⚠️',txt:'Causou um acidente e danificou o carro ou propriedade de outra pessoa? A seguradora paga o conserto.'},
+    'danos corporais':{e:'🏥',txt:'Alguém se machucar num acidente por sua culpa? A seguradora cobre os custos médicos e indenizações.'},
+    'danos morais': {e:'⚖️',txt:'Além dos danos físicos, cobre também indenizações por danos morais e estéticos causados a terceiros.'},
+    'app':        {e:'🧑',txt:'Se você ou seus passageiros se machucarem num acidente, cobre morte e invalidez permanente.'},
+    'morte':      {e:'🕊️',txt:'Em caso de acidente com vítimas fatais, garante indenização para a família.'},
+    'invalidez':  {e:'♿',txt:'Se alguém ficar com sequelas permanentes por causa de um acidente, essa cobertura paga uma indenização.'},
+    'vidros':     {e:'🪟',txt:'Quebrou para-brisa, vidros laterais, lanternas ou retrovisores? Troca sem custo extra para você.'},
+    'faróis':     {e:'💡',txt:'Faróis danificados em um acidente ou impacto? Essa cobertura cobre a substituição.'},
+    'lanternas':  {e:'🔦',txt:'Lanternas quebradas? Cobertas separadamente, sem pesar na franquia principal.'},
+    'retrov':     {e:'🔄',txt:'Retrovisor quebrado ou arranhado? Cobertura específica para essa peça tão comum de danificar.'},
+    'assistência':{e:'🛠️',txt:'Carro enguiçou? Bateria morreu? Pneu furou? Chama a assistência qualquer hora do dia ou da noite, sem custo.'},
+    'guincho':    {e:'🪝',txt:'Precisou rebocar? Pode chamar sem preocupação com distância — é ilimitado!'},
+    'carro reserva':{e:'🚙',txt:'Enquanto o seu tá na oficina, você recebe um carro emprestado pra não ficar na mão.'},
+    'teto solar': {e:'☀️',txt:'Dano no teto solar? Cobertura específica pra esse item que costuma ser caro de consertar.'},
+    'franquia':   {e:'💰',txt:'Em caso de sinistro, essa é sua parte do custo. Quanto maior a franquia, menor o prêmio — e vice-versa.'},
+    'residencial':{e:'🏠',txt:'Incêndio, raio, roubo, danos por água... protege sua casa contra os principais imprevistos.'},
+    'vendaval':   {e:'🌪️',txt:'Ventou forte e danificou o telhado, vidros ou estrutura? Tudo coberto!'},
+    'granizo':    {e:'🌨️',txt:'Chuva de pedra danificou o telhado ou fachada? Cobre os consertos.'},
+    'inundação':  {e:'🌊',txt:'Enchente invadiu a casa? Cobre os danos causados pela água.'},
   };
-  const EXPLICACOES_RESID={
-    'incêndio':'🔥 *Incêndio, Raio e Explosão* — Se pegar fogo, cair raio ou explodir gás, a seguradora cobre todos os danos à sua casa.',
-    'elétrico':'⚡ *Danos Elétricos* — Raio queimou sua TV, geladeira, computador? Cobre os equipamentos danificados por curto ou variação de tensão.',
-    'roubo':'🔒 *Roubo e Furto Qualificado* — Arrombaram sua casa e levaram seus bens? A seguradora indeniza o que foi roubado.',
-    'água':'💧 *Danos por Água* — Entupiu, vazou, a torneira do vizinho de cima abriu? Cobre os danos por água no seu imóvel.',
-    'vendaval':'🌪️ *Vendaval e Tempestade* — Ventou forte e destelheu, quebrou janela, caiu árvore? Tudo coberto!',
-    'granizo':'🌨️ *Granizo* — Chuva de pedra danificou o telhado, vidros ou fachada? A seguradora cobre.',
-    'inundação':'🌊 *Inundação* — Enchente invadiu a casa? Cobre os danos causados pela água.',
-    'rc familiar':'👨‍👩‍👧 *RC Familiar* — Seu filho quebrou o vidro do vizinho com uma bola? Alguém escorregou na sua calçada? Você tá coberto!',
-    'assistência':'🔧 *Assistência Residencial 24h* — Cano estourou às 2h da manhã? Chama o encanador pelo seguro, sem pagar nada à parte.',
-    'chaveiro':'🔑 *Chaveiro* — Trancou a chave dentro de casa? Chama o chaveiro pelo seguro!',
-    'hotel':'🏨 *Hotel (imóvel inabitável)* — Se sua casa ficou inabitável por algum sinistro, a seguradora paga a hospedagem até você poder voltar.',
-  };
-  const explicacoes=tipoSeguro.includes('Auto')?EXPLICACOES_AUTO:EXPLICACOES_RESID;
-  let texto=`Oi${contexto?' '+contexto.split(',')[0].trim():''}! 😊 Deixa eu te explicar o que cada cobertura do seu seguro significa na prática:\n\n`;
-  linhas.forEach(linha=>{
-    const chave=Object.keys(explicacoes).find(k=>linha.toLowerCase().includes(k));
-    if(chave){
-      const valor=linha.match(/R\$[\s\d.,]+/)?.[0]||'';
-      texto+=explicacoes[chave]+(valor?` Valor segurado: *${valor}*`:'')+`\n\n`;
-    } else {
-      texto+=`📌 *${linha}* — Cobertura incluída na sua proposta.\n\n`;
-    }
+
+  const nome1=contexto?contexto.split(',')[0].trim():'';
+  let texto=`Oi${nome1?' '+nome1:''}! 😊 Deixa eu te explicar o que cada cobertura do seu seguro significa na prática:\n\n`;
+
+  coberturasParsed.forEach(({nome,valor})=>{
+    const chave=Object.keys(DB).find(k=>nome.toLowerCase().includes(k));
+    const {e,txt}=chave?DB[chave]:{e:'📌',txt:`Cobertura que protege contra ${nome.toLowerCase()}.`};
+    const valorStr=valor?` *(${valor})*`:'';
+    texto+=`${e} *${nome}*${valorStr}\n${txt}\n\n`;
   });
-  texto+=`---\n✅ Com esse seguro você tem tranquilidade pra usar no dia a dia! Qualquer dúvida me chama! 🙌`;
+
+  texto+=`---\n✅ *Resumo:* Com esse seguro você tem tranquilidade pra usar no dia a dia! Qualquer dúvida me chama! 🙌`;
   return texto;
 }
 
