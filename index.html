@@ -403,6 +403,8 @@ input[type=range]{width:100%;accent-color:var(--accent)}
   .summary-grid{grid-template-columns:1fr 1fr}
   .sdr-grid{grid-template-columns:1fr}
 }
+.cobert-resultado{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:20px 24px;font-size:14px;line-height:1.9;word-break:break-word;min-height:200px;color:var(--text)}
+.cobert-resultado.carregando{color:var(--text-3);font-style:italic}
 </style>
 </head>
 <body>
@@ -5452,8 +5454,12 @@ Regras:
       })
     });
     const data=await response.json();
-    const texto=data.content?.[0]?.text||'Erro ao gerar texto.';
-    res.textContent=texto;
+    let texto=data.content?.[0]?.text||'Erro ao gerar texto.';
+    // Renderizar *negrito* como bold
+    res.innerHTML=texto
+      .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+      .replace(/\*(.*?)\*/g,'<strong>$1</strong>')
+      .replace(/\n/g,'<br>');
     res.className='cobert-resultado';
   }catch(err){
     res.textContent='Erro ao conectar com a IA: '+err.message;
@@ -5467,8 +5473,10 @@ async function copiarTexto(tipo){
   const res=document.getElementById(`cobert-resultado-${tipo}`);
   const btn=document.getElementById(`btn-copiar-${tipo}`);
   if(!res||!res.textContent.trim())return;
+  // Extrair texto puro removendo tags HTML
+  const textoParaCopiar=res.innerText||res.textContent||'';
   try{
-    await navigator.clipboard.writeText(res.textContent);
+    await navigator.clipboard.writeText(textoParaCopiar);
     if(btn){btn.textContent='✅ Copiado!';setTimeout(()=>btn.textContent='📋 Copiar',2000);}
   }catch(e){
     // Fallback para iOS Safari
@@ -5546,22 +5554,36 @@ async function gerarTextoCoberturas(tipo){
   if(btn){btn.disabled=true;btn.textContent='⏳ Gerando...';}
 
   const prompt=`Você é um corretor de seguros brasileiro, simpático e descontraído.
+
 Seu cliente acabou de receber uma proposta de ${tipoSeguro} com as seguintes coberturas:
 
 ${coberturas}
 
 ${contexto?`Contexto do cliente: ${contexto}`:''}
 
-Crie uma mensagem de WhatsApp explicando cada cobertura de forma simples, prática e informal.
+Crie uma mensagem de WhatsApp explicando cada cobertura. SIGA EXATAMENTE esse formato:
 
-Regras:
-- Use emojis relevantes para deixar mais visual
-- Explique NA PRÁTICA o que cada cobertura protege (conte uma situação do dia a dia)
-- Se tiver valor informado, mencione o valor
-- Seja direto, sem juridiquês, como se fosse uma mensagem de amigo
-- No final, faça um resumo do benefício geral
-- Máximo 2-3 linhas por cobertura
-- Tom de WhatsApp mesmo, informal e acolhedor`;
+Oi [nome se tiver contexto, senão "tudo bem?"]! 😊 Deixa eu te explicar o que cada cobertura do seu seguro significa na prática:
+
+[EMOJI] *Nome da Cobertura*
+Explicação simples em 1-2 frases do que é. Depois explique quando o cliente vai usar: "Por exemplo: [situação do dia a dia bem concreta e real]."
+[linha em branco]
+
+[repetir para cada cobertura]
+
+---
+✅ *Resumo geral:* [frase curta sobre o benefício do seguro como um todo]
+
+Qualquer dúvida me chama! 🙌
+
+REGRAS IMPORTANTES:
+- Uma linha em branco entre cada cobertura
+- Use *negrito* nos nomes das coberturas
+- Seja informal, como mensagem de amigo
+- Situações do dia a dia bem concretas e reais
+- Sem juridiquês
+- Se tiver valor (ex: R$ 100.000), mencione naturalmente
+- Máximo 3 linhas por cobertura`;
 
   try{
     // Usar Supabase Edge Function como proxy para evitar CORS
@@ -5584,12 +5606,14 @@ async function copiarTexto(tipo){
   const res=document.getElementById(`cobert-resultado-${tipo}`);
   const btn=document.getElementById(`btn-copiar-${tipo}`);
   if(!res?.textContent?.trim())return;
+  // Extrair texto puro removendo tags HTML
+  const textoParaCopiar=res.innerText||res.textContent||'';
   try{
-    await navigator.clipboard.writeText(res.textContent);
+    await navigator.clipboard.writeText(textoParaCopiar);
     if(btn){btn.textContent='✅ Copiado!';setTimeout(()=>btn.textContent='📋 Copiar',2000);}
   }catch(e){
     const ta=document.createElement('textarea');
-    ta.value=res.textContent;ta.style.position='fixed';ta.style.opacity='0';
+    ta.value=textoParaCopiar;ta.style.position='fixed';ta.style.opacity='0';
     document.body.appendChild(ta);ta.select();document.execCommand('copy');
     document.body.removeChild(ta);
     if(btn){btn.textContent='✅ Copiado!';setTimeout(()=>btn.textContent='📋 Copiar',2000);}
