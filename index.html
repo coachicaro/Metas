@@ -5758,6 +5758,17 @@ async function confirmarAdicionarCarteira(){
   showToast(_pendCarteiraNome+' adicionado à carteira! 🎉','success');
 }
 
+function verVendasVendedor(vendedor, mes){
+  // Setar filtros no histórico e navegar
+  const selMes=document.getElementById('mesFiltroHist');
+  if(selMes) selMes.value=mes;
+  const selVend=document.getElementById('filtroVendedorHist');
+  if(selVend) selVend.value=vendedor;
+  const selBusca=document.getElementById('buscaHist');
+  if(selBusca) selBusca.value='';
+  showView('historico');
+}
+
 </script>
 </body>
 </html><!-- JS PLACEHOLDER -->
