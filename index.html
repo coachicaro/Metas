@@ -456,7 +456,7 @@ input[type=range]{width:100%;accent-color:var(--accent)}
       <div class="nav-item" onclick="showView('analises')" id="nav-analises"><span class="icon">📊</span> Análises</div>
       <div class="nav-item" onclick="showView('indicacoes')" id="nav-indicacoes"><span class="icon">🔗</span> Indicações</div>
       <div class="nav-section">Vendas</div>
-      <div class="nav-item" onclick="showView('nova')" id="nav-nova"><span class="icon">➕</span> Nova Venda</div>
+      <div class="nav-item" onclick="propostaOrigemVenda=null;showView('nova')" id="nav-nova"><span class="icon">➕</span> Nova Venda</div>
       <div class="nav-item" onclick="showView('historico')" id="nav-historico"><span class="icon">📋</span> Histórico</div>
       <div class="nav-item" onclick="showView('propostas')" id="nav-propostas"><span class="icon">📄</span> Propostas</div>
       <div class="nav-section">CRM Premium</div>
@@ -604,7 +604,7 @@ input[type=range]{width:100%;accent-color:var(--accent)}
       <div class="card" style="padding:0">
         <div class="card-header" style="padding:18px 24px 0">
           <div class="card-title" style="margin-bottom:0">Minhas Últimas Vendas</div>
-          <button class="btn btn-ghost" style="font-size:12px;padding:6px 12px" onclick="showView('nova')">+ Nova venda</button>
+          <button class="btn btn-ghost" style="font-size:12px;padding:6px 12px" onclick="propostaOrigemVenda=null;showView('nova')">+ Nova venda</button>
         </div>
         <div class="table-wrap">
           <table>
@@ -1922,7 +1922,7 @@ input[type=range]{width:100%;accent-color:var(--accent)}
     <button class="mobile-nav-item active" id="mnav-dashboard" onclick="showView('dashboard')"><span class="mn-icon">🏠</span><span class="mn-label">Dashboard</span></button>
     <button class="mobile-nav-item" id="mnav-ranking" onclick="showView('ranking')"><span class="mn-icon">🏆</span><span class="mn-label">Ranking</span></button>
     <button class="mobile-nav-item" id="mnav-analises" onclick="showView('analises')"><span class="mn-icon">📊</span><span class="mn-label">Análises</span></button>
-    <button class="mobile-nav-item" id="mnav-nova" onclick="showView('nova')"><span class="mn-icon">➕</span><span class="mn-label">Venda</span></button>
+    <button class="mobile-nav-item" id="mnav-nova" onclick="propostaOrigemVenda=null;showView('nova')"><span class="mn-icon">➕</span><span class="mn-label">Venda</span></button>
     <button class="mobile-nav-item" id="mnav-historico" onclick="showView('historico')"><span class="mn-icon">📋</span><span class="mn-label">Histórico</span></button>
     <button class="mobile-nav-item" id="mnav-carteira" onclick="showView('carteira')"><span class="mn-icon">👥</span><span class="mn-label">Carteira</span></button>
     <button class="mobile-nav-item" id="mnav-tarefas_view" onclick="showView('tarefas_view')"><span class="mn-icon">✅</span><span class="mn-label">Tarefas</span></button>
@@ -2338,7 +2338,7 @@ input[type=range]{width:100%;accent-color:var(--accent)}
         <option>Outro</option>
       </select></div>
       <div class="field"><label>Seguradora *</label><select id="prop_cia"><option value="">Selecione...</option><option>Affinity</option><option>Allianz</option><option>Alliro</option><option>Amil</option><option>Azos</option><option>Azul</option><option>Azul por Assinatura</option><option>Bradesco</option><option>DoctorClin</option><option>Embracon</option><option>Essor</option><option>Ezze</option><option>Fairfax</option><option>HDI</option><option>Itaú</option><option>Ituran</option><option>KOVR</option><option>MAG</option><option>Mapfre</option><option>MedSênior</option><option>Mitsui</option><option>Pasi Icatu</option><option>PetLove/Porto</option><option>Porto</option><option>Pottencial</option><option>Racon</option><option>Sombrero</option><option>Suhai</option><option>SulAmérica</option><option>Tokio Marine</option><option>Yelum</option><option>Zurich</option><option value="__nova_cia__">➕ Adicionar nova seguradora...</option></select></div>
-      <div class="field"><label>Status</label><select id="prop_status"><option value="aberta">Aberta</option><option value="fechada">Fechada</option><option value="perdida">Perdida</option></select></div>
+      <div class="field"><label>Status</label><select id="prop_status" onchange="checkStatusPropostaFechada()"><option value="aberta">Aberta</option><option value="fechada">Fechada</option><option value="perdida">Perdida</option></select></div>
     </div>
     <div class="form-grid" style="margin-bottom:20px">
       <div class="field"><label>Prêmio Líquido *</label><input type="number" id="prop_pl" step="0.01" min="0" oninput="calcComissaoProp()"></div>
@@ -2441,6 +2441,7 @@ const VENDEDORES=['Silvia','Paulo','Ícaro'];
 const CORES_VENDEDOR={'Silvia':'#6366f1','Paulo':'#f59e0b','Ícaro':'#10b981'};
 
 let todasVendas=[], todasPropostas=[], todasMetas=[], todasMetasRamo=[];
+let propostaOrigemVenda=null; // {id,segurado} — preenchido quando Nova Venda nasce de uma Proposta marcada como Fechada
 let currentUser=null, currentProfile=null;
 let charts={};
 let metasAntesDoBatch={};
@@ -3856,6 +3857,47 @@ function calcComissaoProp(){
 function fecharModalProp(e){if(e.target===document.getElementById('modalProposta'))fecharModalPropDireto();}
 function fecharModalPropDireto(){document.getElementById('modalProposta').classList.remove('open');}
 
+// ── PROPOSTA → NOVA VENDA (ao marcar como Fechada) ─────────────────────
+function checkStatusPropostaFechada(){
+  const statusEl=document.getElementById('prop_status');
+  if(!statusEl||statusEl.value!=='fechada')return;
+
+  const propId=document.getElementById('prop_id')?.value||'';
+  const segurado=(document.getElementById('prop_segurado')?.value||'').trim();
+  const vendedor=document.getElementById('prop_vendedor')?.value||'';
+  const ramo=document.getElementById('prop_ramo')?.value||'';
+  const cia=document.getElementById('prop_cia')?.value||'';
+  const pl=document.getElementById('prop_pl')?.value||'';
+  const pct=document.getElementById('prop_pct')?.value||'';
+
+  if(!segurado||!vendedor||!ramo||!cia){
+    showToast('Preencha segurado, vendedor, ramo e seguradora antes de marcar como Fechada.','error');
+    statusEl.value='aberta';
+    return;
+  }
+
+  if(!confirm(`Marcar proposta de "${segurado}" como Fechada e abrir o formulário de Nova Venda já preenchido?`))return;
+
+  // Guarda referência da proposta de origem para vincular ao salvar a venda
+  propostaOrigemVenda={id:propId,segurado};
+
+  fecharModalPropDireto();
+  showView('nova');
+
+  const set=(elId,val)=>{const el=document.getElementById(elId);if(el)el.value=val??'';};
+  set('f_data',hoje());
+  set('f_segurado',segurado);
+  set('f_vendedor',vendedor);
+  set('f_ramo',ramo);
+  set('f_cia',cia);
+  set('f_pl',pl);
+  set('f_pct',pct);
+  const sdr=document.getElementById('f_sdr');if(sdr)sdr.value='';
+  calcComissao();
+
+  showToast('Proposta marcada como Fechada — confira e salve a Nova Venda.','success');
+}
+
 // ── METAS ─────────────────────────────────────────────────────────────
 const RAMOS_META=['Auto','Carta Verde','Cartão Porto','Celular','Condomínio','Consórcio','Dental PJ','Empresarial','Equipamentos','Fiança locatícia','Garantia','Moto','Painel solar','Plano de Saúde','RC Profissional','RCO','Residencial','Residencial Pré-formatado','Vida Global','Vida mensal','Vida mensal PJ','Viagem','Outro'];
 
@@ -3986,6 +4028,7 @@ function resetForm(){
   document.getElementById('f_data').value=hoje();
   document.getElementById('f_comissao_preview').textContent='R$ 0,00';
   if(currentProfile?.vendedor) document.getElementById('f_vendedor').value=currentProfile.vendedor;
+  propostaOrigemVenda=null;
   // Garantir que o botão sempre volta ao estado normal
   const btn=document.getElementById('btnSalvar');
   if(btn){btn.disabled=false;btn.textContent='💾 Salvar Venda';}
@@ -4026,6 +4069,18 @@ async function salvarVenda(e){
       alert('Venda não foi inserida — sem resposta do banco. Tente novamente.');
       return;
     }
+
+    // Se essa venda nasceu de uma Proposta marcada como Fechada, concluir a proposta agora
+    if(propostaOrigemVenda?.id){
+      const{error:errProp}=await db.from('propostas').update({status:'fechada'}).eq('id',propostaOrigemVenda.id);
+      if(errProp){
+        showToast('Venda salva, mas houve erro ao atualizar a proposta de origem: '+errProp.message,'error');
+      }else{
+        await carregarPropostas();
+      }
+    }
+    propostaOrigemVenda=null;
+
     showToast('Venda registrada!','success');
     resetForm();
     showView('ranking');
