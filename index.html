@@ -831,13 +831,49 @@ input[type=range]{width:100%;accent-color:var(--accent)}
     <div class="view" id="view-propostas">
       <div class="page-title">Pipeline de Propostas</div>
       <p class="page-sub">Acompanhe suas propostas e taxa de conversão</p>
+
+      <!-- Filtros -->
+      <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:10px">
+        <input type="text" id="propBuscaNome" placeholder="🔍 Buscar segurado..." oninput="renderPropostas()"
+          style="padding:8px 10px;font-size:13px;font-family:'DM Sans',sans-serif;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--surface);outline:none;width:180px">
+        <label style="font-size:12px;font-weight:500;color:var(--text-2)">Mês:</label>
+        <select id="propMesFiltro" onchange="renderPropostas()" style="padding:8px 10px;font-size:13px;font-family:'DM Sans',sans-serif;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--surface);outline:none">
+          <option value="">Todos os meses</option>
+        </select>
+        <select id="propVendedorFiltro" onchange="renderPropostas()" style="padding:8px 10px;font-size:13px;font-family:'DM Sans',sans-serif;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--surface);outline:none">
+          <option value="">Todos vendedores</option>
+          <option>Silvia</option><option>Paulo</option><option>Ícaro</option>
+        </select>
+        <select id="propStatusFiltro" onchange="renderPropostas()" style="padding:8px 10px;font-size:13px;font-family:'DM Sans',sans-serif;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--surface);outline:none">
+          <option value="">Todos status</option>
+          <option value="aberta">Abertas</option>
+          <option value="fechada">Fechadas</option>
+          <option value="perdida">Perdidas</option>
+        </select>
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:14px;justify-content:space-between">
+        <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+          <select id="propRamoFiltro" onchange="renderPropostas()" style="padding:8px 10px;font-size:13px;font-family:'DM Sans',sans-serif;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--surface);outline:none">
+            <option value="">Todos os ramos</option>
+            <option>Auto</option><option>Carta Verde</option><option>Cartão Porto</option><option>Celular</option>
+            <option>Condomínio</option><option>Consórcio</option><option>Dental PJ</option><option>Empresarial</option>
+            <option>Equipamentos</option><option>Fiança locatícia</option><option>Garantia</option><option>Moto</option>
+            <option>Painel solar</option><option>Plano de Saúde</option><option>RC Profissional</option><option>RCO</option>
+            <option>Residencial</option><option>Residencial Pré-formatado</option><option>Vida Global</option>
+            <option>Vida mensal</option><option>Vida mensal PJ</option><option>Viagem</option><option>Outro</option>
+          </select>
+          <select id="propCiaFiltro" onchange="renderPropostas()" style="padding:8px 10px;font-size:13px;font-family:'DM Sans',sans-serif;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--surface);outline:none">
+            <option value="">Todas seguradoras</option>
+          </select>
+          <button class="btn btn-ghost" style="font-size:12px;padding:6px 12px" onclick="limparFiltrosProp()">✕ Limpar filtros</button>
+        </div>
+        <button class="btn btn-primary" onclick="abrirModalProposta()">➕ Nova Proposta</button>
+      </div>
+
       <div class="summary-grid" style="grid-template-columns:repeat(3,1fr)">
         <div class="summary-card"><div class="label">Em aberto</div><div class="value" id="propAberta">0</div><div class="sub" id="propAbertaVal">R$ 0,00 em PL</div></div>
-        <div class="summary-card"><div class="label">Taxa de Conversão</div><div class="value" id="propTaxa">0%</div><div class="sub">fechadas vs total</div></div>
+        <div class="summary-card"><div class="label">Taxa de Conversão</div><div class="value" id="propTaxa">0%</div><div class="sub" id="propTaxaSub">fechadas vs total</div></div>
         <div class="summary-card"><div class="label">Perdidas</div><div class="value" id="propPerdida">0</div><div class="sub" id="propPerdidaVal">R$ 0,00 em PL</div></div>
-      </div>
-      <div class="card-header" style="margin-bottom:16px">
-        <button class="btn btn-primary" onclick="abrirModalProposta()">➕ Nova Proposta</button>
       </div>
       <div class="card" style="padding:0"><div class="table-wrap">
         <table><thead><tr><th>Data</th><th>Segurado</th><th>Ramo</th><th>Seguradora</th><th>PL</th><th>Com. Est.</th><th>Prob.</th><th>Prev. Fecha.</th><th>Vendedor</th><th>Status</th><th></th></tr></thead>
@@ -2598,6 +2634,8 @@ function popularMeses(){
   ['mesFiltro','mesFiltroHist','mesFiltroInd','metaMes','exportMes','renovMesFiltro','kanbanMes','oteMes','dashMesSel'].forEach(id=>{
     const el=document.getElementById(id);if(el) el.innerHTML=html;
   });
+  const propMes=document.getElementById('propMesFiltro');
+  if(propMes) propMes.innerHTML='<option value="">Todos os meses</option>'+html;
   document.getElementById('mesLabel').textContent=capitalize(opts[0].label);
   document.getElementById('metaMes').addEventListener('change',renderFormMetas);
   document.getElementById('exportMes').addEventListener('change',renderPrevia);
@@ -3743,21 +3781,46 @@ function renderHistorico(){
 
 // ── PROPOSTAS ─────────────────────────────────────────────────────────
 function renderPropostas(){
-  const abertas=todasPropostas.filter(p=>p.status==='aberta');
-  const fechadas=todasPropostas.filter(p=>p.status==='fechada');
-  const perdidas=todasPropostas.filter(p=>p.status==='perdida');
-  const total=todasPropostas.length;
+  // Popular seguradoras presentes (dinâmico, baseado nas propostas existentes)
+  const ciaSel=document.getElementById('propCiaFiltro');
+  if(ciaSel){
+    const ciaAtual=ciaSel.value;
+    const cias=[...new Set(todasPropostas.map(p=>p.cia).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'pt-BR'));
+    ciaSel.innerHTML='<option value="">Todas seguradoras</option>'+cias.map(c=>`<option ${c===ciaAtual?'selected':''}>${c}</option>`).join('');
+  }
+
+  const busca=(document.getElementById('propBuscaNome')?.value||'').toLowerCase();
+  const mes=document.getElementById('propMesFiltro')?.value||'';
+  const vendedor=document.getElementById('propVendedorFiltro')?.value||'';
+  const status=document.getElementById('propStatusFiltro')?.value||'';
+  const ramo=document.getElementById('propRamoFiltro')?.value||'';
+  const cia=document.getElementById('propCiaFiltro')?.value||'';
+
+  let lista=todasPropostas;
+  if(busca) lista=lista.filter(p=>(p.segurado||'').toLowerCase().includes(busca));
+  if(mes) lista=lista.filter(p=>p.data?.startsWith(mes));
+  if(vendedor) lista=lista.filter(p=>p.vendedor===vendedor);
+  if(status) lista=lista.filter(p=>p.status===status);
+  if(ramo) lista=lista.filter(p=>p.ramo===ramo);
+  if(cia) lista=lista.filter(p=>p.cia===cia);
+
+  const abertas=lista.filter(p=>p.status==='aberta');
+  const fechadas=lista.filter(p=>p.status==='fechada');
+  const perdidas=lista.filter(p=>p.status==='perdida');
+  const total=lista.length;
   document.getElementById('propAberta').textContent=abertas.length;
   document.getElementById('propAbertaVal').textContent=fmt(soma(abertas,'premio_liquido'))+' em PL';
   document.getElementById('propTaxa').textContent=total?((fechadas.length/total)*100).toFixed(0)+'%':'0%';
+  const taxaSub=document.getElementById('propTaxaSub');
+  if(taxaSub) taxaSub.textContent=`${fechadas.length} fechada${fechadas.length!==1?'s':''} de ${total} no filtro`;
   document.getElementById('propPerdida').textContent=perdidas.length;
   document.getElementById('propPerdidaVal').textContent=fmt(soma(perdidas,'premio_liquido'))+' em PL';
 
   const tbody=document.getElementById('tbodyProp');
   const empty=document.getElementById('emptyProp');
-  if(!todasPropostas.length){tbody.innerHTML='';empty.style.display='block';return;}
+  if(!lista.length){tbody.innerHTML='';empty.style.display='block';empty.innerHTML=`<div class="icon">📄</div>${todasPropostas.length?'Nenhuma proposta encontrada com esses filtros':'Nenhuma proposta ainda'}`;return;}
   empty.style.display='none';
-  tbody.innerHTML=todasPropostas.map(p=>{
+  tbody.innerHTML=lista.map(p=>{
     const comEst=(+p.premio_liquido||0)*(+p.percentual_comissao||0)/100;
     const prob=p.probabilidade??50;
     const probCls=prob>=70?'prob-high':prob>=40?'prob-med':'prob-low';
@@ -3777,6 +3840,12 @@ function renderPropostas(){
         <button class="action-btn" onclick="deletarProposta('${p.id}')" title="Excluir">🗑️</button>
       </td>
     </tr>`;}).join('');
+}
+function limparFiltrosProp(){
+  ['propBuscaNome','propMesFiltro','propVendedorFiltro','propStatusFiltro','propRamoFiltro','propCiaFiltro'].forEach(id=>{
+    const el=document.getElementById(id);if(el)el.value='';
+  });
+  renderPropostas();
 }
 
 function abrirModalProposta(){
