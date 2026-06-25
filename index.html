@@ -744,9 +744,12 @@ input[type=range]{width:100%;accent-color:var(--accent)}
         <div class="chart-card"><div class="chart-title">Sazonalidade por Ramo (últimos 12 meses)</div><canvas id="chartSazon" style="max-height:220px"></canvas></div>
       </div>
 
-      <!-- PL POR RAMO + FUNIL -->
+      <!-- PL POR RAMO + COMISSÃO POR RAMO + FUNIL -->
       <div class="chart-grid" style="margin-bottom:20px">
         <div class="chart-card"><div class="chart-title">PL por Ramo</div><canvas id="chartRamoPL" style="max-height:220px"></canvas></div>
+        <div class="chart-card"><div class="chart-title">Comissão por Ramo (R$)</div><canvas id="chartRamoComissaoBar" style="max-height:220px"></canvas></div>
+      </div>
+      <div class="chart-grid" style="margin-bottom:20px">
         <div class="chart-card">
           <div class="chart-title">Funil de Propostas</div>
           <div id="funnelChart" style="margin-top:8px"></div>
@@ -3874,6 +3877,23 @@ function renderChartRamoPL(){
   charts['ramoPL']=new Chart(document.getElementById('chartRamoPL'),{type:'bar',
     data:{labels:sorted.map(x=>x[0]),datasets:[{label:'PL',data:sorted.map(x=>x[1]),backgroundColor:'#10b981cc',borderRadius:6}]},
     options:{responsive:true,plugins:{legend:{display:false}},scales:{y:{ticks:{callback:v=>fmt(v)}}}}
+  });
+  renderChartRamoComissaoBar(mes);
+}
+
+// ── COMISSÃO POR RAMO (barras, mesmo filtro de mês do PL por Ramo) ──────
+function renderChartRamoComissaoBar(mes){
+  destroyChart('ramoComissaoBar');
+  const canvas=document.getElementById('chartRamoComissaoBar');
+  if(!canvas)return;
+  const vendas=vendasDoMes(mes!==undefined?mes:mesSelecionado('mesFiltro'));
+  const map={};
+  vendas.forEach(v=>{map[v.ramo]=(map[v.ramo]||0)+(+v.comissao||0);});
+  const sorted=Object.entries(map).sort((a,b)=>b[1]-a[1]);
+  if(!sorted.length) return;
+  charts['ramoComissaoBar']=new Chart(canvas,{type:'bar',
+    data:{labels:sorted.map(x=>x[0]),datasets:[{label:'Comissão',data:sorted.map(x=>x[1]),backgroundColor:'#2A3568cc',borderRadius:6}]},
+    options:{responsive:true,plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>`Comissão: ${fmt(c.raw)}`}}},scales:{y:{ticks:{callback:v=>fmt(v)}}}}
   });
 }
 
