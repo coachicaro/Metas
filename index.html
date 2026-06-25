@@ -650,6 +650,36 @@ input[type=range]{width:100%;accent-color:var(--accent)}
       <!-- CARDS DE DESTAQUE -->
       <div class="summary-grid" style="margin-bottom:24px" id="analiseCards"></div>
 
+      <!-- CONSULTA CRUZADA: TICKET MÉDIO DE COMISSÃO -->
+      <div class="card" style="margin-bottom:20px">
+        <div class="card-title" style="margin-bottom:14px">🔎 Ticket Médio de Comissão — Consulta Cruzada</div>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;margin-bottom:16px">
+          <div class="field" style="margin-bottom:0;min-width:160px">
+            <label>Vendedor</label>
+            <select id="qVendedor" onchange="renderConsultaTicket()">
+              <option value="">Todos os vendedores</option>
+            </select>
+          </div>
+          <div class="field" style="margin-bottom:0;min-width:160px">
+            <label>Ramo / Produto</label>
+            <select id="qRamo" onchange="renderConsultaTicket()">
+              <option value="">Todos os ramos</option>
+            </select>
+          </div>
+          <div class="field" style="margin-bottom:0;min-width:160px">
+            <label>Período</label>
+            <select id="qPeriodo" onchange="renderConsultaTicket()">
+              <option value="3">Últimos 3 meses</option>
+              <option value="6">Últimos 6 meses</option>
+              <option value="12" selected>Últimos 12 meses</option>
+              <option value="24">Últimos 24 meses</option>
+              <option value="999">Desde o início</option>
+            </select>
+          </div>
+        </div>
+        <div id="consultaTicketResultado"></div>
+      </div>
+
       <!-- EVOLUÇÃO COM SELETOR -->
       <div class="chart-card chart-full" style="margin-bottom:20px">
         <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:16px">
@@ -3386,7 +3416,73 @@ function getMeses(n){
   return meses;
 }
 
+// ── CONSULTA CRUZADA: TICKET MÉDIO DE COMISSÃO (vendedor × ramo × período) ──
+function popularFiltrosConsultaTicket(){
+  const selVend=document.getElementById('qVendedor');
+  const selRamo=document.getElementById('qRamo');
+  if(!selVend||!selRamo)return;
+
+  const vendAtual=selVend.value;
+  selVend.innerHTML='<option value="">Todos os vendedores</option>'+
+    VENDEDORES.map(v=>`<option ${v===vendAtual?'selected':''}>${v}</option>`).join('');
+
+  const ramoAtual=selRamo.value;
+  const ramos=[...new Set(todasVendas.map(v=>v.ramo).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'pt-BR'));
+  selRamo.innerHTML='<option value="">Todos os ramos</option>'+
+    ramos.map(r=>`<option ${r===ramoAtual?'selected':''}>${r}</option>`).join('');
+}
+
+function renderConsultaTicket(){
+  const vendedor=document.getElementById('qVendedor')?.value||'';
+  const ramo=document.getElementById('qRamo')?.value||'';
+  const nMeses=+(document.getElementById('qPeriodo')?.value||12);
+
+  let vendas=todasVendas;
+  if(nMeses<999){
+    const meses=new Set(getMeses(nMeses));
+    vendas=vendas.filter(v=>v.data && meses.has(v.data.slice(0,7)));
+  }
+  if(vendedor) vendas=vendas.filter(v=>v.vendedor===vendedor);
+  if(ramo) vendas=vendas.filter(v=>v.ramo===ramo);
+
+  const out=document.getElementById('consultaTicketResultado');
+  if(!out)return;
+
+  const periodoLabel=nMeses<999?`nos últimos ${nMeses} meses`:'desde o início';
+  const quemLabel=vendedor||'toda a equipe';
+  const ramoLabel=ramo||'todos os ramos';
+
+  if(!vendas.length){
+    out.innerHTML=`<div style="padding:16px;text-align:center;color:var(--text-3);font-size:13px;background:var(--bg);border-radius:var(--radius-sm)">
+      Nenhuma venda encontrada para <b>${quemLabel}</b> em <b>${ramoLabel}</b> ${periodoLabel}.
+    </div>`;
+    return;
+  }
+
+  const totalComissao=soma(vendas,'comissao');
+  const totalPL=soma(vendas,'premio_liquido');
+  const ticketMedio=totalComissao/vendas.length;
+  const plMedio=totalPL/vendas.length;
+
+  out.innerHTML=`
+    <div style="background:var(--accent-light);border-radius:var(--radius-sm);padding:18px 22px;display:flex;flex-wrap:wrap;gap:24px;align-items:center;justify-content:space-between">
+      <div>
+        <div style="font-size:12px;color:var(--accent-text);margin-bottom:4px">
+          Ticket médio de comissão — <b>${quemLabel}</b> · <b>${ramoLabel}</b> · ${periodoLabel}
+        </div>
+        <div style="font-family:'Inter',sans-serif;font-weight:800;letter-spacing:-.01em;font-size:30px;color:var(--accent-text)">${fmt(ticketMedio)}</div>
+      </div>
+      <div style="display:flex;gap:28px;flex-wrap:wrap">
+        <div><div style="font-size:11px;color:var(--text-3);text-transform:uppercase;letter-spacing:.05em">Vendas no período</div><div style="font-weight:700;font-size:16px">${vendas.length}</div></div>
+        <div><div style="font-size:11px;color:var(--text-3);text-transform:uppercase;letter-spacing:.05em">Comissão total</div><div style="font-weight:700;font-size:16px">${fmt(totalComissao)}</div></div>
+        <div><div style="font-size:11px;color:var(--text-3);text-transform:uppercase;letter-spacing:.05em">PL médio por venda</div><div style="font-weight:700;font-size:16px">${fmt(plMedio)}</div></div>
+      </div>
+    </div>`;
+}
+
 function renderAnalises(){
+  popularFiltrosConsultaTicket();
+  renderConsultaTicket();
   renderAnaliseCards();
   renderChartEvolucao();
   renderChartTendencia();
