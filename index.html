@@ -699,6 +699,13 @@ input[type=range]{width:100%;accent-color:var(--accent)}
         <canvas id="chartEvolucao" style="max-height:280px"></canvas>
       </div>
 
+      <!-- EVOLUÇÃO DO TICKET MÉDIO GERAL -->
+      <div class="chart-card chart-full" style="margin-bottom:20px">
+        <div class="chart-title">Evolução do Ticket Médio de Comissão (geral)</div>
+        <p style="font-size:12px;color:var(--text-3);margin:-6px 0 14px">Comissão total ÷ nº de vendas em cada mês · mesmo período selecionado acima</p>
+        <canvas id="chartTicketEvolucao" style="max-height:220px"></canvas>
+      </div>
+
       <!-- TENDÊNCIA DO MÊS + ANO ANTERIOR -->
       <div class="chart-grid" style="margin-bottom:20px">
         <div class="chart-card">
@@ -3631,6 +3638,30 @@ function renderChartEvolucao(){
     type:'line',data:{labels,datasets},
     options:{responsive:true,interaction:{mode:'index',intersect:false},
       plugins:{legend:{position:'top'},tooltip:{callbacks:{label:c=>`${c.dataset.label}: ${fmt(c.raw)}`}}},
+      scales:{y:{ticks:{callback:v=>fmt(v)},grid:{color:'#f0f0f0'}}}}
+  });
+  renderChartTicketEvolucao(meses,labels);
+}
+
+// ── EVOLUÇÃO DO TICKET MÉDIO GERAL (comissão total ÷ nº de vendas, por mês) ──
+function renderChartTicketEvolucao(meses,labels){
+  destroyChart('ticketEvolucao');
+  const canvas=document.getElementById('chartTicketEvolucao');
+  if(!canvas)return;
+  const ticketPorMes=meses.map(m=>{
+    const vm=vendasDoMes(m);
+    return vm.length?soma(vm,'comissao')/vm.length:0;
+  });
+  charts['ticketEvolucao']=new Chart(canvas,{
+    type:'line',
+    data:{labels,datasets:[{
+      label:'Ticket médio de comissão',
+      data:ticketPorMes,
+      borderColor:'#2A3568',backgroundColor:'#2A356822',
+      tension:.4,fill:true,borderWidth:2.5,pointRadius:5,pointHoverRadius:7
+    }]},
+    options:{responsive:true,interaction:{mode:'index',intersect:false},
+      plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>`Ticket médio: ${fmt(c.raw)}`}}},
       scales:{y:{ticks:{callback:v=>fmt(v)},grid:{color:'#f0f0f0'}}}}
   });
 }
