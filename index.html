@@ -459,6 +459,7 @@ input[type=range]{width:100%;accent-color:var(--accent)}
       <div class="nav-item active" onclick="showView('dashboard')" id="nav-dashboard"><span class="icon">🏠</span> Meu Dashboard</div>
       <div class="nav-item" onclick="showView('ranking')" id="nav-ranking"><span class="icon">🏆</span> Ranking</div>
       <div class="nav-item" onclick="showView('analises')" id="nav-analises"><span class="icon">📊</span> Análises</div>
+      <div class="nav-item" onclick="showView('analise_produto')" id="nav-analise_produto"><span class="icon">🧩</span> Análise por Produto</div>
       <div class="nav-item" onclick="showView('indicacoes')" id="nav-indicacoes"><span class="icon">🔗</span> Origem</div>
       <div class="nav-section">Vendas</div>
       <div class="nav-item" onclick="propostaOrigemVenda=null;showView('nova')" id="nav-nova"><span class="icon">➕</span> Nova Venda</div>
@@ -756,6 +757,84 @@ input[type=range]{width:100%;accent-color:var(--accent)}
         </div>
       </div>
 
+    </div>
+
+    <!-- ANÁLISE POR PRODUTO -->
+    <div class="view" id="view-analise_produto">
+      <div class="page-title">Análise por Produto</div>
+      <p class="page-sub">Qual ramo dá mais retorno, em que prazo, e por quê</p>
+
+      <!-- FILTRO DE PERÍODO -->
+      <div class="card" style="margin-bottom:20px">
+        <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end">
+          <div class="field" style="margin-bottom:0;min-width:170px">
+            <label>Período</label>
+            <select id="apPeriodo" onchange="onChangeApPeriodo()">
+              <option value="3">Últimos 3 meses</option>
+              <option value="6">Últimos 6 meses</option>
+              <option value="12" selected>Últimos 12 meses</option>
+              <option value="24">Últimos 24 meses</option>
+              <option value="999">Desde o início</option>
+              <option value="mes">Mês específico</option>
+            </select>
+          </div>
+          <div class="field" id="apMesWrap" style="margin-bottom:0;min-width:170px;display:none">
+            <label>Mês</label>
+            <select id="apMes" onchange="renderAnaliseProduto()"></select>
+          </div>
+          <div class="field" style="margin-bottom:0;min-width:170px">
+            <label>Vendedor</label>
+            <select id="apVendedor" onchange="renderAnaliseProduto()">
+              <option value="">Toda a equipe</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- INSIGHT AUTOMÁTICO -->
+      <div id="apInsight" style="margin-bottom:20px"></div>
+
+      <!-- RANKINGS -->
+      <div class="chart-grid" style="margin-bottom:20px">
+        <div class="chart-card">
+          <div class="chart-title">💰 Comissão Total por Ramo</div>
+          <p style="font-size:11.5px;color:var(--text-3);margin:-8px 0 10px">Qual ramo trouxe mais dinheiro no período</p>
+          <canvas id="chartApComissaoTotal" style="max-height:230px"></canvas>
+        </div>
+        <div class="chart-card">
+          <div class="chart-title">📈 % Médio de Comissão por Ramo</div>
+          <p style="font-size:11.5px;color:var(--text-3);margin:-8px 0 10px">Comissão ÷ PL — onde cada venda rende proporcionalmente mais</p>
+          <canvas id="chartApPercentual" style="max-height:230px"></canvas>
+        </div>
+      </div>
+      <div class="chart-grid" style="margin-bottom:20px">
+        <div class="chart-card">
+          <div class="chart-title">🎯 Ticket Médio de Comissão por Ramo</div>
+          <p style="font-size:11.5px;color:var(--text-3);margin:-8px 0 10px">Comissão média gerada por venda em cada ramo</p>
+          <canvas id="chartApTicketComissao" style="max-height:230px"></canvas>
+        </div>
+        <div class="chart-card">
+          <div class="chart-title">🧾 PL Médio por Venda (ticket médio de venda)</div>
+          <p style="font-size:11.5px;color:var(--text-3);margin:-8px 0 10px">Tamanho médio do prêmio líquido vendido em cada ramo</p>
+          <canvas id="chartApPLMedio" style="max-height:230px"></canvas>
+        </div>
+      </div>
+      <div class="chart-card" style="margin-bottom:20px">
+        <div class="chart-title">📦 Volume de Vendas por Ramo</div>
+        <p style="font-size:11.5px;color:var(--text-3);margin:-8px 0 10px">Quantidade de vendas — contextualiza os rankings acima (ticket alto com pouco volume pesa menos que ticket alto com volume)</p>
+        <canvas id="chartApVolume" style="max-height:230px"></canvas>
+      </div>
+
+      <!-- TABELA RESUMO -->
+      <div class="card" style="padding:0">
+        <div style="padding:20px 24px 4px"><div class="card-title" style="margin-bottom:0">Resumo Completo por Ramo</div></div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Ramo</th><th>Vendas</th><th>PL Total</th><th>Comissão Total</th><th>% Médio</th><th>Ticket Médio Comissão</th><th>PL Médio</th></tr></thead>
+            <tbody id="tbodyApResumo"></tbody>
+          </table>
+        </div>
+      </div>
     </div>
 
     <!-- INDICAÇÕES -->
@@ -2009,6 +2088,7 @@ input[type=range]{width:100%;accent-color:var(--accent)}
     <button class="mobile-nav-item active" id="mnav-dashboard" onclick="showView('dashboard')"><span class="mn-icon">🏠</span><span class="mn-label">Dashboard</span></button>
     <button class="mobile-nav-item" id="mnav-ranking" onclick="showView('ranking')"><span class="mn-icon">🏆</span><span class="mn-label">Ranking</span></button>
     <button class="mobile-nav-item" id="mnav-analises" onclick="showView('analises')"><span class="mn-icon">📊</span><span class="mn-label">Análises</span></button>
+    <button class="mobile-nav-item" id="mnav-analise_produto" onclick="showView('analise_produto')"><span class="mn-icon">🧩</span><span class="mn-label">Por Produto</span></button>
     <button class="mobile-nav-item" id="mnav-nova" onclick="propostaOrigemVenda=null;showView('nova')"><span class="mn-icon">➕</span><span class="mn-label">Venda</span></button>
     <button class="mobile-nav-item" id="mnav-historico" onclick="showView('historico')"><span class="mn-icon">📋</span><span class="mn-label">Histórico</span></button>
     <button class="mobile-nav-item" id="mnav-carteira" onclick="showView('carteira')"><span class="mn-icon">👥</span><span class="mn-label">Carteira</span></button>
@@ -2740,6 +2820,7 @@ function showView(id){
   if(id==='dashboard') renderDashboard();
   if(id==='ranking') renderRanking();
   if(id==='analises') renderAnalises();
+  if(id==='analise_produto') renderAnaliseProduto();
   if(id==='historico'){
     const t=document.querySelector('#view-historico .page-title');
     if(t) t.textContent='Histórico de Vendas';
@@ -3553,6 +3634,149 @@ function renderConsultaTicket(){
           </div>`).join('')}
       </div>
     </div>`;
+}
+
+// ── ANÁLISE POR PRODUTO ──────────────────────────────────────────────────
+function onChangeApPeriodo(){
+  const periodo=document.getElementById('apPeriodo')?.value;
+  const wrap=document.getElementById('apMesWrap');
+  if(wrap) wrap.style.display=periodo==='mes'?'flex':'none';
+  renderAnaliseProduto();
+}
+
+function popularFiltrosAnaliseProduto(){
+  const selVend=document.getElementById('apVendedor');
+  const selMes=document.getElementById('apMes');
+  if(!selVend)return;
+  const vendAtual=selVend.value;
+  selVend.innerHTML='<option value="">Toda a equipe</option>'+
+    VENDEDORES.map(v=>`<option ${v===vendAtual?'selected':''}>${v}</option>`).join('');
+  if(selMes && !selMes.options.length){
+    const mesAtual=getMeses(1)[0];
+    selMes.innerHTML=getMeses(12).slice().reverse().map(m=>{
+      const[y,mm]=m.split('-');
+      const label=new Date(+y,+mm-1,1).toLocaleDateString('pt-BR',{month:'long',year:'numeric'});
+      return `<option value="${m}" ${m===mesAtual?'selected':''}>${capitalize(label)}</option>`;
+    }).join('');
+  }
+}
+
+function getVendasFiltradasAnaliseProduto(){
+  const periodo=document.getElementById('apPeriodo')?.value||'12';
+  const mesEscolhido=document.getElementById('apMes')?.value||'';
+  const vendedor=document.getElementById('apVendedor')?.value||'';
+
+  let vendas=todasVendas;
+  let periodoLabel;
+  if(periodo==='mes'){
+    vendas=mesEscolhido?vendas.filter(v=>v.data?.startsWith(mesEscolhido)):[];
+    const[y,mm]=(mesEscolhido||getMeses(1)[0]).split('-');
+    periodoLabel=`em ${capitalize(new Date(+y,+mm-1,1).toLocaleDateString('pt-BR',{month:'long',year:'numeric'}))}`;
+  }else{
+    const nMeses=+periodo;
+    if(nMeses<999){
+      const meses=new Set(getMeses(nMeses));
+      vendas=vendas.filter(v=>v.data && meses.has(v.data.slice(0,7)));
+    }
+    periodoLabel=nMeses<999?`nos últimos ${nMeses} meses`:'desde o início';
+  }
+  if(vendedor) vendas=vendas.filter(v=>v.vendedor===vendedor);
+  return{vendas,periodoLabel,vendedor};
+}
+
+function renderAnaliseProduto(){
+  popularFiltrosAnaliseProduto();
+  const{vendas,periodoLabel,vendedor}=getVendasFiltradasAnaliseProduto();
+
+  const insightEl=document.getElementById('apInsight');
+  const tbody=document.getElementById('tbodyApResumo');
+  ['chartApComissaoTotal','chartApPercentual','chartApTicketComissao','chartApPLMedio','chartApVolume'].forEach(destroyChart);
+
+  if(!vendas.length){
+    if(insightEl) insightEl.innerHTML=`<div class="card" style="text-align:center;color:var(--text-3);font-size:13px">Nenhuma venda encontrada ${periodoLabel}${vendedor?' para '+vendedor:''}.</div>`;
+    if(tbody) tbody.innerHTML='';
+    return;
+  }
+
+  // Agrupar por ramo
+  const map={};
+  vendas.forEach(v=>{
+    if(!map[v.ramo]) map[v.ramo]={comissao:0,pl:0,qtd:0};
+    map[v.ramo].comissao+=(+v.comissao||0);
+    map[v.ramo].pl+=(+v.premio_liquido||0);
+    map[v.ramo].qtd++;
+  });
+  const ramos=Object.entries(map).map(([ramo,s])=>({
+    ramo,
+    comissao:s.comissao,
+    pl:s.pl,
+    qtd:s.qtd,
+    pct:s.pl>0?(s.comissao/s.pl*100):0,
+    ticketComissao:s.comissao/s.qtd,
+    plMedio:s.pl/s.qtd
+  }));
+
+  // ── INSIGHT AUTOMÁTICO: ramo com maior % médio de comissão (entre ramos com volume mínimo razoável) ──
+  const candidatosInsight=ramos.filter(r=>r.qtd>=2);
+  const base=candidatosInsight.length?candidatosInsight:ramos;
+  const melhorRetorno=[...base].sort((a,b)=>b.pct-a.pct)[0];
+  const maisComissao=[...ramos].sort((a,b)=>b.comissao-a.comissao)[0];
+  if(insightEl && melhorRetorno){
+    insightEl.innerHTML=`
+      <div class="card" style="background:var(--accent-light);border:1px solid var(--accent);display:flex;gap:16px;align-items:flex-start;flex-wrap:wrap">
+        <div style="font-size:26px;line-height:1">💡</div>
+        <div style="flex:1;min-width:240px">
+          <div style="font-weight:700;font-size:14.5px;color:var(--accent-text);margin-bottom:4px">
+            ${melhorRetorno.ramo} é o ramo com melhor retorno proporcional ${periodoLabel}
+          </div>
+          <div style="font-size:13px;color:var(--text-2)">
+            Cada venda em <b>${melhorRetorno.ramo}</b> gera em média <b>${melhorRetorno.pct.toFixed(1)}%</b> de comissão sobre o PL
+            (vs. ${(ramos.reduce((a,r)=>a+r.pct,0)/ramos.length).toFixed(1)}% de média geral) — com ${melhorRetorno.qtd} venda${melhorRetorno.qtd!==1?'s':''} e ticket médio de comissão de ${fmt(melhorRetorno.ticketComissao)}.
+            Priorizar esforço de venda aqui rende mais por venda do que em ramos de menor %.
+          </div>
+          ${maisComissao.ramo!==melhorRetorno.ramo?`<div style="font-size:12px;color:var(--text-3);margin-top:6px">Já em volume total de comissão, <b>${maisComissao.ramo}</b> lidera com ${fmt(maisComissao.comissao)} ${periodoLabel}.</div>`:''}
+        </div>
+      </div>`;
+  }
+
+  // ── GRÁFICOS ──
+  const corBarra='#2A3568cc';
+  const mkChart=(canvasId,key,sortFn,labelFn,colorFn)=>{
+    const canvas=document.getElementById(canvasId);
+    if(!canvas)return;
+    const sorted=[...ramos].sort(sortFn);
+    charts[canvasId]=new Chart(canvas,{type:'bar',
+      data:{labels:sorted.map(r=>r.ramo),datasets:[{
+        data:sorted.map(r=>r[key]),
+        backgroundColor:colorFn?colorFn(sorted):corBarra,
+        borderRadius:6
+      }]},
+      options:{responsive:true,plugins:{legend:{display:false},tooltip:{callbacks:{label:labelFn}}},
+        scales:{y:{ticks:{callback:v=>typeof v==='number'?(key==='pct'?v.toFixed(1)+'%':v):v}}}}
+    });
+  };
+
+  mkChart('chartApComissaoTotal','comissao',(a,b)=>b.comissao-a.comissao,c=>`Comissão: ${fmt(c.raw)}`);
+  mkChart('chartApPercentual','pct',(a,b)=>b.pct-a.pct,c=>`% médio: ${c.raw.toFixed(1)}%`,
+    sorted=>sorted.map(r=>r.ramo===melhorRetorno.ramo?'#2A3568':'#2A356877'));
+  mkChart('chartApTicketComissao','ticketComissao',(a,b)=>b.ticketComissao-a.ticketComissao,c=>`Ticket médio: ${fmt(c.raw)}`);
+  mkChart('chartApPLMedio','plMedio',(a,b)=>b.plMedio-a.plMedio,c=>`PL médio: ${fmt(c.raw)}`);
+  mkChart('chartApVolume','qtd',(a,b)=>b.qtd-a.qtd,c=>`${c.raw} venda${c.raw!==1?'s':''}`);
+
+  // ── TABELA RESUMO ──
+  if(tbody){
+    const sortedTabela=[...ramos].sort((a,b)=>b.comissao-a.comissao);
+    tbody.innerHTML=sortedTabela.map(r=>`
+      <tr>
+        <td><span class="ramo-badge ${ramoClass(r.ramo)}">${r.ramo}</span></td>
+        <td>${r.qtd}</td>
+        <td>${fmt(r.pl)}</td>
+        <td class="val-green">${fmt(r.comissao)}</td>
+        <td>${r.pct.toFixed(1)}%</td>
+        <td>${fmt(r.ticketComissao)}</td>
+        <td>${fmt(r.plMedio)}</td>
+      </tr>`).join('');
+  }
 }
 
 function renderAnalises(){
