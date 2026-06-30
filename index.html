@@ -935,9 +935,17 @@ input[type=range]{width:100%;accent-color:var(--accent)}
       <div class="page-title">Histórico de Vendas</div>
       <p class="page-sub">Todas as vendas registradas</p>
 
-      <div class="mes-bar" style="justify-content:space-between">
+      <div class="mes-bar" style="justify-content:space-between;flex-wrap:wrap;gap:10px">
         <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
           <label style="font-size:12px;font-weight:500;color:var(--text-2)">Período:</label>
+          <select id="histPeriodoTipo" onchange="onChangeHistPeriodoTipo()" style="padding:8px 12px;font-size:13px;font-family:'DM Sans',sans-serif;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--surface);color:var(--text);outline:none">
+            <option value="mes">Mês específico</option>
+            <option value="3">Últimos 3 meses</option>
+            <option value="6">Últimos 6 meses</option>
+            <option value="12">Últimos 12 meses</option>
+            <option value="24">Últimos 24 meses</option>
+            <option value="999">Desde o início</option>
+          </select>
           <select id="mesFiltroHist" onchange="renderHistorico()"></select>
           <select id="filtroVendedorHist" onchange="renderHistorico()" style="padding:8px 12px;font-size:13px;font-family:'DM Sans',sans-serif;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--surface);color:var(--text);outline:none">
             <option value="">Todos os vendedores</option>
@@ -945,6 +953,20 @@ input[type=range]{width:100%;accent-color:var(--accent)}
             <option>Paulo</option>
             <option>Ícaro</option>
           </select>
+          <select id="filtroRamoHist" onchange="renderHistorico()" style="padding:8px 12px;font-size:13px;font-family:'DM Sans',sans-serif;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--surface);color:var(--text);outline:none">
+            <option value="">Todos os produtos</option>
+          </select>
+          <div style="position:relative">
+            <button type="button" class="btn btn-ghost" id="btnFiltroCiaHist" onclick="toggleFiltroCiaHist()" style="font-size:13px;padding:8px 12px;font-weight:500">
+              🏢 Seguradoras <span id="filtroCiaHistCount" style="display:none;background:var(--accent);color:#fff;border-radius:99px;font-size:10.5px;padding:1px 6px;margin-left:4px"></span> ▾
+            </button>
+            <div id="filtroCiaHistDropdown" style="display:none;position:absolute;top:calc(100% + 6px);left:0;z-index:20;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);box-shadow:var(--shadow-lg);padding:10px;min-width:220px;max-height:280px;overflow-y:auto">
+              <div style="display:flex;justify-content:space-between;margin-bottom:8px;gap:8px">
+                <button type="button" class="btn btn-ghost" style="font-size:11px;padding:4px 8px" onclick="event.stopPropagation();limparFiltroCiaHist()">Limpar</button>
+              </div>
+              <div id="filtroCiaHistLista"></div>
+            </div>
+          </div>
           <input type="text" id="buscaHist" placeholder="🔍 Buscar..." style="width:160px" oninput="renderHistorico()">
         </div>
         <button class="btn btn-primary" onclick="abrirModalImport()" style="gap:6px">
@@ -4342,13 +4364,94 @@ function renderIndicacoes(){
 }
 
 // ── HISTÓRICO ─────────────────────────────────────────────────────────
+// ── HISTÓRICO DE VENDAS — filtros de período/produto/seguradoras ───────
+let filtroCiaHistSelecionadas=new Set();
+
+function onChangeHistPeriodoTipo(){
+  const tipo=document.getElementById('histPeriodoTipo')?.value;
+  const selMes=document.getElementById('mesFiltroHist');
+  if(selMes) selMes.style.display=tipo==='mes'?'inline-block':'none';
+  renderHistorico();
+}
+
+function toggleFiltroCiaHist(){
+  const dd=document.getElementById('filtroCiaHistDropdown');
+  if(!dd)return;
+  const abrindo=dd.style.display==='none';
+  dd.style.display=abrindo?'block':'none';
+  if(abrindo){
+    document.addEventListener('click',fecharFiltroCiaHistFora,{once:true,capture:true});
+  }
+}
+function fecharFiltroCiaHistFora(e){
+  const dd=document.getElementById('filtroCiaHistDropdown');
+  const btn=document.getElementById('btnFiltroCiaHist');
+  if(dd && !dd.contains(e.target) && e.target!==btn && !btn.contains(e.target)){
+    dd.style.display='none';
+  } else if(dd && dd.style.display==='block'){
+    document.addEventListener('click',fecharFiltroCiaHistFora,{once:true,capture:true});
+  }
+}
+function toggleCiaHistItem(cia){
+  if(filtroCiaHistSelecionadas.has(cia)) filtroCiaHistSelecionadas.delete(cia);
+  else filtroCiaHistSelecionadas.add(cia);
+  renderHistorico();
+}
+function limparFiltroCiaHist(){
+  filtroCiaHistSelecionadas.clear();
+  renderHistorico();
+}
+
 function renderHistorico(){
-  const mes=mesSelecionado('mesFiltroHist');
+  // Popular select de produtos/ramo dinamicamente a partir das vendas existentes
+  const ramoSel=document.getElementById('filtroRamoHist');
+  if(ramoSel){
+    const ramoAtual=ramoSel.value;
+    const ramos=[...new Set(todasVendas.map(v=>v.ramo).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'pt-BR'));
+    ramoSel.innerHTML='<option value="">Todos os produtos</option>'+ramos.map(r=>`<option ${r===ramoAtual?'selected':''}>${r}</option>`).join('');
+  }
+
+  // Popular lista de seguradoras (checkboxes) dinamicamente
+  const ciaListaEl=document.getElementById('filtroCiaHistLista');
+  if(ciaListaEl){
+    const cias=[...new Set(todasVendas.map(v=>v.cia).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'pt-BR'));
+    ciaListaEl.innerHTML=cias.map(c=>`
+      <label style="display:flex;align-items:center;gap:8px;padding:5px 4px;font-size:12.5px;cursor:pointer;border-radius:4px" onmouseover="this.style.background='var(--bg)'" onmouseout="this.style.background='transparent'">
+        <input type="checkbox" ${filtroCiaHistSelecionadas.has(c)?'checked':''} onchange="toggleCiaHistItem('${c.replace(/'/g,"\\'")}')">
+        ${c}
+      </label>`).join('');
+  }
+  const countEl=document.getElementById('filtroCiaHistCount');
+  if(countEl){
+    if(filtroCiaHistSelecionadas.size>0){countEl.style.display='inline';countEl.textContent=filtroCiaHistSelecionadas.size;}
+    else countEl.style.display='none';
+  }
+
+  // Período: mês específico OU agrupado (3/6/12/24 meses, desde o início)
+  const tipoPeriodo=document.getElementById('histPeriodoTipo')?.value||'mes';
+  let vendas;
+  if(tipoPeriodo==='mes'){
+    const mes=mesSelecionado('mesFiltroHist');
+    vendas=vendasDoMes(mes);
+  }else{
+    const nMeses=+tipoPeriodo;
+    if(nMeses<999){
+      const meses=new Set(getMeses(nMeses));
+      vendas=todasVendas.filter(v=>v.data && meses.has(v.data.slice(0,7)));
+    }else{
+      vendas=todasVendas;
+    }
+  }
+
   const busca=(document.getElementById('buscaHist').value||'').toLowerCase();
   const filtroVend=(document.getElementById('filtroVendedorHist')?.value||'');
-  let vendas=vendasDoMes(mes);
+  const filtroRamo=(document.getElementById('filtroRamoHist')?.value||'');
+
   if(filtroVend) vendas=vendas.filter(v=>v.vendedor===filtroVend);
+  if(filtroRamo) vendas=vendas.filter(v=>v.ramo===filtroRamo);
+  if(filtroCiaHistSelecionadas.size>0) vendas=vendas.filter(v=>filtroCiaHistSelecionadas.has(v.cia));
   if(busca) vendas=vendas.filter(v=>(v.segurado||'').toLowerCase().includes(busca)||(v.cia||'').toLowerCase().includes(busca));
+
   const tbody=document.getElementById('tbodyHist');
   const empty=document.getElementById('emptyHist');
   if(!vendas.length){tbody.innerHTML='';empty.style.display='block';return;}
@@ -6665,8 +6768,10 @@ async function confirmarAdicionarCarteira(){
 
 function verVendasVendedor(vendedor, mes){
   // Setar filtros no histórico e navegar
+  const tipoSel=document.getElementById('histPeriodoTipo');
+  if(tipoSel) tipoSel.value='mes';
   const selMes=document.getElementById('mesFiltroHist');
-  if(selMes) selMes.value=mes;
+  if(selMes){selMes.value=mes;selMes.style.display='inline-block';}
   const selVend=document.getElementById('filtroVendedorHist');
   if(selVend) selVend.value=vendedor;
   const selBusca=document.getElementById('buscaHist');
