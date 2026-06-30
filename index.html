@@ -191,6 +191,7 @@ body{font-family:'Inter','DM Sans',sans-serif;background:var(--bg);color:var(--t
 .field{display:flex;flex-direction:column;gap:5px;margin-bottom:14px}
 .field label{font-size:12px;font-weight:600;color:var(--text-2)}
 .field input,.field select,.field textarea{padding:9px 12px;font-size:13px;font-family:'DM Sans',sans-serif;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--bg);color:var(--text);outline:none;transition:border .15s,box-shadow .15s;width:100%}
+.field input[readonly]{background:#EEF0F3;color:var(--text-2);cursor:not-allowed}
 .field input:focus,.field select:focus,.field textarea:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(42,53,104,.08);background:#fff}
 .computed{font-size:13px;padding:9px 12px;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--accent-light);color:var(--accent-text);font-weight:600}
 .btn{display:inline-flex;align-items:center;justify-content:center;gap:7px;padding:9px 18px;border-radius:var(--radius-sm);font-size:13px;font-weight:600;font-family:'DM Sans',sans-serif;cursor:pointer;border:none;transition:all .15s;white-space:nowrap}
@@ -2213,6 +2214,27 @@ input[type=range]{width:100%;accent-color:var(--accent)}
   </div>
 </div>
 
+<!-- MODAL SUGESTÃO SEMANAL DE CROSS-SELL -->
+<div class="modal-overlay" id="modalCrossSell" onclick="if(event.target===this)fecharSugestaoCrossSell()">
+  <div class="modal" style="max-width:540px">
+    <div style="display:flex;align-items:flex-start;gap:12px;margin-bottom:4px">
+      <div style="font-size:26px;line-height:1">🎯</div>
+      <div>
+        <div class="modal-title" style="margin-bottom:4px">Oportunidades de Cross-sell da Semana</div>
+        <p style="font-size:13px;color:var(--text-2);margin:0">
+          Esses clientes da sua carteira têm o maior potencial de comprar mais produtos com você.
+          Vale a pena agendar uma conversa.
+        </p>
+      </div>
+    </div>
+    <div id="crossSellLista" style="margin:18px 0 6px"></div>
+    <div class="form-actions">
+      <button class="btn btn-ghost" onclick="fecharSugestaoCrossSell()">Fechar (lembrar em 7 dias)</button>
+      <button class="btn btn-primary" onclick="criarTarefasDaSugestaoCrossSell()">✅ Criar tarefas para esses clientes</button>
+    </div>
+  </div>
+</div>
+
 <!-- MODAL IMPORTAR HISTÓRICO RENOVAÇÕES -->
 <div class="modal-overlay" id="modalImportHistRenov" onclick="fecharModalImportHistRenovEvt(event)">
   <div class="modal" style="max-width:680px">
@@ -2294,16 +2316,17 @@ input[type=range]{width:100%;accent-color:var(--accent)}
     </div>
     <div class="form-grid" style="margin-bottom:14px">
       <div class="field"><label>Comissão Ano Anterior (R$)</label><input type="number" id="renov_com_ant" step="0.01" min="0" placeholder="0,00" oninput="calcVariacaoRenov()"></div>
-      <div class="field"><label>Comissão Ano Atual (R$)</label><input type="number" id="renov_com_atual" step="0.01" min="0" placeholder="0,00" oninput="calcVariacaoRenov()"></div>
-      <div class="field"><label>Variação</label><div class="computed" id="renov_variacao_preview">—</div></div>
-    </div>
-    <div class="form-grid" style="margin-bottom:14px">
       <div class="field"><label>PL Anterior (R$)</label><input type="number" id="renov_pl_ant" step="0.01" min="0" placeholder="0,00" oninput="calcVariacaoRenov()"></div>
-      <div class="field"><label>PL Atual (R$)</label><input type="number" id="renov_pl_atual" step="0.01" min="0" placeholder="0,00" oninput="calcVariacaoRenov()"></div>
-      <div class="field"><label>% Comissão (ant. → atual)</label><div class="computed" id="renov_pct_preview">— → —</div></div>
+      <div class="field"><label>% Comissão Anterior</label><div class="computed" id="renov_pct_ant_preview" style="color:var(--text-2)">—</div></div>
     </div>
     <div class="form-grid" style="margin-bottom:14px">
-      <div class="field"></div>
+      <div class="field"><label>PL Atual / Renovado (R$)</label><input type="number" id="renov_pl_atual" step="0.01" min="0" placeholder="0,00" oninput="calcVariacaoRenov()"></div>
+      <div class="field"><label>% Comissão da Renovação</label><input type="number" id="renov_pct_atual" step="0.01" min="0" max="500" placeholder="0,00" oninput="calcVariacaoRenov()"></div>
+      <div class="field"><label>Comissão Atual (calculada)</label><div class="computed" id="renov_com_atual_preview">R$ 0,00</div></div>
+      <input type="hidden" id="renov_com_atual">
+    </div>
+    <div class="form-grid" style="margin-bottom:14px">
+      <div class="field"><label>Variação de Comissão</label><div class="computed" id="renov_variacao_preview">—</div></div>
       <div class="field"></div>
       <div class="field"><label>Status *</label>
         <select id="renov_status">
@@ -2466,9 +2489,58 @@ input[type=range]{width:100%;accent-color:var(--accent)}
       <div class="field"><label>% Comissão *</label><input type="number" id="edit_pct" step="0.01" min="0" max="500" oninput="calcComissaoEdit()"></div>
       <div class="field"><label>Comissão</label><div class="computed" id="edit_comissao_preview">R$ 0,00</div></div>
     </div>
+    <div class="form-actions" style="justify-content:space-between">
+      <button class="btn btn-danger" onclick="abrirModalCancelarVenda()">↩️ Cancelar Venda</button>
+      <div style="display:flex;gap:10px">
+        <button class="btn btn-ghost" onclick="fecharModalDireto()">Fechar</button>
+        <button class="btn btn-primary" onclick="salvarEdicao()">💾 Salvar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL CANCELAR VENDA (volta para Proposta) -->
+<div class="modal-overlay" id="modalCancelarVenda" onclick="if(event.target===this)fecharModalCancelarVendaDireto()">
+  <div class="modal">
+    <div class="modal-title">↩️ Cancelar Venda — Voltar para Proposta</div>
+    <input type="hidden" id="cv_venda_id">
+    <p style="font-size:13px;color:var(--text-2);margin-bottom:16px">
+      A venda será removida do histórico e do ranking, e uma nova proposta será criada com os mesmos dados,
+      para você retomar o acompanhamento.
+    </p>
+    <div class="field">
+      <label>Motivo do cancelamento *</label>
+      <select id="cv_motivo" onchange="onChangeMotivoCancelamento()">
+        <option value="">Selecione...</option>
+        <option>Plano de saúde recusado</option>
+        <option>Vistoria não foi feita</option>
+        <option>Falta de pagamento</option>
+        <option>Cliente desistiu</option>
+        <option>Documentação incompleta</option>
+        <option>Proposta recusada pela seguradora</option>
+        <option>Erro de cotação/cadastro</option>
+        <option value="__novo__">➕ Adicionar novo motivo...</option>
+        <option value="__outro__">Outro (especificar)</option>
+      </select>
+    </div>
+    <div class="field" id="cv_motivo_novo_wrap" style="display:none">
+      <label>Novo motivo</label>
+      <input type="text" id="cv_motivo_novo" placeholder="Digite o novo motivo...">
+    </div>
+    <div class="field" id="cv_motivo_outro_wrap" style="display:none">
+      <label>Detalhe o motivo</label>
+      <textarea id="cv_motivo_outro" rows="2" placeholder="Descreva o motivo do cancelamento..." style="resize:vertical"></textarea>
+    </div>
+    <div class="field">
+      <label>Status da proposta ao voltar *</label>
+      <select id="cv_status">
+        <option value="aberta">Aberta — vamos tentar reverter / reenviar</option>
+        <option value="perdida">Perdida — não vamos mais buscar essa venda</option>
+      </select>
+    </div>
     <div class="form-actions">
-      <button class="btn btn-ghost" onclick="fecharModalDireto()">Cancelar</button>
-      <button class="btn btn-primary" onclick="salvarEdicao()">💾 Salvar</button>
+      <button class="btn btn-ghost" onclick="fecharModalCancelarVendaDireto()">Voltar</button>
+      <button class="btn btn-danger" onclick="confirmarCancelarVenda()">↩️ Confirmar Cancelamento</button>
     </div>
   </div>
 </div>
@@ -2662,6 +2734,7 @@ async function iniciarApp(user){
   setSync('ok');
   subscribeRealtime();
   checarLembretes();
+  checarSugestaoCrossSell();
 
   // Só mostrar o dashboard depois que os dados chegaram
   showView('dashboard');
@@ -3037,6 +3110,78 @@ function renderOportunidades(){
       <td style="padding:10px 14px"><button class="btn btn-ghost" style="font-size:11px;padding:5px 10px" onclick="abrirDetalheCliente('${cl.id}')">Ver →</button></td>
     </tr>`).join('')}</tbody>
   </table></div></div>`;
+}
+
+// ── SUGESTÃO SEMANAL DE CROSS-SELL ──────────────────────────────────────
+// Dispara ao abrir o app (não depende de estar na tela de Carteira). Se já fazem
+// 7+ dias desde a última vez que o vendedor viu uma sugestão, calcula os clientes
+// com mais produtos faltando (oportunidade de cross-sell) e mostra um banner.
+function calcularRankingCrossSell(){
+  return todosClientes.map(cl=>{
+    const pv=produtosDasVendas(cl.nome);
+    const m={...cl,tem_auto:!!(cl.tem_auto||pv.auto),tem_residencial:!!(cl.tem_residencial||pv.residencial),tem_vida:!!(cl.tem_vida||pv.vida),tem_saude:!!(cl.tem_saude||pv.saude),tem_empresarial:!!(cl.tem_empresarial||pv.empresarial),tem_cartao:!!(cl.tem_cartao||pv.cartao)};
+    const faltam=TODOS_PRODUTOS.filter(p=>p.key!=='outros'&&!m['tem_'+p.key]);
+    return{...m,faltam};
+  }).filter(x=>x.faltam.length>0).sort((a,b)=>b.faltam.length-a.faltam.length||(+b.ltv||0)-(+a.ltv||0));
+}
+
+async function checarSugestaoCrossSell(){
+  if(!currentProfile?.id)return;
+  const ultima=currentProfile.ultima_sugestao_crosssell;
+  const seteDigas=7*24*60*60*1000;
+  if(ultima && (Date.now()-new Date(ultima).getTime())<seteDigas)return;
+  if(!todosClientes.length)return;
+
+  const ranking=calcularRankingCrossSell();
+  if(!ranking.length)return;
+
+  const top3=ranking.slice(0,3);
+  const lista=document.getElementById('crossSellLista');
+  if(!lista)return;
+  lista.innerHTML=top3.map(cl=>`
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 14px;background:var(--bg);border-radius:var(--radius-sm);margin-bottom:8px">
+      <div>
+        <div style="font-weight:700;font-size:13.5px;color:var(--text)">${cl.nome}</div>
+        <div style="font-size:12px;color:var(--text-2);margin-top:2px">
+          Não tem: ${cl.faltam.map(p=>p.label).join(', ')}
+          ${cl.ltv?` · LTV ${fmt(cl.ltv)}`:''}
+        </div>
+      </div>
+      <button class="btn btn-ghost" style="font-size:11.5px;padding:6px 12px;white-space:nowrap" onclick="fecharSugestaoCrossSell();showView('carteira');setTimeout(()=>abrirDetalheCliente('${cl.id}'),200)">Ver cliente →</button>
+    </div>`).join('');
+  document.getElementById('modalCrossSell').classList.add('open');
+}
+
+async function fecharSugestaoCrossSell(adiar){
+  document.getElementById('modalCrossSell').classList.remove('open');
+  if(!currentProfile?.id)return;
+  // Sempre marca a data de hoje como "última vez que vi a sugestão", mesmo se só fechou —
+  // assim ela só volta a aparecer dali a 7 dias, e não toda vez que o app é aberto.
+  const agora=new Date().toISOString();
+  currentProfile.ultima_sugestao_crosssell=agora;
+  await db.from('profiles').update({ultima_sugestao_crosssell:agora}).eq('id',currentProfile.id);
+}
+
+function criarTarefasDaSugestaoCrossSell(){
+  const ranking=calcularRankingCrossSell().slice(0,3);
+  const vendedor=(currentProfile?.vendedor||'').trim();
+  const jaExistem=new Set((todasTarefas||[]).filter(t=>t.status==='pendente').map(t=>t.cliente_id));
+  const aCriar=ranking.filter(cl=>!jaExistem.has(cl.id));
+  if(!aCriar.length){
+    showToast('Já existem tarefas pendentes para esses clientes.','');
+    fecharSugestaoCrossSell();
+    return;
+  }
+  Promise.all(aCriar.map(cl=>db.from('lembretes').insert([{
+    titulo:`Oferecer: ${cl.faltam.map(p=>p.label.replace(/^\S+\s/,'')).join(', ')}`,
+    descricao:`Cross-sell sugerido pelo sistema — cliente ainda não tem: ${cl.faltam.map(p=>p.label).join(', ')}.`,
+    vendedor,cliente_id:cl.id,status:'pendente',
+    data_lembrete:null,email_lembrete:null
+  }]))).then(async()=>{
+    showToast(`${aCriar.length} tarefa(s) de cross-sell criada(s).`,'success');
+    fecharSugestaoCrossSell();
+    await carregarCRM();
+  });
 }
 
 function abrirDetalheCliente(id){
@@ -4675,6 +4820,87 @@ async function deletarVenda(id){
 function fecharModal(e){if(e.target===document.getElementById('modalOverlay'))fecharModalDireto();}
 function fecharModalDireto(){document.getElementById('modalOverlay').classList.remove('open');}
 
+// ── CANCELAR VENDA → VOLTA PARA PROPOSTA ────────────────────────────────
+function abrirModalCancelarVenda(){
+  const id=document.getElementById('edit_id').value;
+  if(!id){showToast('Erro: ID da venda não encontrado.','error');return;}
+  document.getElementById('cv_venda_id').value=id;
+  document.getElementById('cv_motivo').value='';
+  document.getElementById('cv_motivo_novo').value='';
+  document.getElementById('cv_motivo_outro').value='';
+  document.getElementById('cv_motivo_novo_wrap').style.display='none';
+  document.getElementById('cv_motivo_outro_wrap').style.display='none';
+  document.getElementById('cv_status').value='aberta';
+  document.getElementById('modalCancelarVenda').classList.add('open');
+}
+function fecharModalCancelarVendaDireto(){
+  document.getElementById('modalCancelarVenda').classList.remove('open');
+}
+function onChangeMotivoCancelamento(){
+  const v=document.getElementById('cv_motivo').value;
+  document.getElementById('cv_motivo_novo_wrap').style.display=v==='__novo__'?'flex':'none';
+  document.getElementById('cv_motivo_outro_wrap').style.display=v==='__outro__'?'flex':'none';
+}
+async function confirmarCancelarVenda(){
+  const vendaId=document.getElementById('cv_venda_id').value;
+  const venda=todasVendas.find(v=>v.id===vendaId);
+  if(!venda){showToast('Erro: venda não encontrada.','error');return;}
+
+  const motivoSel=document.getElementById('cv_motivo').value;
+  let motivoFinal='';
+  if(motivoSel==='__novo__'){
+    motivoFinal=document.getElementById('cv_motivo_novo').value.trim();
+  }else if(motivoSel==='__outro__'){
+    motivoFinal=document.getElementById('cv_motivo_outro').value.trim();
+  }else{
+    motivoFinal=motivoSel;
+  }
+  if(!motivoFinal){showToast('Selecione ou descreva o motivo do cancelamento.','error');return;}
+
+  const statusVolta=document.getElementById('cv_status').value;
+  const btn=document.querySelector('#modalCancelarVenda .btn-danger');
+  if(btn){btn.disabled=true;btn.textContent='Processando...';}
+
+  try{
+    // 1) Criar a proposta de volta, com os dados da venda
+    const payloadProposta={
+      data:venda.data,
+      segurado:venda.segurado,
+      ramo:venda.ramo,
+      cia:venda.cia,
+      premio_liquido:venda.premio_liquido,
+      percentual_comissao:venda.percentual_comissao,
+      vendedor:venda.vendedor,
+      status:statusVolta,
+      probabilidade:statusVolta==='perdida'?0:50,
+      observacoes:`Venda cancelada em ${fmtData(hoje())} — Motivo: ${motivoFinal}`
+    };
+    const{error:errProp}=await db.from('propostas').insert(payloadProposta);
+    if(errProp){
+      showToast('Erro ao recriar a proposta: '+errProp.message,'error');
+      if(btn){btn.disabled=false;btn.textContent='↩️ Confirmar Cancelamento';}
+      return;
+    }
+
+    // 2) Excluir a venda original
+    const{error:errDel}=await db.from('vendas').delete().eq('id',vendaId);
+    if(errDel){
+      showToast('Proposta recriada, mas houve erro ao remover a venda original: '+errDel.message,'error');
+      if(btn){btn.disabled=false;btn.textContent='↩️ Confirmar Cancelamento';}
+      return;
+    }
+
+    fecharModalCancelarVendaDireto();
+    fecharModalDireto();
+    showToast('Venda cancelada — voltou para Propostas.','success');
+    await Promise.all([carregarVendas(),carregarPropostas()]);
+  }catch(err){
+    showToast('Erro: '+err.message,'error');
+  }finally{
+    if(btn){btn.disabled=false;btn.textContent='↩️ Confirmar Cancelamento';}
+  }
+}
+
 // ── DASHBOARD ─────────────────────────────────────────────────────────
 let dashPeriodoAtual='mes';
 
@@ -5175,6 +5401,7 @@ function renderAnaliseRenovacoes(){
 function abrirModalRenovacao(id){
   document.getElementById('renov_id').value=id||'';
   document.getElementById('modalRenovTitulo').textContent=id?'Editar Renovação':'Nova Renovação';
+  const camposAnteriores=['renov_com_ant','renov_pl_ant'];
   if(id){
     const r=todasRenovacoes.find(x=>x.id===id);
     if(r){
@@ -5184,25 +5411,37 @@ function abrirModalRenovacao(id){
       document.getElementById('renov_ramo').value=r.ramo||'';
       document.getElementById('renov_cia').value=r.cia||'';
       document.getElementById('renov_venc').value=r.data_vencimento||'';
+      // Comissão/PL Anterior: ficam travados como histórico do ciclo passado (não editáveis no fluxo normal)
       document.getElementById('renov_com_ant').value=r.comissao_anterior||'';
-      document.getElementById('renov_com_atual').value=r.comissao_atual||'';
       document.getElementById('renov_pl_ant').value=r.premio_anterior||'';
+      // PL Atual + % da renovação: o que está sendo negociado agora. Se ainda não foi preenchido, abre vazio.
       document.getElementById('renov_pl_atual').value=r.premio_atual||'';
+      document.getElementById('renov_pct_atual').value=r.percentual_comissao||'';
       document.getElementById('renov_apolice').value=r.apolice||'';
       document.getElementById('renov_endosso').checked=!!r.tem_endosso;
       document.getElementById('renov_sinistro').checked=!!r.tem_sinistro;
       document.getElementById('renov_tipo_endosso').value=r.tipo_endosso||'';
       document.getElementById('renov_status').value=r.status||'pendente';
       document.getElementById('renov_obs').value=r.observacoes||'';
+      camposAnteriores.forEach(cid=>{
+        const el=document.getElementById(cid);
+        if(el){el.readOnly=true;el.title='Valor do ciclo anterior — travado para preservar o histórico. Para corrigir, use a opção de editar diretamente se necessário.';}
+      });
       calcVariacaoRenov();
     }
   } else {
-    ['renov_cliente','renov_apolice','renov_tipo_endosso','renov_cia','renov_venc','renov_obs','renov_com_ant','renov_com_atual','renov_pl_ant','renov_pl_atual'].forEach(id=>{
+    ['renov_cliente','renov_apolice','renov_tipo_endosso','renov_cia','renov_venc','renov_obs','renov_com_ant','renov_pl_ant','renov_pl_atual','renov_pct_atual'].forEach(id=>{
       const el=document.getElementById(id);if(el)el.value='';
+    });
+    camposAnteriores.forEach(cid=>{
+      const el=document.getElementById(cid);
+      if(el){el.readOnly=false;el.title='';}
     });
     document.getElementById('renov_status').value='pendente';
     document.getElementById('renov_variacao_preview').textContent='—';
-    const pctEl=document.getElementById('renov_pct_preview');if(pctEl)pctEl.textContent='— → —';
+    document.getElementById('renov_com_atual_preview').textContent='R$ 0,00';
+    document.getElementById('renov_pct_ant_preview').textContent='—';
+    document.getElementById('renov_com_atual').value='0';
     // Pré-preencher mês atual
     const agora=new Date();
     document.getElementById('renov_mes').value=`${agora.getFullYear()}-${String(agora.getMonth()+1).padStart(2,'0')}`;
@@ -5211,20 +5450,29 @@ function abrirModalRenovacao(id){
 }
 
 function calcVariacaoRenov(){
-  const ant=parseFloat(document.getElementById('renov_com_ant').value)||0;
-  const atual=parseFloat(document.getElementById('renov_com_atual').value)||0;
+  const comAnt=parseFloat(document.getElementById('renov_com_ant').value)||0;
+  const plAnt=parseFloat(document.getElementById('renov_pl_ant').value)||0;
+  const plAtual=parseFloat(document.getElementById('renov_pl_atual').value)||0;
+  const pctAtual=parseFloat(document.getElementById('renov_pct_atual').value)||0;
+
+  // % de comissão do ciclo anterior (somente leitura, calculado a partir dos valores travados)
+  const pctAntEl=document.getElementById('renov_pct_ant_preview');
+  if(pctAntEl) pctAntEl.textContent=pctComissaoRenovStr(comAnt,plAnt);
+
+  // Comissão atual = PL Atual × % Comissão da Renovação (calculado automaticamente)
+  const comAtualCalculada=plAtual*pctAtual/100;
+  document.getElementById('renov_com_atual').value=comAtualCalculada.toFixed(2);
+  const comAtualEl=document.getElementById('renov_com_atual_preview');
+  if(comAtualEl) comAtualEl.textContent=fmt(comAtualCalculada);
+
+  // Variação da comissão (anterior travada vs. atual recém-calculada)
   const el=document.getElementById('renov_variacao_preview');
-  if(!ant){el.textContent='—';}
+  if(!comAnt){el.textContent='—';el.style.color='var(--text)';}
   else{
-    const vari=((atual-ant)/ant*100);
+    const vari=((comAtualCalculada-comAnt)/comAnt*100);
     el.textContent=(vari>=0?'▲':'▼')+' '+Math.abs(vari).toFixed(1)+'%';
     el.style.color=vari>=0?'var(--green)':'var(--danger)';
   }
-
-  const plAnt=parseFloat(document.getElementById('renov_pl_ant').value)||0;
-  const plAtual=parseFloat(document.getElementById('renov_pl_atual').value)||0;
-  const pctEl=document.getElementById('renov_pct_preview');
-  if(pctEl) pctEl.textContent=pctComissaoRenovStr(ant,plAnt)+' → '+pctComissaoRenovStr(atual,plAtual);
 }
 
 function fecharModalRenov(e){if(!e||e.target===document.getElementById('modalRenovacao'))fecharModalRenovDireto();}
@@ -5246,6 +5494,7 @@ async function salvarRenovacao(){
     comissao_atual:parseFloat(document.getElementById('renov_com_atual').value)||0,
     premio_anterior:parseFloat(document.getElementById('renov_pl_ant').value)||0,
     premio_atual:parseFloat(document.getElementById('renov_pl_atual').value)||0,
+    percentual_comissao:parseFloat(document.getElementById('renov_pct_atual').value)||0,
     status:document.getElementById('renov_status').value,
     tem_endosso:document.getElementById('renov_endosso').checked,
     tem_sinistro:document.getElementById('renov_sinistro').checked,
@@ -5396,8 +5645,8 @@ function processarRenovImport(file){
               data_vencimento:dataVenc||null,
               comissao_anterior:pn(row[5]),
               comissao_atual:0,
-              premio_anterior:0,
-              premio_atual:pn(row[6]),
+              premio_anterior:pn(row[6]),
+              premio_atual:0,
               status:'pendente',
               tem_endosso:temEndosso,
               tem_sinistro:temSinistro,
@@ -5684,7 +5933,7 @@ async function processarHistoricoRenov(files){
               mes_renovacao:mesImport,
               data_vencimento:dataVenc||null,
               comissao_anterior:pn(row[5]),
-              comissao_atual:0, premio_anterior:0, premio_atual:pn(row[6]),
+              comissao_atual:0, premio_anterior:pn(row[6]), premio_atual:0,
               status:'pendente', kanban_status:'nao_iniciada',
               tem_endosso:!!em, tem_sinistro:String(row[2]||'').toUpperCase().includes('SINISTRO'),
               tipo_endosso:em?em[1].trim():null, vendedor:'',
