@@ -956,6 +956,9 @@ input[type=range]{width:100%;accent-color:var(--accent)}
           <select id="filtroRamoHist" onchange="renderHistorico()" style="padding:8px 12px;font-size:13px;font-family:'DM Sans',sans-serif;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--surface);color:var(--text);outline:none">
             <option value="">Todos os produtos</option>
           </select>
+          <select id="filtroOrigemHist" onchange="renderHistorico()" style="padding:8px 12px;font-size:13px;font-family:'DM Sans',sans-serif;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--surface);color:var(--text);outline:none">
+            <option value="">Todas as origens</option>
+          </select>
           <div style="position:relative">
             <button type="button" class="btn btn-ghost" id="btnFiltroCiaHist" onclick="toggleFiltroCiaHist()" style="font-size:13px;padding:8px 12px;font-weight:500">
               🏢 Seguradoras <span id="filtroCiaHistCount" style="display:none;background:var(--accent);color:#fff;border-radius:99px;font-size:10.5px;padding:1px 6px;margin-left:4px"></span> ▾
@@ -4403,6 +4406,14 @@ function limparFiltroCiaHist(){
 }
 
 function renderHistorico(){
+  // Popular select de origens dinamicamente
+  const origemSel=document.getElementById('filtroOrigemHist');
+  if(origemSel){
+    const origemAtual=origemSel.value;
+    const origens=[...new Set(todasVendas.map(v=>v.sdr_indicacao).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'pt-BR'));
+    origemSel.innerHTML='<option value="">Todas as origens</option>'+origens.map(o=>`<option ${o===origemAtual?'selected':''}>${o}</option>`).join('');
+  }
+
   // Popular select de produtos/ramo dinamicamente a partir das vendas existentes
   const ramoSel=document.getElementById('filtroRamoHist');
   if(ramoSel){
@@ -4447,8 +4458,11 @@ function renderHistorico(){
   const filtroVend=(document.getElementById('filtroVendedorHist')?.value||'');
   const filtroRamo=(document.getElementById('filtroRamoHist')?.value||'');
 
+  const filtroOrigem=(document.getElementById('filtroOrigemHist')?.value||'');
+
   if(filtroVend) vendas=vendas.filter(v=>v.vendedor===filtroVend);
   if(filtroRamo) vendas=vendas.filter(v=>v.ramo===filtroRamo);
+  if(filtroOrigem) vendas=vendas.filter(v=>v.sdr_indicacao===filtroOrigem);
   if(filtroCiaHistSelecionadas.size>0) vendas=vendas.filter(v=>filtroCiaHistSelecionadas.has(v.cia));
   if(busca) vendas=vendas.filter(v=>(v.segurado||'').toLowerCase().includes(busca)||(v.cia||'').toLowerCase().includes(busca));
 
