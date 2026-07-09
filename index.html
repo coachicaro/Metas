@@ -5721,16 +5721,34 @@ function processarRenovImport(file){
         let dataVenc='';
         for(const row of rows){
           if(!row||row.every(v=>!v)) continue;
-          // Linha de data: col B tem data, col D vazia
-          if(row[1]&&!row[3]){
-            const v=row[1];
-            if(v instanceof Date) dataVenc=`${v.getFullYear()}-${String(v.getMonth()+1).padStart(2,'0')}-${String(v.getDate()).padStart(2,'0')}`;
-            else{const s=String(v);const m=s.match(/(\d{4})-(\d{2})-(\d{2})/);if(m)dataVenc=`${m[1]}-${m[2]}-${m[3]}`;}
+          // Linha de data: col 0 tem a data de vencimento (string Date do JS), col 2 vazia (sem apólice)
+          // Layout do XLSX.js: [0]=data [1]=dia-semana [2]=apólice [3]=segurado
+          //                    [4]=ano2026 [5]=comissão_ant [6]=prêmio_pago [7]=seguradora [8]=ramo
+          if(row[0]&&!row[2]){
+            const v=row[0];
+            if(v instanceof Date){
+              dataVenc=`${v.getFullYear()}-${String(v.getMonth()+1).padStart(2,'0')}-${String(v.getDate()).padStart(2,'0')}`;
+            }else{
+              const s=String(v);
+              // Formato "Wed Jul 01 2026..." gerado pelo XLSX.js com cellDates:true em .xls
+              const mLong=s.match(/(\w{3})\s+(\w{3})\s+(\d{1,2})\s+(\d{4})/);
+              if(mLong){
+                const MON={Jan:'01',Feb:'02',Mar:'03',Apr:'04',May:'05',Jun:'06',Jul:'07',Aug:'08',Sep:'09',Oct:'10',Nov:'11',Dec:'12'};
+                dataVenc=`${mLong[4]}-${MON[mLong[2]]||'01'}-${String(mLong[3]).padStart(2,'0')}`;
+              }else{
+                // Tenta formato ISO YYYY-MM-DD
+                const mISO=s.match(/(\d{4})-(\d{2})-(\d{2})/);
+                if(mISO) dataVenc=`${mISO[1]}-${mISO[2]}-${mISO[3]}`;
+                // Tenta DD/MM/YYYY
+                const mBR=s.match(/(\d{1,2})\/(\d{1,2})\/(\d{4})/);
+                if(mBR) dataVenc=`${mBR[3]}-${String(mBR[2]).padStart(2,'0')}-${String(mBR[1]).padStart(2,'0')}`;
+              }
+            }
           }
-          // Linha de apólice: col D tem número da apólice
-          if(row[3]){
-            const apolice=String(row[3]).trim();
-            const seguradoRaw=String(row[4]||'').trim();
+          // Linha de apólice: col 2 tem número da apólice
+          if(row[2]){
+            const apolice=String(row[2]).trim();
+            const seguradoRaw=String(row[3]||'').trim();
             const cia=String(row[7]||'').trim();
             const ramoRaw=String(row[8]||'').trim();
             if(!seguradoRaw||!cia) continue;
@@ -5741,8 +5759,8 @@ function processarRenovImport(file){
             const tipoEndosso=endMatch?endMatch[1].trim():'';
             const cliente=seguradoRaw.replace(/-\s*END[\s\S]*/i,'').trim();
 
-            // Detectar sinistro na coluna C
-            const temSinistro=String(row[2]||'').toUpperCase().includes('SINISTRO');
+            // Detectar sinistro: coluna 1 (dia-semana) pode conter "SINISTRO" em outras variações da planilha
+            const temSinistro=String(row[1]||'').toUpperCase().includes('SINISTRO');
 
             // Normalizar ramo
             let ramo='Outro';
@@ -5760,10 +5778,11 @@ function processarRenovImport(file){
               cia:cia.trim(),
               mes_renovacao:mesImport,
               data_vencimento:dataVenc||null,
-              comissao_anterior:pn(row[5]),
+              comissao_anterior:pn(row[6]),
               comissao_atual:0,
-              premio_anterior:pn(row[6]),
+              premio_anterior:pn(row[7]),
               premio_atual:0,
+              percentual_comissao:0,
               status:'pendente',
               tem_endosso:temEndosso,
               tem_sinistro:temSinistro,
