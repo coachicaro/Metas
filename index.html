@@ -5243,9 +5243,15 @@ function desvincularClienteDetalhe(){
 }
 
 // ── OTE SILVIA ────────────────────────────────────────────────────────
-const OTE_META       = 4500;    // meta de comissão mensal
 const OTE_ALVO       = 627.95;  // recebimento em 100%
 const OTE_VENDEDOR   = 'Silvia';
+
+function getOTEMeta(mes){
+  // Puxar da tabela de metas cadastradas para a Silvia no mês
+  const metaCadastrada=todasMetas.find(m=>m.vendedor===OTE_VENDEDOR&&m.mes===mes);
+  if(metaCadastrada&&+metaCadastrada.meta_comissao>0) return +metaCadastrada.meta_comissao;
+  return 4500; // fallback padrão
+}
 
 const OTE_FAIXAS = [
   {min:0,    max:70,   mult:0,   label:'Abaixo 70%',     id:'faixa0'},
@@ -5255,8 +5261,8 @@ const OTE_FAIXAS = [
   {min:120,  max:9999, mult:1.3, label:'120%+',           id:'faixa4'},
 ];
 
-function calcOTE(comissaoRealizada){
-  const pct=(comissaoRealizada/OTE_META)*100;
+function calcOTE(comissaoRealizada, meta){
+  const pct=(comissaoRealizada/meta)*100;
   const faixa=OTE_FAIXAS.find(f=>pct>=f.min&&pct<=f.max)||OTE_FAIXAS[0];
   const bonus=Math.round(OTE_ALVO*faixa.mult*100)/100;
   return{pct, faixa, bonus};
@@ -5269,8 +5275,9 @@ function renderOTE(){
   // Vendas da Silvia no mês
   const vendasSilvia=vendasDoMes(mes).filter(v=>v.vendedor===OTE_VENDEDOR);
   const comissaoRealizada=soma(vendasSilvia,'comissao');
+  const metaDoMes=getOTEMeta(mes);
 
-  const{pct,faixa,bonus}=calcOTE(comissaoRealizada);
+  const{pct,faixa,bonus}=calcOTE(comissaoRealizada,metaDoMes);
   const pctCapped=Math.min(pct,150); // cap visual em 150%
 
   // Resultado
@@ -5295,12 +5302,15 @@ function renderOTE(){
 
   // Mensagem motivacional
   const msgEl=document.getElementById('oteFaltaMensagem');
-  const falta=Math.max(0,OTE_META-comissaoRealizada);
+  const falta=Math.max(0,metaDoMes-comissaoRealizada);
+  // Atualizar subtítulo com meta do mês
+  const subEl=document.querySelector('#view-ote .page-sub');
+  if(subEl) subEl.innerHTML=`Meta mensal: <strong>${fmt(metaDoMes)}</strong> · Recebimento alvo (100%): <strong>${fmt(OTE_ALVO)}</strong>`;
   if(pct>=120){
     msgEl.innerHTML='🎉 <strong>Acelerador ativado!</strong> Meta superada em '+((pct-100).toFixed(1))+'% — bônus máximo!';
     msgEl.style.color='var(--green)';
   } else if(pct>=100){
-    msgEl.innerHTML='✅ <strong>Meta batida!</strong> Faltam '+fmt(OTE_META*1.2-comissaoRealizada)+' para ativar o acelerador 1,3x';
+    msgEl.innerHTML='✅ <strong>Meta batida!</strong> Faltam '+fmt(metaDoMes*1.2-comissaoRealizada)+' para ativar o acelerador 1,3x';
     msgEl.style.color='var(--green)';
   } else if(pct>=85){
     msgEl.innerHTML='💪 Faltam <strong>'+fmt(falta)+'</strong> para bater a meta e receber <strong>'+fmt(OTE_ALVO)+'</strong>';
@@ -5341,7 +5351,8 @@ function renderOTEHistorico(){
   const rows=meses.map(m=>{
     const vendas=vendasDoMes(m).filter(v=>v.vendedor===OTE_VENDEDOR);
     const com=soma(vendas,'comissao');
-    const{pct,faixa,bonus}=calcOTE(com);
+    const metaH=getOTEMeta(m);
+    const{pct,faixa,bonus}=calcOTE(com,metaH);
     return{mes:m,com,pct,faixa,bonus};
   });
 
