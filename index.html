@@ -2033,8 +2033,7 @@ input[type=range]{width:100%;accent-color:var(--accent)}
               <div class="prop-rc-row"><label><input type="checkbox" id="rc_dm" data-tipo="auto" style="accent-color:var(--accent)"> Danos Materiais</label><input type="text" id="rc_dm_val" placeholder="Ex: R$ 200.000" class="prop-rc-input"></div>
               <div class="prop-rc-row"><label><input type="checkbox" id="rc_dc" data-tipo="auto" style="accent-color:var(--accent)"> Danos Corporais</label><input type="text" id="rc_dc_val" placeholder="Ex: R$ 300.000" class="prop-rc-input"></div>
               <div class="prop-rc-row"><label><input type="checkbox" id="rc_mo" data-tipo="auto" style="accent-color:var(--accent)"> Danos Morais e Estéticos</label><input type="text" id="rc_mo_val" placeholder="Ex: R$ 20.000" class="prop-rc-input"></div>
-              <div class="prop-rc-row"><label><input type="checkbox" id="rc_app_morte" data-tipo="auto" style="accent-color:var(--accent)"> APP — Morte</label><input type="text" id="rc_app_morte_val" placeholder="Ex: R$ 10.000" class="prop-rc-input"></div>
-              <div class="prop-rc-row"><label><input type="checkbox" id="rc_app_inv" data-tipo="auto" style="accent-color:var(--accent)"> APP — Invalidez Permanente</label><input type="text" id="rc_app_inv_val" placeholder="Ex: R$ 10.000" class="prop-rc-input"></div>
+              <div class="prop-rc-row"><label><input type="checkbox" id="rc_app" data-tipo="auto" style="accent-color:var(--accent)"> APP — Morte e Invalidez Permanente</label><input type="text" id="rc_app_val" placeholder="Ex: R$ 10.000" class="prop-rc-input"></div>
             </div>
 
             <!-- ASSISTÊNCIAS -->
@@ -6512,6 +6511,223 @@ function abrirPropostaLink(dados){
 </body></html>`);
   win.document.close();
 }
+
+// ── PROPOSTA AUTO FUNÇÕES ─────────────────────────────────────────────
+function atualizarLblPrincipal(){
+  const val=document.querySelector('input[name="auto_principal"]:checked')?.value||'';
+  [['comp','compreensiva'],['rf','roubo_furto'],['terc','terceiros']].forEach(([k,v])=>{
+    const lbl=document.getElementById('lbl_'+k);
+    if(lbl){lbl.style.background=val===v?'#EEF2FF':'var(--bg)';lbl.style.borderColor=val===v?'var(--accent)':'var(--border)';}
+  });
+}
+function getPrincipalAuto(){
+  const val=document.querySelector('input[name="auto_principal"]:checked')?.value||'';
+  if(val==='compreensiva') return{label:'Compreensiva',desc:'Colisão, furto e roubo, incêndio, fenômenos da natureza e perda total — o pacote completo de proteção para o seu veículo.',comp:true};
+  if(val==='roubo_furto') return{label:'Roubo e Furto',desc:'Cobre roubo e furto do veículo. Sem cobertura de colisão.',comp:false};
+  if(val==='terceiros') return{label:'Somente Terceiros',desc:'Apenas responsabilidade civil perante terceiros — sem cobertura para danos ao próprio veículo.',comp:false};
+  return null;
+}
+function getFipeAuto(){
+  const val=document.querySelector('input[name="auto_fipe"]:checked')?.value||'';
+  if(val==='100') return'100% FIPE';
+  if(val==='90') return'90% FIPE';
+  if(val==='outro') return document.getElementById('pp_auto_fipe_outro')?.value.trim()||'';
+  return'';
+}
+function getDadosAutoCompleto(){
+  const g=id=>document.getElementById(id);
+  const nome=g('pp_auto_nome')?.value.trim()||'';
+  const cidade=g('pp_auto_cidade')?.value.trim()||'';
+  const veiculo=g('pp_auto_veiculo')?.value.trim()||'';
+  const placa=g('pp_auto_placa')?.value.trim()||'';
+  const cia=g('pp_auto_cia')?.value||'';
+  const premio=parseFloat(g('pp_auto_premio')?.value||0)||0;
+  const franquia=g('pp_auto_franquia')?.value.trim()||'';
+  const parcelamento=g('pp_auto_parcelamento')?.value.trim()||'';
+  const notas=g('pp_auto_notas')?.value.trim()||'';
+  const extras=g('pp_auto_extras')?.value.trim()||'';
+  const principal=getPrincipalAuto();
+  const fipe=getFipeAuto();
+  const rc=[];
+  const chkRc=[
+    ['rc_dm','rc_dm_val','Danos Materiais a Terceiros','🏗️','Paga o conserto ou indenização de qualquer propriedade que você danificar num acidente — carros, motos, muros, grades. Sem franquia.','Bateu em 2 carros. A seguradora paga tudo sem tirar nada do seu bolso.'],
+    ['rc_dc','rc_dc_val','Danos Corporais a Terceiros','🏥','Cobre custos médicos, hospitalares e indenizações caso alguém se machuque num acidente causado por você.','Um pedestre foi atingido. A seguradora cobre todo o tratamento e indenização.'],
+    ['rc_mo','rc_mo_val','Danos Morais e Estéticos','⚖️','Cobre indenizações judiciais por sofrimento psicológico ou sequelas estéticas causadas a terceiros.','A vítima ficou com cicatriz e entrou na Justiça. A seguradora responde por você.'],
+    ['rc_app','rc_app_val','APP — Morte e Invalidez Permanente','🧑','Protege você e passageiros. Em caso de morte, a família recebe o valor. Em caso de invalidez permanente, você recebe indenização proporcional à sequela.','Sequela permanente após acidente? Você recebe o valor. Em caso fatal, a família é amparada.'],
+  ];
+  chkRc.forEach(([chkId,valId,nome,e,desc,ex])=>{
+    if(g(chkId)?.checked) rc.push({nome,valor:g(valId)?.value.trim()||'',e,desc,ex});
+  });
+  const ass=[];
+  if(g('ass_24h')?.checked){const v=g('ass_24h_val')?.value.trim();ass.push({nome:'Assistência 24h',extra:v?v+' km de guincho':'',e:'🛠️',desc:'Disponível a qualquer hora. Cobre pane seca, pane elétrica, bateria, chaveiro e guincho.',ex:'Carro enguiçou às 2h na estrada? É só ligar e o socorro vem.'});}
+  if(g('ass_reserva')?.checked){const v=g('ass_reserva_val')?.value.trim();ass.push({nome:'Carro Reserva',extra:v?v+' dias':'',e:'🚙',desc:'Enquanto seu carro está na oficina por sinistro, você recebe um carro emprestado.',ex:'Carro ficou 10 dias na funilaria? Você usou o reserva sem custo adicional.'});}
+  if(g('ass_vidros')?.checked){const v=g('ass_vidros_val')?.value.trim();ass.push({nome:'Vidros, Lanternas e Retrovisores',extra:v?'franquia '+v:'',e:'🪟',desc:'Cobre troca de para-brisa, vidros, lanternas e retrovisores com franquia reduzida.',ex:'Pedra quebrou seu para-brisa? Você paga só a franquia específica.'});}
+  if(g('ass_pneu')?.checked) ass.push({nome:'Pneu Furado',extra:'',e:'🛞',desc:'Assistência para troca de pneu furado onde você estiver.',ex:'Pneu furou na rodovia? A assistência vem e faz a troca no local.'});
+  if(g('ass_chaveiro')?.checked) ass.push({nome:'Chaveiro',extra:'',e:'🔑',desc:'Trancou a chave dentro do carro? A assistência resolve sem custo.',ex:'Chave dentro do carro? Chama pelo seguro — sem taxa extra.'});
+  const ext=[];
+  if(g('ext_rastreador')?.checked) ext.push('Rastreador');
+  if(g('ext_multas')?.checked) ext.push('Proteção de Multas');
+  if(g('ext_carta')?.checked) ext.push('Carta Verde');
+  if(g('ext_teto')?.checked) ext.push('Teto Solar');
+  if(extras) extras.split(/\n|,/).map(s=>s.trim()).filter(Boolean).forEach(e=>ext.push(e));
+  return{nome,cidade,veiculo,placa,cia,premio,franquia,parcelamento,notas,principal,fipe,rc,ass,ext};
+}
+
+function gerarPropostaAuto(){
+  const d=getDadosAutoCompleto();
+  if(!d.nome){showToast('Informe o nome do cliente.','error');return;}
+  if(!d.principal){showToast('Selecione a cobertura principal.','error');return;}
+  const hoje=new Date().toLocaleDateString('pt-BR');
+  const pm=d.premio>0?d.premio/12:0;
+  const sec=t=>`<div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--accent);margin:16px 0 10px;padding-bottom:4px;border-bottom:2px solid #C7D2FE">${t}</div>`;
+  let html=`<div>
+  <div style="border-bottom:2px solid var(--accent);padding-bottom:12px;margin-bottom:16px">
+    <div style="font-size:16px;font-weight:700;color:var(--accent)">🚗 PROPOSTA — SEGURO AUTO</div>
+    <div style="font-size:11px;color:var(--text-3)">Elaborada em ${hoje} · Vigência: 12 meses</div>
+  </div>
+  <div style="background:#EEF2FF;border-left:4px solid var(--accent);border-radius:6px;padding:12px 16px;margin-bottom:16px">
+    <div style="font-size:15px;font-weight:700">${d.nome}</div>
+    <div style="font-size:11.5px;color:var(--text-2);margin-top:4px;line-height:1.8">
+      ${d.cidade?'📍 '+d.cidade+'<br>':''}
+      ${d.veiculo?'🚗 '+d.veiculo+(d.placa?' · '+d.placa:'')+'<br>':''}
+      ${d.cia?'🏢 <strong>'+d.cia+'</strong>':''}
+    </div>
+  </div>`;
+  if(d.premio>0||d.franquia||d.parcelamento){
+    html+=`<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:16px">`;
+    if(d.premio>0) html+=`<div style="background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:10px;text-align:center"><div style="font-size:9px;font-weight:700;text-transform:uppercase;color:var(--text-3)">Prêmio anual</div><div style="font-size:16px;font-weight:700;color:var(--accent);margin-top:3px">R$ ${d.premio.toLocaleString('pt-BR',{minimumFractionDigits:2})}</div>${pm>0?`<div style="font-size:10px;color:var(--text-3)">≈ R$ ${pm.toLocaleString('pt-BR',{minimumFractionDigits:2})}/mês</div>`:''}</div>`;
+    if(d.franquia) html+=`<div style="background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:10px;text-align:center"><div style="font-size:9px;font-weight:700;text-transform:uppercase;color:var(--text-3)">Franquia</div><div style="font-size:14px;font-weight:700;margin-top:3px">${d.franquia}</div></div>`;
+    if(d.parcelamento) html+=`<div style="background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:10px;text-align:center"><div style="font-size:9px;font-weight:700;text-transform:uppercase;color:var(--text-3)">Parcelamento</div><div style="font-size:13px;font-weight:700;margin-top:3px">${d.parcelamento}</div></div>`;
+    html+=`</div>`;
+  }
+  html+=sec('🛡️ Cobertura Principal');
+  html+=`<div style="background:#F0F4FF;border:1px solid #C7D2FE;border-left:4px solid var(--accent);border-radius:6px;padding:13px 16px;margin-bottom:12px">
+    <div style="font-size:14px;font-weight:700;color:var(--accent);margin-bottom:6px">✅ ${d.principal.label}${d.fipe?' — '+d.fipe:''}</div>
+    <div style="font-size:12px;color:var(--text-2);line-height:1.7">${d.principal.desc}</div>
+    ${d.principal.comp?`<div style="display:flex;flex-wrap:wrap;gap:5px;margin-top:8px">${['🚗 Colisão','🔒 Furto e Roubo','🔥 Incêndio','⛈️ Fenômenos da Natureza','💥 Perda Total'].map(t=>`<span style="background:#fff;border:1px solid #C7D2FE;color:var(--accent);padding:2px 9px;border-radius:99px;font-size:10.5px;font-weight:500">${t}</span>`).join('')}</div>`:''}
+  </div>`;
+  if(d.rc.length){
+    html+=sec('👥 Responsabilidade Civil');
+    d.rc.forEach(i=>{html+=`<div style="padding:10px 0;border-bottom:1px solid var(--border)"><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:5px"><span style="font-size:13px;font-weight:700">${i.e} ${i.nome}</span>${i.valor?`<span style="font-size:11px;font-weight:700;color:var(--accent);background:#EEF2FF;padding:2px 10px;border-radius:99px">${i.valor}</span>`:''}</div><div style="font-size:11.5px;color:var(--text-2);line-height:1.7">${i.desc}</div><div style="font-size:11px;color:var(--text-3);font-style:italic;margin-top:3px">👉 ${i.ex}</div></div>`;});
+    html+=`<div style="margin-bottom:8px"></div>`;
+  }
+  if(d.ass.length){
+    html+=sec('🔧 Assistências');
+    d.ass.forEach(i=>{html+=`<div style="padding:10px 0;border-bottom:1px solid var(--border)"><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:5px"><span style="font-size:13px;font-weight:700">${i.e} ${i.nome}</span>${i.extra?`<span style="font-size:11px;color:var(--text-3);background:var(--bg);padding:2px 9px;border-radius:99px;border:1px solid var(--border)">${i.extra}</span>`:''}</div><div style="font-size:11.5px;color:var(--text-2);line-height:1.7">${i.desc}</div><div style="font-size:11px;color:var(--text-3);font-style:italic;margin-top:3px">👉 ${i.ex}</div></div>`;});
+    html+=`<div style="margin-bottom:8px"></div>`;
+  }
+  if(d.ext.length){html+=sec('⚡ Extras');html+=`<div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px">${d.ext.map(e=>`<span style="background:#F0F4FF;border:1px solid #C7D2FE;color:var(--accent);padding:4px 12px;border-radius:99px;font-size:12px;font-weight:500">• ${e}</span>`).join('')}</div>`;}
+  if(d.notas) html+=`<div style="background:#FFFBF0;border:1px solid #F0DFA0;border-radius:6px;padding:10px 14px;font-size:12px;color:var(--text-2);margin-top:12px;line-height:1.7">📌 ${d.notas}</div>`;
+  html+=`<div style="margin-top:16px;padding-top:12px;border-top:1px solid var(--border);font-size:10.5px;color:var(--text-3);text-align:center;line-height:1.8">Vigência: 12 meses · ${hoje} · Syros Financial · Creta Seguros</div></div>`;
+  const el=document.getElementById('pp_auto_preview');
+  if(el){el.innerHTML=html;el.style.color='var(--text)';}
+  showToast('Proposta gerada! ✅','success');
+}
+
+function imprimirPDFAuto(){
+  const d=getDadosAutoCompleto();
+  if(!d.nome){showToast('Informe o nome do cliente.','error');return;}
+  if(!d.principal){showToast('Selecione a cobertura principal.','error');return;}
+  const hoje=new Date().toLocaleDateString('pt-BR');
+  const pm=d.premio>0?d.premio/12:0;
+  const rcH=d.rc.map(i=>`<div class="cb"><div class="ct">${i.e} ${i.nome}${i.valor?` <span class="cv">${i.valor}</span>`:''}</div><div class="cd">${i.desc}</div><div class="ce">👉 ${i.ex}</div></div>`).join('');
+  const asH=d.ass.map(i=>`<div class="cb"><div class="ct">${i.e} ${i.nome}${i.extra?` <span class="cx">${i.extra}</span>`:''}</div><div class="cd">${i.desc}</div><div class="ce">👉 ${i.ex}</div></div>`).join('');
+  const exH=d.ext.length?`<div class="eg">${d.ext.map(e=>`<div class="ei">• ${e}</div>`).join('')}</div>`:'';
+  const win=window.open('','_blank');
+  win.document.write(`<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8"><title>Proposta Auto — ${d.nome}</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>*{box-sizing:border-box;margin:0;padding:0}body{font-family:'DM Sans',sans-serif;color:#1A1917;background:#fff;font-size:10.5pt;line-height:1.6}
+@page{size:A4;margin:20px 24px}.page{max-width:720px;margin:0 auto;padding:24px 28px 40px}
+.hd{display:flex;justify-content:space-between;border-bottom:3px solid #2A3568;padding-bottom:14px;margin-bottom:20px}
+.br{font-family:'DM Serif Display',serif;font-size:22px;color:#2A3568}.br small{display:block;font-size:9px;font-family:'DM Sans',sans-serif;color:#9C9890;text-transform:uppercase;letter-spacing:.1em;margin-top:2px}
+.hr{text-align:right;font-size:9.5px;color:#5C5850;line-height:1.9}.hr strong{font-size:14px;color:#2A3568;display:block;font-family:'DM Serif Display',serif}
+.cl{background:#E8EAF3;border-left:4px solid #2A3568;border-radius:6px;padding:12px 16px;margin-bottom:16px}
+.cn{font-family:'DM Serif Display',serif;font-size:18px;margin-bottom:4px}.cs{font-size:10.5px;color:#5C5850;line-height:1.8}
+.ig{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:18px}
+.ib{background:#F5F6FA;border:1px solid #DDE0EC;border-radius:7px;padding:10px 13px;text-align:center}
+.il{font-size:8.5px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:#9C9890;margin-bottom:3px}
+.iv{font-size:15px;font-weight:700}.is{font-size:9px;color:#9C9890;margin-top:1px}
+.pb{background:#EEF2FF;border:1px solid #C7D2FE;border-left:4px solid #2A3568;border-radius:7px;padding:13px 16px;margin-bottom:16px}
+.pl{font-size:13px;font-weight:700;color:#2A3568;margin-bottom:5px}.pd{font-size:11px;color:#5C5850;line-height:1.7}
+.tg{display:flex;flex-wrap:wrap;gap:5px;margin-top:8px}.tg span{background:#fff;border:1px solid #C7D2FE;color:#2A3568;padding:2px 9px;border-radius:99px;font-size:10px;font-weight:500}
+.st{font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:#2A3568;margin:16px 0 10px;padding-bottom:5px;border-bottom:2px solid #C7D2FE}
+.cb{padding:9px 0;border-bottom:1px solid #EEF2FF}.ct{font-size:12px;font-weight:700;color:#1A1917;margin-bottom:3px;display:flex;align-items:center;gap:7px;flex-wrap:wrap}
+.cv{font-size:10px;font-weight:700;color:#fff;background:#2A3568;padding:1px 8px;border-radius:99px}
+.cx{font-size:10px;color:#5C5850;background:#F5F6FA;padding:1px 8px;border-radius:99px;border:1px solid #DDE0EC}
+.cd{font-size:10.5px;color:#5C5850;line-height:1.7;margin-bottom:2px}.ce{font-size:10px;color:#9C9890;font-style:italic}
+.eg{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px}.ei{background:#EEF2FF;border:1px solid #C7D2FE;color:#2A3568;padding:3px 12px;border-radius:99px;font-size:10.5px;font-weight:500}
+.nt{background:#FFFBF0;border:1px solid #F0DFA0;border-radius:6px;padding:10px 14px;font-size:10.5px;color:#5C5850;margin-top:14px;line-height:1.7}
+.ft{margin-top:22px;padding-top:10px;border-top:1px solid #DDE0EC;font-size:8.5px;color:#9C9890;text-align:center;line-height:1.8}
+@media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact}}</style></head><body><div class="page">
+<div class="hd"><div><div class="br">Syros Financial<small>Creta Seguros</small></div></div><div class="hr"><strong>🚗 Seguro Auto</strong>Data: ${hoje}<br>Vigência: 12 meses<br>Proposta confidencial</div></div>
+<div class="cl"><div class="cn">${d.nome}</div><div class="cs">${d.cidade?'📍 '+d.cidade+'<br>':''}${d.veiculo?'🚗 '+d.veiculo+(d.placa?' · '+d.placa:'')+'<br>':''}${d.cia?'🏢 Seguradora: <strong>'+d.cia+'</strong>':''}</div></div>
+${d.premio>0||d.franquia||d.parcelamento?`<div class="ig">${d.premio>0?`<div class="ib"><div class="il">Prêmio anual</div><div class="iv">R$ ${d.premio.toLocaleString('pt-BR',{minimumFractionDigits:2})}</div>${pm>0?`<div class="is">≈ R$ ${pm.toLocaleString('pt-BR',{minimumFractionDigits:2})}/mês</div>`:''}</div>`:''}${d.franquia?`<div class="ib"><div class="il">Franquia</div><div class="iv">${d.franquia}</div></div>`:''}${d.parcelamento?`<div class="ib"><div class="il">Parcelamento</div><div class="iv">${d.parcelamento}</div></div>`:''}</div>`:''}
+<div class="st">🛡️ Cobertura Principal</div>
+<div class="pb"><div class="pl">✅ ${d.principal.label}${d.fipe?' — '+d.fipe:''}</div><div class="pd">${d.principal.desc}</div>${d.principal.comp?`<div class="tg"><span>🚗 Colisão</span><span>🔒 Furto e Roubo</span><span>🔥 Incêndio</span><span>⛈️ Fenômenos da Natureza</span><span>💥 Perda Total</span></div>`:''}</div>
+${d.rc.length?`<div class="st">👥 Responsabilidade Civil</div>${rcH}`:''}
+${d.ass.length?`<div class="st">🔧 Assistências</div>${asH}`:''}
+${d.ext.length?`<div class="st">⚡ Coberturas Extras</div>${exH}`:''}
+${d.notas?`<div class="nt">📌 <strong>Observações:</strong> ${d.notas}</div>`:''}
+<div class="ft">Proposta de ${hoje} · Vigência: 12 meses · Valores sujeitos à confirmação pela seguradora.<br>Syros Financial · Creta Seguros</div>
+</div><script>window.onload=function(){window.print()}<\/script></body></html>`);
+  win.document.close();
+  showToast('📄 Abrindo PDF...','success');
+}
+
+function copiarWhatsAppAuto(){
+  const d=getDadosAutoCompleto();
+  if(!d.nome){showToast('Informe o nome do cliente.','error');return;}
+  if(!d.principal){showToast('Selecione a cobertura principal.','error');return;}
+  const hoje=new Date().toLocaleDateString('pt-BR');
+  const pm=d.premio>0?d.premio/12:0;
+  let t='🚗 *PROPOSTA — SEGURO AUTO*\n━━━━━━━━━━━━━━━━━━━━━━\n\n';
+  t+=`👤 *${d.nome}*\n`;
+  if(d.cidade)t+=`📍 ${d.cidade}\n`;
+  if(d.veiculo)t+=`🚗 ${d.veiculo}${d.placa?' · '+d.placa:''}\n`;
+  if(d.cia)t+=`🏢 ${d.cia}\n`;
+  t+='\n';
+  if(d.premio>0)t+=`💰 *Prêmio anual: R$ ${d.premio.toLocaleString('pt-BR',{minimumFractionDigits:2})}*${pm>0?' (≈ R$ '+pm.toLocaleString('pt-BR',{minimumFractionDigits:2})+'/mês)':''}\n`;
+  if(d.franquia)t+=`⚠️ Franquia: ${d.franquia}\n`;
+  if(d.parcelamento)t+=`💳 Parcelamento: ${d.parcelamento}\n`;
+  t+=`📅 Vigência: 12 meses\n\n🛡️ *COBERTURAS*\n\n`;
+  t+=`✅ *${d.principal.label}*${d.fipe?' — '+d.fipe:''}\n${d.principal.desc}\n\n`;
+  if(d.rc.length){t+='👥 *Responsabilidade Civil*\n';d.rc.forEach(i=>{t+=`${i.e} *${i.nome}*${i.valor?' — '+i.valor:''}\n${i.desc}\n👉 ${i.ex}\n\n`;});}
+  if(d.ass.length){t+='🔧 *Assistências*\n';d.ass.forEach(i=>{t+=`${i.e} *${i.nome}*${i.extra?' — '+i.extra:''}\n${i.desc}\n👉 ${i.ex}\n\n`;});}
+  if(d.ext.length)t+=`⚡ *Extras:* ${d.ext.join(' · ')}\n\n`;
+  if(d.notas)t+=`📌 ${d.notas}\n\n`;
+  t+=`━━━━━━━━━━━━━━━━━━━━━━\n${hoje} · Syros Financial · Creta Seguros`;
+  navigator.clipboard.writeText(t).then(()=>showToast('✅ Copiado para WhatsApp!','success')).catch(()=>{
+    const ta=document.createElement('textarea');ta.value=t;ta.style.position='fixed';ta.style.opacity='0';
+    document.body.appendChild(ta);ta.select();document.execCommand('copy');document.body.removeChild(ta);
+    showToast('✅ Copiado!','success');
+  });
+}
+
+function gerarLinkAuto(){
+  const d=getDadosAutoCompleto();
+  if(!d.nome){showToast('Informe o nome do cliente.','error');return;}
+  const encoded=btoa(encodeURIComponent(JSON.stringify({...d,tipo:'auto'})));
+  const link=`${window.location.origin}${window.location.pathname}?prop=${encoded}`;
+  navigator.clipboard.writeText(link).then(()=>showToast('🔗 Link copiado!','success')).catch(()=>prompt('Copie o link:',link));
+}
+
+function copiarTextoPropostaSeguro(tipo){
+  const el=document.getElementById(`pp_${tipo}_preview`);
+  if(!el)return;
+  const txt=el.innerText||el.textContent||'';
+  if(!txt.trim()||txt.includes('Preencha')){showToast('Gere a proposta primeiro.','error');return;}
+  navigator.clipboard.writeText(txt).then(()=>showToast('✅ Copiado!','success')).catch(()=>{
+    const ta=document.createElement('textarea');ta.value=txt;ta.style.position='fixed';ta.style.opacity='0';
+    document.body.appendChild(ta);ta.select();document.execCommand('copy');document.body.removeChild(ta);
+    showToast('✅ Copiado!','success');
+  });
+}
+function limparCobProp(tipo){document.querySelectorAll(`input[type=checkbox][data-tipo="${tipo}"]`).forEach(cb=>cb.checked=false);}
+function getCoberturasProp(tipo){return[];}
+function gerarPropostaSeguro(t){if(t==='auto')gerarPropostaAuto();}
+function imprimirPDFSeguro(t){if(t==='auto')imprimirPDFAuto();}
+function copiarWhatsAppSeguro(t){if(t==='auto')copiarWhatsAppAuto();}
+function gerarLinkSeguro(t){if(t==='auto')gerarLinkAuto();}
 
 </script>
 </body>
