@@ -2480,12 +2480,23 @@ input[type=range]{width:100%;accent-color:var(--accent)}
     </div>
     <div id="renovImportResult" style="display:none;padding:10px 14px;border-radius:var(--radius-sm);font-size:13px;margin-bottom:16px"></div>
     <div id="renovImportVendedorWrap" style="display:none;margin-bottom:16px">
-      <div class="field">
-        <label style="font-size:12px;font-weight:600">Atribuir ao vendedor:</label>
-        <select id="renovImportVendedor" style="padding:8px 12px;font-size:13px;font-family:'DM Sans',sans-serif;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--surface);outline:none;width:100%">
-          <option value="">Selecione o vendedor responsável</option>
-          <option selected>Luiza</option><option>Paulo</option><option>Ícaro</option>
-        </select>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+        <div class="field">
+          <label style="font-size:12px;font-weight:600">Atribuir ao vendedor:</label>
+          <select id="renovImportVendedor" style="padding:8px 12px;font-size:13px;font-family:'DM Sans',sans-serif;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--surface);outline:none;width:100%">
+            <option value="">Selecione o vendedor responsável</option>
+            <option selected>Luiza</option><option>Paulo</option><option>Ícaro</option>
+          </select>
+        </div>
+        <div class="field">
+          <label style="font-size:12px;font-weight:600">Mês de referência:</label>
+          <div style="display:flex;flex-direction:column;gap:4px">
+            <select id="renovImportMesOverride" style="padding:8px 12px;font-size:13px;font-family:'DM Sans',sans-serif;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--surface);outline:none;width:100%">
+              <option value="">Usar mês da planilha (automático)</option>
+            </select>
+            <div style="font-size:11px;color:var(--text-3)">⚠️ Use isso quando importar antes do mês virar</div>
+          </div>
+        </div>
       </div>
     </div>
     <div class="form-actions" style="margin-top:0">
@@ -2881,15 +2892,37 @@ function subscribeRealtime(){
 }
 
 // ── MESES ─────────────────────────────────────────────────────────────
-function popularMeses(){
+async function popularMeses(){
   const agora=new Date();
   const opts=[];
-  for(let i=0;i<12;i++){
+
+  // Buscar meses que têm dados no banco
+  let mesesComDados=new Set();
+  try{
+    const{data}=await db.from('vendas').select('data');
+    (data||[]).forEach(v=>{if(v.data)mesesComDados.add(v.data.slice(0,7));});
+    const{data:rv}=await db.from('renovacoes').select('mes_renovacao');
+    (rv||[]).forEach(r=>{if(r.mes_renovacao)mesesComDados.add(r.mes_renovacao);});
+  }catch(e){}
+
+  // Gerar meses: 2 à frente até 24 atrás + qualquer mês com dados
+  const mesesGerados=new Set();
+  for(let i=-2;i<=24;i++){
     const d=new Date(agora.getFullYear(),agora.getMonth()-i,1);
     const val=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
+    mesesGerados.add(val);
+  }
+  // Adicionar meses com dados que possam estar fora do range
+  mesesComDados.forEach(m=>mesesGerados.add(m));
+
+  // Ordenar do mais recente para o mais antigo
+  [...mesesGerados].sort((a,b)=>b.localeCompare(a)).forEach(val=>{
+    const[ano,mes]=val.split('-');
+    const d=new Date(+ano,+mes-1,1);
     const label=d.toLocaleDateString('pt-BR',{month:'long',year:'numeric'});
     opts.push({val,label});
-  }
+  });
+
   const html=opts.map(o=>`<option value="${o.val}">${capitalize(o.label)}</option>`).join('');
   ['mesFiltro','mesFiltroHist','mesFiltroInd','metaMes','exportMes','renovMesFiltro','kanbanMes','oteMes','dashMesSel'].forEach(id=>{
     const el=document.getElementById(id);if(el) el.innerHTML=html;
@@ -5146,6 +5179,22 @@ function processarRenovImport(file){
         <td style="padding:6px 10px;font-size:12px;border-bottom:1px solid var(--border)">${r.tem_endosso?'<span style="background:#FEF3C7;color:#92400E;padding:2px 6px;border-radius:99px;font-weight:700">✏️ END</span>':''} ${r.tem_sinistro?'<span style="background:#FEE2E2;color:#991B1B;padding:2px 6px;border-radius:99px;font-weight:700">⚠️ SIN</span>':''}</td>
       </tr>`).join('');
       document.getElementById('renovImportPreview').style.display='block';
+      // Popular select de mês com opções
+      const selMesOv=document.getElementById('renovImportMesOverride');
+      if(selMesOv){
+        selMesOv.innerHTML='<option value="">Usar mês da planilha (automático)</option>';
+        const MESES_PT=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+        const agora=new Date();
+        // Próximos 3 meses + últimos 12
+        for(let i=-12;i<=3;i++){
+          const d=new Date(agora.getFullYear(),agora.getMonth()+i,1);
+          const val=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
+          const label=`${MESES_PT[d.getMonth()]} de ${d.getFullYear()}${i===1?' (próximo mês)':i===0?' (mês atual)':i===2?' (daqui 2 meses)':''}`;
+          const opt=document.createElement('option');
+          opt.value=val;opt.textContent=label;
+          selMesOv.appendChild(opt);
+        }
+      }
       document.getElementById('renovImportVendedorWrap').style.display='block';
       if(validRows.length>0){
         document.getElementById('btnImportarRenov').style.display='inline-flex';
@@ -5165,9 +5214,11 @@ async function executarImportRenov(){
   let importados=0,erros=0;
   for(let i=0;i<renovImportRows.length;i+=BATCH){
     const vend=document.getElementById('renovImportVendedor')?.value||'Luiza';
+    const mesOv=document.getElementById('renovImportMesOverride')?.value||'';
     const lote=renovImportRows.slice(i,i+BATCH).map(r=>({
       cliente:r.cliente, apolice:r.apolice, ramo:r.ramo, cia:r.cia,
-      mes_renovacao:r.mes_renovacao, data_vencimento:r.data_vencimento||null,
+      mes_renovacao:mesOv||r.mes_renovacao,
+      data_vencimento:r.data_vencimento||null,
       comissao_anterior:r.comissao_anterior||0, comissao_atual:r.comissao_atual||0,
       premio_anterior:r.premio_anterior||0, premio_atual:r.premio_atual||0,
       status:r.status||'pendente', kanban_status:r.kanban_status||'nao_iniciada',
