@@ -413,6 +413,27 @@ input[type=range]{width:100%;accent-color:var(--accent)}
 .cobert-resultado .cob-desc{font-size:13.5px;color:var(--text-2);line-height:1.7;margin-bottom:4px}
 .cobert-resultado .cob-exemplo{font-size:13px;color:var(--text-3);font-style:italic;line-height:1.6}
 .cobert-resultado .cob-resumo{margin-top:20px;padding:14px 16px;background:var(--accent-light,#eef2ff);border-radius:var(--radius-sm);font-size:13.5px;color:var(--accent);font-weight:500}
+
+/* ── PROPOSTAS SEGURO ── */
+.prop-plano-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;margin-bottom:10px;transition:border-color .15s}
+.prop-plano-card.selecionado{border-color:var(--accent);box-shadow:0 0 0 2px rgba(42,53,104,.1)}
+.prop-plano-card.recomendado{border-color:#E8A020;box-shadow:0 0 0 2px rgba(232,160,32,.15)}
+.prop-plano-header{display:flex;align-items:center;gap:12px;padding:14px 18px;cursor:pointer;user-select:none}
+.prop-plano-header:hover{background:var(--bg)}
+.prop-plano-header input[type=checkbox]{width:17px;height:17px;accent-color:var(--accent);cursor:pointer;flex-shrink:0}
+.prop-plano-body{display:none;padding:14px 18px;border-top:1px solid var(--border);background:#F5F6FA}
+.prop-plano-body.open{display:block}
+.prop-rec-btn{display:inline-flex;align-items:center;gap:5px;font-size:11px;padding:4px 10px;border-radius:99px;border:1px solid var(--border);background:transparent;color:var(--text-3);cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .15s;white-space:nowrap}
+.prop-rec-btn:hover{border-color:#E8A020;color:#B8760A;background:#FEF9EE}
+.prop-rec-btn.active{background:#E8A020;color:#fff;border-color:#E8A020}
+.prop-valor-wrap{display:flex;align-items:center;gap:10px;margin:12px 0 10px;flex-wrap:wrap}
+.prop-valor-wrap label{font-size:12px;font-weight:500;color:var(--text-2);white-space:nowrap;margin:0}
+.prop-valor-wrap input{width:140px;padding:8px 12px;font-size:13.5px;font-family:'DM Sans',sans-serif;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--surface);color:var(--text);outline:none}
+.prop-coberturas-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:10px}
+.prop-cobertura-item{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text-2)}
+.prop-cobertura-item input{accent-color:var(--accent);width:14px;height:14px}
+.prop-rec-badge{display:inline-flex;align-items:center;gap:4px;font-size:10px;font-weight:700;padding:2px 9px;border-radius:99px;background:#E8A020;color:#fff;letter-spacing:.04em;text-transform:uppercase;margin-left:8px;vertical-align:middle}
+
 </style>
 </head>
 <body>
@@ -474,6 +495,9 @@ input[type=range]{width:100%;accent-color:var(--accent)}
       <div class="nav-item" onclick="showView('renovacoes')" id="nav-renovacoes"><span class="icon">🔄</span> Controle</div>
       <div class="nav-item" onclick="showView('renov_analise')" id="nav-renov_analise"><span class="icon">📈</span> Análise</div>
       <div class="nav-item" onclick="showView('renov_kanban')" id="nav-renov_kanban"><span class="icon">🗂️</span> Kanban</div>
+      <div class="nav-section">Propostas</div>
+      <div class="nav-item" onclick="showView('prop_auto')" id="nav-prop_auto"><span class="icon">🚗</span> Proposta Auto</div>
+      <div class="nav-item" onclick="showView('prop_resid')" id="nav-prop_resid"><span class="icon">🏠</span> Proposta Residencial</div>
       <div class="nav-section">Explicar Coberturas</div>
       <div class="nav-item" onclick="showView('cobert_auto')" id="nav-cobert_auto"><span class="icon">🚗</span> Seguro Auto</div>
       <div class="nav-item" onclick="showView('cobert_resid')" id="nav-cobert_resid"><span class="icon">🏠</span> Seguro Residencial</div>
@@ -1921,6 +1945,163 @@ input[type=range]{width:100%;accent-color:var(--accent)}
     </div>
 
 
+
+    <!-- PROPOSTA AUTO -->
+    <div class="view" id="view-prop_auto">
+      <div class="page-title">🚗 Proposta — Seguro Auto</div>
+      <p class="page-sub">Monte a proposta, gere o PDF e envie o link pro cliente</p>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;align-items:start">
+
+        <!-- Esquerda: dados + coberturas -->
+        <div>
+          <div class="card" style="margin-bottom:16px">
+            <div class="card-title">Dados do cliente</div>
+            <div class="form-grid" style="margin-bottom:0">
+              <div class="field"><label>Nome do cliente *</label><input type="text" id="pp_auto_nome" placeholder="Ex: João Silva" style="width:100%;padding:9px 12px;font-size:13px;font-family:'DM Sans',sans-serif;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--bg);color:var(--text);outline:none"></div>
+              <div class="field"><label>Cidade</label><input type="text" id="pp_auto_cidade" placeholder="Ex: Porto Alegre / RS" style="width:100%;padding:9px 12px;font-size:13px;font-family:'DM Sans',sans-serif;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--bg);color:var(--text);outline:none"></div>
+              <div class="field"><label>Veículo</label><input type="text" id="pp_auto_veiculo" placeholder='Ex: Honda Civic 2022' style="width:100%;padding:9px 12px;font-size:13px;font-family:'DM Sans',sans-serif;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--bg);color:var(--text);outline:none"></div>
+              <div class="field"><label>Observação (opcional)</label><input type="text" id="pp_auto_obs" placeholder="Ex: seguro novo, renovação..." style="width:100%;padding:9px 12px;font-size:13px;font-family:'DM Sans',sans-serif;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--bg);color:var(--text);outline:none"></div>
+            </div>
+          </div>
+
+          <div class="card" style="margin-bottom:16px">
+            <div class="card-title">Seguradora e valor</div>
+            <div class="form-grid" style="margin-bottom:0">
+              <div class="field"><label>Seguradora *</label>
+                <select id="pp_auto_cia" style="width:100%;padding:9px 12px;font-size:13px;font-family:'DM Sans',sans-serif;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--bg);color:var(--text);outline:none">
+                  <option value="">Selecione...</option>
+                  <option>Allianz</option><option>Azul</option><option>Bradesco</option>
+                  <option>HDI</option><option>Itaú</option><option>Mapfre</option>
+                  <option>Porto</option><option>SulAmérica</option><option>Tokio Marine</option>
+                  <option>Zurich</option><option>Outra</option>
+                </select>
+              </div>
+              <div class="field"><label>Prêmio mensal (R$)</label><input type="number" id="pp_auto_premio" placeholder="0,00" min="0" step="0.01" style="width:100%;padding:9px 12px;font-size:13px;font-family:'DM Sans',sans-serif;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--bg);color:var(--text);outline:none"></div>
+              <div class="field"><label>Vigência</label><input type="text" id="pp_auto_vigencia" placeholder="Ex: 12 meses" style="width:100%;padding:9px 12px;font-size:13px;font-family:'DM Sans',sans-serif;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--bg);color:var(--text);outline:none"></div>
+              <div class="field"><label>Franquia principal</label><input type="text" id="pp_auto_franquia" placeholder="Ex: R$ 2.500" style="width:100%;padding:9px 12px;font-size:13px;font-family:'DM Sans',sans-serif;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--bg);color:var(--text);outline:none"></div>
+            </div>
+          </div>
+
+          <div class="card">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+              <div class="card-title" style="margin:0">Coberturas incluídas</div>
+              <button onclick="limparCobProp('auto')" style="font-size:11px;padding:3px 10px;border:1px solid var(--border);border-radius:4px;background:none;cursor:pointer;color:var(--text-3)">Limpar</button>
+            </div>
+            <div style="max-height:380px;overflow-y:auto">
+              <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--text-3);margin:12px 0 6px;padding-bottom:4px;border-bottom:1px solid var(--border)">🛡️ Principais</div><div class="prop-coberturas-grid"><label class="prop-cobertura-item"><input type="checkbox" id="pc_auto_Colisão" data-nome="Colisão" data-tipo="auto"> Colisão</label><label class="prop-cobertura-item"><input type="checkbox" id="pc_auto_Furto_e_Roubo" data-nome="Furto e Roubo" data-tipo="auto"> Furto e Roubo</label><label class="prop-cobertura-item"><input type="checkbox" id="pc_auto_Incêndio" data-nome="Incêndio" data-tipo="auto"> Incêndio</label><label class="prop-cobertura-item"><input type="checkbox" id="pc_auto_Danos_da_Natureza" data-nome="Danos da Natureza" data-tipo="auto"> Danos da Natureza</label><label class="prop-cobertura-item"><input type="checkbox" id="pc_auto_Cobertura_Compreensiva" data-nome="Cobertura Compreensiva" data-tipo="auto"> Cobertura Compreensiva</label><label class="prop-cobertura-item"><input type="checkbox" id="pc_auto_Perda_Total" data-nome="Perda Total" data-tipo="auto"> Perda Total</label><label class="prop-cobertura-item"><input type="checkbox" id="pc_auto_Perda_Parcial" data-nome="Perda Parcial" data-tipo="auto"> Perda Parcial</label></div><div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--text-3);margin:12px 0 6px;padding-bottom:4px;border-bottom:1px solid var(--border)">👥 Responsabilidade Civil</div><div class="prop-coberturas-grid"><label class="prop-cobertura-item"><input type="checkbox" id="pc_auto_RCF_DM__Danos_Materiais" data-nome="RCF-DM — Danos Materiais" data-tipo="auto"> RCF-DM — Danos Materiais</label><label class="prop-cobertura-item"><input type="checkbox" id="pc_auto_RCF_DC__Danos_Corporais" data-nome="RCF-DC — Danos Corporais" data-tipo="auto"> RCF-DC — Danos Corporais</label><label class="prop-cobertura-item"><input type="checkbox" id="pc_auto_Danos_Morais_e_Estéticos" data-nome="Danos Morais e Estéticos" data-tipo="auto"> Danos Morais e Estéticos</label><label class="prop-cobertura-item"><input type="checkbox" id="pc_auto_APP__Morte" data-nome="APP — Morte" data-tipo="auto"> APP — Morte</label><label class="prop-cobertura-item"><input type="checkbox" id="pc_auto_APP__Invalidez_Permanente" data-nome="APP — Invalidez Permanente" data-tipo="auto"> APP — Invalidez Permanente</label></div><div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--text-3);margin:12px 0 6px;padding-bottom:4px;border-bottom:1px solid var(--border)">🔧 Assistências</div><div class="prop-coberturas-grid"><label class="prop-cobertura-item"><input type="checkbox" id="pc_auto_Assistência_24h" data-nome="Assistência 24h" data-tipo="auto"> Assistência 24h</label><label class="prop-cobertura-item"><input type="checkbox" id="pc_auto_Carro_Reserva" data-nome="Carro Reserva" data-tipo="auto"> Carro Reserva</label><label class="prop-cobertura-item"><input type="checkbox" id="pc_auto_Guincho_Ilimitado" data-nome="Guincho Ilimitado" data-tipo="auto"> Guincho Ilimitado</label><label class="prop-cobertura-item"><input type="checkbox" id="pc_auto_Chaveiro" data-nome="Chaveiro" data-tipo="auto"> Chaveiro</label><label class="prop-cobertura-item"><input type="checkbox" id="pc_auto_Pneu_Furado" data-nome="Pneu Furado" data-tipo="auto"> Pneu Furado</label><label class="prop-cobertura-item"><input type="checkbox" id="pc_auto_Táxi___App" data-nome="Táxi / App" data-tipo="auto"> Táxi / App</label></div><div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--text-3);margin:12px 0 6px;padding-bottom:4px;border-bottom:1px solid var(--border)">⚡ Extras</div><div class="prop-coberturas-grid"><label class="prop-cobertura-item"><input type="checkbox" id="pc_auto_Vidros_Lanternas_e_Retrovisores" data-nome="Vidros, Lanternas e Retrovisores" data-tipo="auto"> Vidros, Lanternas e Retrovisores</label><label class="prop-cobertura-item"><input type="checkbox" id="pc_auto_Faróis" data-nome="Faróis" data-tipo="auto"> Faróis</label><label class="prop-cobertura-item"><input type="checkbox" id="pc_auto_Retrovisores" data-nome="Retrovisores" data-tipo="auto"> Retrovisores</label><label class="prop-cobertura-item"><input type="checkbox" id="pc_auto_Teto_Solar" data-nome="Teto Solar" data-tipo="auto"> Teto Solar</label><label class="prop-cobertura-item"><input type="checkbox" id="pc_auto_Rastreador" data-nome="Rastreador" data-tipo="auto"> Rastreador</label><label class="prop-cobertura-item"><input type="checkbox" id="pc_auto_Proteção_de_Multas" data-nome="Proteção de Multas" data-tipo="auto"> Proteção de Multas</label><label class="prop-cobertura-item"><input type="checkbox" id="pc_auto_Carta_Verde" data-nome="Carta Verde" data-tipo="auto"> Carta Verde</label></div>
+            </div>
+            <div style="margin-top:14px">
+              <label style="font-size:12px;font-weight:500;color:var(--text-2);display:block;margin-bottom:5px">Coberturas adicionais (texto livre):</label>
+              <textarea id="pp_auto_extras" placeholder="Ex: Carro reserva 30 dias, Vidros completos..." rows="3"
+                style="width:100%;padding:9px 12px;font-size:13px;font-family:'DM Sans',sans-serif;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--bg);color:var(--text);outline:none;resize:vertical;box-sizing:border-box"></textarea>
+            </div>
+            <div style="margin-top:12px">
+              <label style="font-size:12px;font-weight:500;color:var(--text-2);display:block;margin-bottom:5px">Observações finais (opcional):</label>
+              <textarea id="pp_auto_notas" placeholder="Ex: Proposta válida por 7 dias..." rows="2"
+                style="width:100%;padding:9px 12px;font-size:13px;font-family:'DM Sans',sans-serif;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--bg);color:var(--text);outline:none;resize:vertical;box-sizing:border-box"></textarea>
+            </div>
+          </div>
+
+          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:16px">
+            <button class="btn btn-primary" onclick="gerarPropostaSeguro('auto')">📄 Visualizar proposta</button>
+            <button class="btn btn-ghost" onclick="copiarWhatsAppSeguro('auto')">💬 WhatsApp</button>
+            <button class="btn" style="background:#1e3a5f;color:#fff;border-color:#1e3a5f" onclick="imprimirPDFSeguro('auto')">⬇️ PDF</button>
+            <button class="btn" style="background:#2DB863;color:#fff;border-color:#2DB863" onclick="gerarLinkSeguro('auto')">🔗 Link pro cliente</button>
+          </div>
+        </div>
+
+        <!-- Direita: preview -->
+        <div>
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+            <div style="font-size:13px;font-weight:600;color:var(--text-2)">Pré-visualização:</div>
+            <button class="btn btn-ghost" style="font-size:12px;padding:5px 12px" onclick="copiarTextoPropostaSeguro('auto')">📋 Copiar</button>
+          </div>
+          <div id="pp_auto_preview" style="background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);padding:20px 24px;font-size:13px;line-height:1.8;color:var(--text-3);min-height:400px;white-space:pre-wrap;font-family:'DM Sans',sans-serif">
+            Preencha os dados e clique em "Visualizar proposta" para ver o preview aqui.
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PROPOSTA RESID -->
+    <div class="view" id="view-prop_resid">
+      <div class="page-title">🏠 Proposta — Seguro Residencial</div>
+      <p class="page-sub">Monte a proposta, gere o PDF e envie o link pro cliente</p>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;align-items:start">
+
+        <!-- Esquerda: dados + coberturas -->
+        <div>
+          <div class="card" style="margin-bottom:16px">
+            <div class="card-title">Dados do cliente</div>
+            <div class="form-grid" style="margin-bottom:0">
+              <div class="field"><label>Nome do cliente *</label><input type="text" id="pp_resid_nome" placeholder="Ex: João Silva" style="width:100%;padding:9px 12px;font-size:13px;font-family:'DM Sans',sans-serif;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--bg);color:var(--text);outline:none"></div>
+              <div class="field"><label>Cidade</label><input type="text" id="pp_resid_cidade" placeholder="Ex: Porto Alegre / RS" style="width:100%;padding:9px 12px;font-size:13px;font-family:'DM Sans',sans-serif;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--bg);color:var(--text);outline:none"></div>
+              <div class="field"><label>Imóvel</label><input type="text" id="pp_resid_veiculo" placeholder='Ex: Casa própria, 180m²' style="width:100%;padding:9px 12px;font-size:13px;font-family:'DM Sans',sans-serif;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--bg);color:var(--text);outline:none"></div>
+              <div class="field"><label>Observação (opcional)</label><input type="text" id="pp_resid_obs" placeholder="Ex: seguro novo, renovação..." style="width:100%;padding:9px 12px;font-size:13px;font-family:'DM Sans',sans-serif;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--bg);color:var(--text);outline:none"></div>
+            </div>
+          </div>
+
+          <div class="card" style="margin-bottom:16px">
+            <div class="card-title">Seguradora e valor</div>
+            <div class="form-grid" style="margin-bottom:0">
+              <div class="field"><label>Seguradora *</label>
+                <select id="pp_resid_cia" style="width:100%;padding:9px 12px;font-size:13px;font-family:'DM Sans',sans-serif;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--bg);color:var(--text);outline:none">
+                  <option value="">Selecione...</option>
+                  <option>Allianz</option><option>Azul</option><option>Bradesco</option>
+                  <option>HDI</option><option>Itaú</option><option>Mapfre</option>
+                  <option>Porto</option><option>SulAmérica</option><option>Tokio Marine</option>
+                  <option>Zurich</option><option>Outra</option>
+                </select>
+              </div>
+              <div class="field"><label>Prêmio mensal (R$)</label><input type="number" id="pp_resid_premio" placeholder="0,00" min="0" step="0.01" style="width:100%;padding:9px 12px;font-size:13px;font-family:'DM Sans',sans-serif;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--bg);color:var(--text);outline:none"></div>
+              <div class="field"><label>Vigência</label><input type="text" id="pp_resid_vigencia" placeholder="Ex: 12 meses" style="width:100%;padding:9px 12px;font-size:13px;font-family:'DM Sans',sans-serif;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--bg);color:var(--text);outline:none"></div>
+              <div class="field"><label>Franquia principal</label><input type="text" id="pp_resid_franquia" placeholder="Ex: R$ 2.500" style="width:100%;padding:9px 12px;font-size:13px;font-family:'DM Sans',sans-serif;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--bg);color:var(--text);outline:none"></div>
+            </div>
+          </div>
+
+          <div class="card">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+              <div class="card-title" style="margin:0">Coberturas incluídas</div>
+              <button onclick="limparCobProp('resid')" style="font-size:11px;padding:3px 10px;border:1px solid var(--border);border-radius:4px;background:none;cursor:pointer;color:var(--text-3)">Limpar</button>
+            </div>
+            <div style="max-height:380px;overflow-y:auto">
+              <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--text-3);margin:12px 0 6px;padding-bottom:4px;border-bottom:1px solid var(--border)">🏠 Estrutura</div><div class="prop-coberturas-grid"><label class="prop-cobertura-item"><input type="checkbox" id="pc_resid_Incêndio_Raio_e_Explosão" data-nome="Incêndio, Raio e Explosão" data-tipo="resid"> Incêndio, Raio e Explosão</label><label class="prop-cobertura-item"><input type="checkbox" id="pc_resid_Danos_Elétricos" data-nome="Danos Elétricos" data-tipo="resid"> Danos Elétricos</label><label class="prop-cobertura-item"><input type="checkbox" id="pc_resid_Roubo_e_Furto_Qualificado" data-nome="Roubo e Furto Qualificado" data-tipo="resid"> Roubo e Furto Qualificado</label><label class="prop-cobertura-item"><input type="checkbox" id="pc_resid_Danos_por_Água" data-nome="Danos por Água" data-tipo="resid"> Danos por Água</label><label class="prop-cobertura-item"><input type="checkbox" id="pc_resid_Impacto_de_Veículos" data-nome="Impacto de Veículos" data-tipo="resid"> Impacto de Veículos</label><label class="prop-cobertura-item"><input type="checkbox" id="pc_resid_Queda_de_Aeronave" data-nome="Queda de Aeronave" data-tipo="resid"> Queda de Aeronave</label></div><div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--text-3);margin:12px 0 6px;padding-bottom:4px;border-bottom:1px solid var(--border)">🌪️ Natureza</div><div class="prop-coberturas-grid"><label class="prop-cobertura-item"><input type="checkbox" id="pc_resid_Vendaval_e_Tempestade" data-nome="Vendaval e Tempestade" data-tipo="resid"> Vendaval e Tempestade</label><label class="prop-cobertura-item"><input type="checkbox" id="pc_resid_Granizo" data-nome="Granizo" data-tipo="resid"> Granizo</label><label class="prop-cobertura-item"><input type="checkbox" id="pc_resid_Inundação_e_Enchente" data-nome="Inundação e Enchente" data-tipo="resid"> Inundação e Enchente</label><label class="prop-cobertura-item"><input type="checkbox" id="pc_resid_Deslizamento_de_Terra" data-nome="Deslizamento de Terra" data-tipo="resid"> Deslizamento de Terra</label><label class="prop-cobertura-item"><input type="checkbox" id="pc_resid_Queda_de_Árvore" data-nome="Queda de Árvore" data-tipo="resid"> Queda de Árvore</label></div><div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--text-3);margin:12px 0 6px;padding-bottom:4px;border-bottom:1px solid var(--border)">👨‍👩‍👧 Responsabilidade Civil</div><div class="prop-coberturas-grid"><label class="prop-cobertura-item"><input type="checkbox" id="pc_resid_RC_Familiar" data-nome="RC Familiar" data-tipo="resid"> RC Familiar</label><label class="prop-cobertura-item"><input type="checkbox" id="pc_resid_Danos_a_Terceiros_no_Imóvel" data-nome="Danos a Terceiros no Imóvel" data-tipo="resid"> Danos a Terceiros no Imóvel</label><label class="prop-cobertura-item"><input type="checkbox" id="pc_resid_RC_Empregador_Doméstico" data-nome="RC Empregador Doméstico" data-tipo="resid"> RC Empregador Doméstico</label><label class="prop-cobertura-item"><input type="checkbox" id="pc_resid_Danos_Morais" data-nome="Danos Morais" data-tipo="resid"> Danos Morais</label></div><div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--text-3);margin:12px 0 6px;padding-bottom:4px;border-bottom:1px solid var(--border)">🔧 Assistências</div><div class="prop-coberturas-grid"><label class="prop-cobertura-item"><input type="checkbox" id="pc_resid_Assistência_Residencial_24h" data-nome="Assistência Residencial 24h" data-tipo="resid"> Assistência Residencial 24h</label><label class="prop-cobertura-item"><input type="checkbox" id="pc_resid_Chaveiro" data-nome="Chaveiro" data-tipo="resid"> Chaveiro</label><label class="prop-cobertura-item"><input type="checkbox" id="pc_resid_Encanador" data-nome="Encanador" data-tipo="resid"> Encanador</label><label class="prop-cobertura-item"><input type="checkbox" id="pc_resid_Eletricista" data-nome="Eletricista" data-tipo="resid"> Eletricista</label><label class="prop-cobertura-item"><input type="checkbox" id="pc_resid_Vidraceiro" data-nome="Vidraceiro" data-tipo="resid"> Vidraceiro</label><label class="prop-cobertura-item"><input type="checkbox" id="pc_resid_Desentupimento" data-nome="Desentupimento" data-tipo="resid"> Desentupimento</label><label class="prop-cobertura-item"><input type="checkbox" id="pc_resid_Hotel_imóvel_inabitável" data-nome="Hotel (imóvel inabitável)" data-tipo="resid"> Hotel (imóvel inabitável)</label></div><div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--text-3);margin:12px 0 6px;padding-bottom:4px;border-bottom:1px solid var(--border)">💼 Extras</div><div class="prop-coberturas-grid"><label class="prop-cobertura-item"><input type="checkbox" id="pc_resid_RC_Condomínio" data-nome="RC Condomínio" data-tipo="resid"> RC Condomínio</label><label class="prop-cobertura-item"><input type="checkbox" id="pc_resid_Aluguel_Temporário" data-nome="Aluguel Temporário" data-tipo="resid"> Aluguel Temporário</label><label class="prop-cobertura-item"><input type="checkbox" id="pc_resid_Bicicleta" data-nome="Bicicleta" data-tipo="resid"> Bicicleta</label><label class="prop-cobertura-item"><input type="checkbox" id="pc_resid_Portáteis_e_Eletrônicos" data-nome="Portáteis e Eletrônicos" data-tipo="resid"> Portáteis e Eletrônicos</label><label class="prop-cobertura-item"><input type="checkbox" id="pc_resid_Joias_e_Obras_de_Arte" data-nome="Joias e Obras de Arte" data-tipo="resid"> Joias e Obras de Arte</label><label class="prop-cobertura-item"><input type="checkbox" id="pc_resid_Perda_de_Aluguel" data-nome="Perda de Aluguel" data-tipo="resid"> Perda de Aluguel</label></div>
+            </div>
+            <div style="margin-top:14px">
+              <label style="font-size:12px;font-weight:500;color:var(--text-2);display:block;margin-bottom:5px">Coberturas adicionais (texto livre):</label>
+              <textarea id="pp_resid_extras" placeholder="Ex: Carro reserva 30 dias, Vidros completos..." rows="3"
+                style="width:100%;padding:9px 12px;font-size:13px;font-family:'DM Sans',sans-serif;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--bg);color:var(--text);outline:none;resize:vertical;box-sizing:border-box"></textarea>
+            </div>
+            <div style="margin-top:12px">
+              <label style="font-size:12px;font-weight:500;color:var(--text-2);display:block;margin-bottom:5px">Observações finais (opcional):</label>
+              <textarea id="pp_resid_notas" placeholder="Ex: Proposta válida por 7 dias..." rows="2"
+                style="width:100%;padding:9px 12px;font-size:13px;font-family:'DM Sans',sans-serif;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--bg);color:var(--text);outline:none;resize:vertical;box-sizing:border-box"></textarea>
+            </div>
+          </div>
+
+          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:16px">
+            <button class="btn btn-primary" onclick="gerarPropostaSeguro('resid')">📄 Visualizar proposta</button>
+            <button class="btn btn-ghost" onclick="copiarWhatsAppSeguro('resid')">💬 WhatsApp</button>
+            <button class="btn" style="background:#1e3a5f;color:#fff;border-color:#1e3a5f" onclick="imprimirPDFSeguro('resid')">⬇️ PDF</button>
+            <button class="btn" style="background:#2DB863;color:#fff;border-color:#2DB863" onclick="gerarLinkSeguro('resid')">🔗 Link pro cliente</button>
+          </div>
+        </div>
+
+        <!-- Direita: preview -->
+        <div>
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+            <div style="font-size:13px;font-weight:600;color:var(--text-2)">Pré-visualização:</div>
+            <button class="btn btn-ghost" style="font-size:12px;padding:5px 12px" onclick="copiarTextoPropostaSeguro('resid')">📋 Copiar</button>
+          </div>
+          <div id="pp_resid_preview" style="background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);padding:20px 24px;font-size:13px;line-height:1.8;color:var(--text-3);min-height:400px;white-space:pre-wrap;font-family:'DM Sans',sans-serif">
+            Preencha os dados e clique em "Visualizar proposta" para ver o preview aqui.
+          </div>
+        </div>
+      </div>
+    </div>
+
   </main>
 </div>
 
@@ -2671,6 +2852,7 @@ function showView(id){
   if(id==='renov_analise') renderAnaliseRenovacoes();
   if(id==='renov_kanban') renderKanban();
   if(id==='ote') renderOTE();
+  if(id==='prop_auto'||id==='prop_resid') { /* ready */ }
   if(id==='cobert_auto'||id==='cobert_resid') { /* ready */ }
 }
 
@@ -6011,6 +6193,248 @@ async function excluirDuplicatasSelecionadas(){
   showToast(`✅ ${ids.length} duplicata${ids.length!==1?'s':''} excluída${ids.length!==1?'s':''}!`,'success');
   await carregarRenovacoes();
   fecharModalDuplicatasDireto();
+}
+
+// ── PROPOSTAS SEGURO AUTO/RESIDENCIAL ─────────────────────────────────
+
+function limparCobProp(tipo){
+  document.querySelectorAll(`input[type=checkbox][data-tipo="${tipo}"]`).forEach(cb=>cb.checked=false);
+  const ex=document.getElementById(`pp_${tipo}_extras`);if(ex)ex.value='';
+}
+
+function getCoberturasProp(tipo){
+  const selecionadas=[];
+  document.querySelectorAll(`input[type=checkbox][data-tipo="${tipo}"]:checked`).forEach(cb=>{
+    selecionadas.push(cb.dataset.nome);
+  });
+  const extras=(document.getElementById(`pp_${tipo}_extras`)?.value||'').trim();
+  if(extras) extras.split(/\n|,/).map(s=>s.trim()).filter(Boolean).forEach(e=>selecionadas.push(e));
+  return selecionadas;
+}
+
+function montarTextoPropostaSeguro(tipo){
+  const nome=document.getElementById(`pp_${tipo}_nome`)?.value.trim()||'Cliente';
+  const cidade=document.getElementById(`pp_${tipo}_cidade`)?.value.trim()||'';
+  const veiculo=document.getElementById(`pp_${tipo}_veiculo`)?.value.trim()||'';
+  const cia=document.getElementById(`pp_${tipo}_cia`)?.value||'';
+  const premio=parseFloat(document.getElementById(`pp_${tipo}_premio`)?.value||0)||0;
+  const vigencia=document.getElementById(`pp_${tipo}_vigencia`)?.value.trim()||'12 meses';
+  const franquia=document.getElementById(`pp_${tipo}_franquia`)?.value.trim()||'';
+  const notas=document.getElementById(`pp_${tipo}_notas`)?.value.trim()||'';
+  const coberturas=getCoberturasProp(tipo);
+  const tipoLabel=tipo==='auto'?'Seguro Auto':'Seguro Residencial';
+  const hoje=new Date().toLocaleDateString('pt-BR');
+
+  let txt=`PROPOSTA — ${tipoLabel.toUpperCase()}\n`;
+  txt+=`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n`;
+  txt+=`👤 Cliente: ${nome}\n`;
+  if(cidade) txt+=`📍 Cidade: ${cidade}\n`;
+  if(veiculo) txt+=`${tipo==='auto'?'🚗':'🏠'} ${tipo==='auto'?'Veículo':'Imóvel'}: ${veiculo}\n`;
+  txt+=`\n`;
+  if(cia) txt+=`🏢 Seguradora: ${cia}\n`;
+  if(premio>0) txt+=`💰 Prêmio: R$ ${premio.toLocaleString('pt-BR',{minimumFractionDigits:2})} / mês\n`;
+  if(vigencia) txt+=`📅 Vigência: ${vigencia}\n`;
+  if(franquia) txt+=`⚠️ Franquia: ${franquia}\n`;
+  txt+=`\n`;
+  if(coberturas.length){
+    txt+=`✅ COBERTURAS INCLUÍDAS:\n`;
+    coberturas.forEach(cob=>{txt+=`   • ${cob}\n`;});
+  }
+  if(notas){txt+=`\n📌 Observações:\n${notas}\n`;}
+  txt+=`\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n`;
+  txt+=`Proposta elaborada em ${hoje}.\n`;
+  txt+=`Valores e coberturas sujeitos a confirmação pela seguradora.\n`;
+  txt+=`Syros Financial · Creta Seguros`;
+  return txt;
+}
+
+function gerarPropostaSeguro(tipo){
+  const nome=document.getElementById(`pp_${tipo}_nome`)?.value.trim();
+  if(!nome){showToast('Informe o nome do cliente.','error');return;}
+  const texto=montarTextoPropostaSeguro(tipo);
+  const el=document.getElementById(`pp_${tipo}_preview`);
+  if(el){el.textContent=texto;el.style.color='var(--text)';}
+  showToast('Proposta gerada!','success');
+}
+
+function copiarWhatsAppSeguro(tipo){
+  const nome=document.getElementById(`pp_${tipo}_nome`)?.value.trim();
+  if(!nome){showToast('Informe o nome do cliente.','error');return;}
+  const texto=montarTextoPropostaSeguro(tipo);
+  navigator.clipboard.writeText(texto).then(()=>showToast('✅ Copiado para o WhatsApp!','success')).catch(()=>{
+    const ta=document.createElement('textarea');ta.value=texto;ta.style.position='fixed';ta.style.opacity='0';
+    document.body.appendChild(ta);ta.select();document.execCommand('copy');document.body.removeChild(ta);
+    showToast('✅ Copiado!','success');
+  });
+}
+
+function copiarTextoPropostaSeguro(tipo){
+  const el=document.getElementById(`pp_${tipo}_preview`);
+  if(!el?.textContent?.trim()||el.textContent.includes('Preencha os dados')){
+    showToast('Gere a proposta primeiro.','error');return;
+  }
+  navigator.clipboard.writeText(el.textContent).then(()=>showToast('✅ Copiado!','success')).catch(()=>{
+    const ta=document.createElement('textarea');ta.value=el.textContent;ta.style.position='fixed';ta.style.opacity='0';
+    document.body.appendChild(ta);ta.select();document.execCommand('copy');document.body.removeChild(ta);
+    showToast('✅ Copiado!','success');
+  });
+}
+
+function imprimirPDFSeguro(tipo){
+  const nome=document.getElementById(`pp_${tipo}_nome`)?.value.trim();
+  if(!nome){showToast('Informe o nome do cliente.','error');return;}
+  const cidade=document.getElementById(`pp_${tipo}_cidade`)?.value.trim()||'';
+  const veiculo=document.getElementById(`pp_${tipo}_veiculo`)?.value.trim()||'';
+  const cia=document.getElementById(`pp_${tipo}_cia`)?.value||'';
+  const premio=parseFloat(document.getElementById(`pp_${tipo}_premio`)?.value||0)||0;
+  const vigencia=document.getElementById(`pp_${tipo}_vigencia`)?.value.trim()||'12 meses';
+  const franquia=document.getElementById(`pp_${tipo}_franquia`)?.value.trim()||'';
+  const notas=document.getElementById(`pp_${tipo}_notas`)?.value.trim()||'';
+  const coberturas=getCoberturasProp(tipo);
+  const tipoLabel=tipo==='auto'?'Seguro Auto':'Seguro Residencial';
+  const hoje=new Date().toLocaleDateString('pt-BR');
+
+  const cobHtml=coberturas.length
+    ?`<div class="section-title">✅ Coberturas incluídas</div>
+      <div class="coberturas-grid">${coberturas.map(c=>`<div class="cob-item">• ${c}</div>`).join('')}</div>`
+    :'';
+
+  const win=window.open('','_blank');
+  win.document.write(`<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8">
+<title>Proposta ${tipoLabel} — ${nome}</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'DM Sans',sans-serif;color:#1A1917;background:#fff;font-size:10.5pt}
+  @page{size:A4;margin:24px 28px}
+  .page{max-width:740px;margin:0 auto;padding:24px 32px 40px}
+  .header{display:flex;align-items:flex-start;justify-content:space-between;border-bottom:3px solid #2A3568;padding-bottom:14px;margin-bottom:20px}
+  .header-brand{font-family:'DM Serif Display',serif;font-size:22px;color:#2A3568;line-height:1.2}
+  .header-brand small{display:block;font-family:'DM Sans',sans-serif;font-size:9px;color:#9C9890;text-transform:uppercase;letter-spacing:.1em;margin-top:3px}
+  .header-tipo{text-align:right;font-size:10px;color:#5C5850;line-height:1.9}
+  .header-tipo strong{font-size:13px;color:#2A3568;display:block;font-family:'DM Serif Display',serif}
+  .client-block{background:#E8EAF3;border-left:4px solid #2A3568;border-radius:6px;padding:12px 16px;margin-bottom:20px}
+  .client-name{font-family:'DM Serif Display',serif;font-size:18px;color:#1A1917;margin-bottom:3px}
+  .client-sub{font-size:10px;color:#5C5850;line-height:1.7}
+  .info-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:20px}
+  .info-box{background:#F5F6FA;border:1px solid #DDE0EC;border-radius:8px;padding:12px 14px}
+  .info-label{font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:#9C9890;margin-bottom:4px}
+  .info-valor{font-size:15px;font-weight:600;color:#1A1917}
+  .info-sub{font-size:10px;color:#5C5850;margin-top:2px}
+  .section-title{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:#2A3568;margin:18px 0 10px;padding-bottom:6px;border-bottom:1px solid #DDE0EC}
+  .coberturas-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+  .cob-item{background:#F0F4FF;border:1px solid #DDE0EC;border-radius:5px;padding:7px 12px;font-size:11px;color:#2A3568;font-weight:500}
+  .notas-box{background:#FFFBF0;border:1px solid #F0DFA0;border-radius:6px;padding:12px 14px;font-size:11px;color:#5C5850;margin-top:16px;line-height:1.7}
+  .footer{margin-top:28px;padding-top:12px;border-top:1px solid #DDE0EC;font-size:8.5px;color:#9C9890;text-align:center;line-height:1.8}
+  @media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact}}
+</style></head><body><div class="page">
+  <div class="header">
+    <div><div class="header-brand">Syros Financial<small>Creta Seguros</small></div></div>
+    <div class="header-tipo"><strong>${tipoLabel}</strong>Data: ${hoje}<br>Proposta confidencial</div>
+  </div>
+  <div class="client-block">
+    <div class="client-name">${nome}</div>
+    <div class="client-sub">${[cidade,veiculo].filter(Boolean).join(' · ')||'&nbsp;'}</div>
+  </div>
+  <div class="info-grid">
+    ${cia?`<div class="info-box"><div class="info-label">Seguradora</div><div class="info-valor">${cia}</div></div>`:''}
+    ${premio>0?`<div class="info-box"><div class="info-label">Prêmio mensal</div><div class="info-valor">R$ ${premio.toLocaleString('pt-BR',{minimumFractionDigits:2})}</div><div class="info-sub">por mês</div></div>`:''}
+    ${vigencia?`<div class="info-box"><div class="info-label">Vigência</div><div class="info-valor">${vigencia}</div></div>`:''}
+    ${franquia?`<div class="info-box"><div class="info-label">Franquia</div><div class="info-valor">${franquia}</div></div>`:''}
+  </div>
+  ${cobHtml}
+  ${notas?`<div class="notas-box">📌 <strong>Observações:</strong> ${notas}</div>`:''}
+  <div class="footer">
+    Proposta elaborada em ${hoje}. Valores e coberturas sujeitos à confirmação pela seguradora.<br>
+    Para contratar ou tirar dúvidas, entre em contato com seu corretor · Syros Financial · Creta Seguros
+  </div>
+</div><script>window.onload=function(){window.print()}<\/script></body></html>`);
+  win.document.close();
+  showToast('📄 Abrindo PDF...','success');
+}
+
+function gerarLinkSeguro(tipo){
+  const nome=document.getElementById(`pp_${tipo}_nome`)?.value.trim();
+  if(!nome){showToast('Informe o nome do cliente.','error');return;}
+  // Codificar dados na URL para página pública
+  const dados={
+    tipo,nome,
+    cidade:document.getElementById(`pp_${tipo}_cidade`)?.value.trim()||'',
+    veiculo:document.getElementById(`pp_${tipo}_veiculo`)?.value.trim()||'',
+    cia:document.getElementById(`pp_${tipo}_cia`)?.value||'',
+    premio:document.getElementById(`pp_${tipo}_premio`)?.value||'',
+    vigencia:document.getElementById(`pp_${tipo}_vigencia`)?.value.trim()||'',
+    franquia:document.getElementById(`pp_${tipo}_franquia`)?.value.trim()||'',
+    notas:document.getElementById(`pp_${tipo}_notas`)?.value.trim()||'',
+    coberturas:getCoberturasProp(tipo),
+  };
+  const encoded=btoa(encodeURIComponent(JSON.stringify(dados)));
+  const link=`${window.location.origin}${window.location.pathname}?prop=${encoded}`;
+  navigator.clipboard.writeText(link).then(()=>showToast('🔗 Link copiado! Cole no WhatsApp.','success')).catch(()=>{
+    prompt('Copie o link abaixo:',link);
+  });
+}
+
+// Verificar se há proposta na URL ao carregar
+window.addEventListener('load',function(){
+  const params=new URLSearchParams(window.location.search);
+  const propParam=params.get('prop');
+  if(propParam){
+    try{
+      const dados=JSON.parse(decodeURIComponent(atob(propParam)));
+      // Abrir PDF direto se for link de proposta
+      setTimeout(()=>abrirPropostaLink(dados),500);
+    }catch(e){}
+  }
+});
+
+function abrirPropostaLink(dados){
+  const {tipo,nome,cidade,veiculo,cia,premio,vigencia,franquia,notas,coberturas}=dados;
+  const tipoLabel=tipo==='auto'?'Seguro Auto':'Seguro Residencial';
+  const hoje=new Date().toLocaleDateString('pt-BR');
+  const cobHtml=coberturas?.length
+    ?`<div class="section-title">✅ Coberturas incluídas</div>
+      <div class="coberturas-grid">${coberturas.map(c=>`<div class="cob-item">• ${c}</div>`).join('')}</div>`
+    :'';
+  const premioNum=parseFloat(premio)||0;
+  const win=window.open('','_self');
+  win.document.write(`<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8">
+<title>Proposta — ${nome}</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>*{box-sizing:border-box;margin:0;padding:0}body{font-family:'DM Sans',sans-serif;color:#1A1917;background:#fff;font-size:10.5pt}
+.page{max-width:740px;margin:0 auto;padding:32px}
+.header{display:flex;justify-content:space-between;border-bottom:3px solid #2A3568;padding-bottom:14px;margin-bottom:20px}
+.header-brand{font-family:'DM Serif Display',serif;font-size:22px;color:#2A3568}
+.header-brand small{display:block;font-size:9px;color:#9C9890;text-transform:uppercase;letter-spacing:.1em;margin-top:3px;font-family:'DM Sans',sans-serif}
+.client-block{background:#E8EAF3;border-left:4px solid #2A3568;border-radius:6px;padding:12px 16px;margin-bottom:20px}
+.client-name{font-family:'DM Serif Display',serif;font-size:18px}
+.client-sub{font-size:10px;color:#5C5850;line-height:1.7}
+.info-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:20px}
+.info-box{background:#F5F6FA;border:1px solid #DDE0EC;border-radius:8px;padding:12px 14px}
+.info-label{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:#9C9890;margin-bottom:4px}
+.info-valor{font-size:15px;font-weight:600}
+.section-title{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:#2A3568;margin:18px 0 10px;padding-bottom:6px;border-bottom:1px solid #DDE0EC}
+.coberturas-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.cob-item{background:#F0F4FF;border:1px solid #DDE0EC;border-radius:5px;padding:7px 12px;font-size:11px;color:#2A3568;font-weight:500}
+.footer{margin-top:28px;padding-top:12px;border-top:1px solid #DDE0EC;font-size:8.5px;color:#9C9890;text-align:center;line-height:1.8}
+.btn-print{margin:20px auto;display:block;padding:12px 28px;background:#2A3568;color:#fff;border:none;border-radius:8px;font-size:14px;font-family:'DM Sans',sans-serif;cursor:pointer;font-weight:600}
+@media print{.btn-print{display:none}body{-webkit-print-color-adjust:exact;print-color-adjust:exact}}</style></head>
+<body><div class="page">
+  <div class="header"><div class="header-brand">Syros Financial<small>Creta Seguros</small></div>
+  <div style="text-align:right;font-size:10px;color:#5C5850"><strong style="font-size:13px;color:#2A3568;display:block;font-family:'DM Serif Display',serif">${tipoLabel}</strong>Data: ${hoje}</div></div>
+  <div class="client-block"><div class="client-name">${nome}</div><div class="client-sub">${[cidade,veiculo].filter(Boolean).join(' · ')||'&nbsp;'}</div></div>
+  <div class="info-grid">
+    ${cia?`<div class="info-box"><div class="info-label">Seguradora</div><div class="info-valor">${cia}</div></div>`:''}
+    ${premioNum>0?`<div class="info-box"><div class="info-label">Prêmio mensal</div><div class="info-valor">R$ ${premioNum.toLocaleString('pt-BR',{minimumFractionDigits:2})}</div></div>`:''}
+    ${vigencia?`<div class="info-box"><div class="info-label">Vigência</div><div class="info-valor">${vigencia}</div></div>`:''}
+    ${franquia?`<div class="info-box"><div class="info-label">Franquia</div><div class="info-valor">${franquia}</div></div>`:''}
+  </div>
+  ${cobHtml}
+  <div class="footer">Proposta elaborada em ${hoje}. Valores sujeitos à confirmação pela seguradora.<br>Syros Financial · Creta Seguros</div>
+</div>
+<button class="btn-print" onclick="window.print()">⬇️ Salvar / Imprimir PDF</button>
+</body></html>`);
+  win.document.close();
 }
 
 </script>
