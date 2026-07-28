@@ -2892,36 +2892,17 @@ function subscribeRealtime(){
 }
 
 // ── MESES ─────────────────────────────────────────────────────────────
-async function popularMeses(){
+function popularMeses(){
   const agora=new Date();
   const opts=[];
 
-  // Buscar meses que têm dados no banco
-  let mesesComDados=new Set();
-  try{
-    const{data}=await db.from('vendas').select('data');
-    (data||[]).forEach(v=>{if(v.data)mesesComDados.add(v.data.slice(0,7));});
-    const{data:rv}=await db.from('renovacoes').select('mes_renovacao');
-    (rv||[]).forEach(r=>{if(r.mes_renovacao)mesesComDados.add(r.mes_renovacao);});
-  }catch(e){}
-
-  // Gerar meses: 2 à frente até 24 atrás + qualquer mês com dados
-  const mesesGerados=new Set();
-  for(let i=-2;i<=24;i++){
+  // Gerar de 3 meses à frente até 24 meses atrás
+  for(let i=-3;i<=24;i++){
     const d=new Date(agora.getFullYear(),agora.getMonth()-i,1);
     const val=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
-    mesesGerados.add(val);
-  }
-  // Adicionar meses com dados que possam estar fora do range
-  mesesComDados.forEach(m=>mesesGerados.add(m));
-
-  // Ordenar do mais recente para o mais antigo
-  [...mesesGerados].sort((a,b)=>b.localeCompare(a)).forEach(val=>{
-    const[ano,mes]=val.split('-');
-    const d=new Date(+ano,+mes-1,1);
     const label=d.toLocaleDateString('pt-BR',{month:'long',year:'numeric'});
     opts.push({val,label});
-  });
+  }
 
   const html=opts.map(o=>`<option value="${o.val}">${capitalize(o.label)}</option>`).join('');
   ['mesFiltro','mesFiltroHist','mesFiltroInd','metaMes','exportMes','renovMesFiltro','kanbanMes','oteMes','dashMesSel'].forEach(id=>{
