@@ -434,6 +434,12 @@ input[type=range]{width:100%;accent-color:var(--accent)}
 .prop-cobertura-item input{accent-color:var(--accent);width:14px;height:14px}
 .prop-rec-badge{display:inline-flex;align-items:center;gap:4px;font-size:10px;font-weight:700;padding:2px 9px;border-radius:99px;background:#E8A020;color:#fff;letter-spacing:.04em;text-transform:uppercase;margin-left:8px;vertical-align:middle}
 
+
+.prop-rc-row{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:7px 10px;background:var(--bg);border-radius:var(--radius-sm);border:1px solid var(--border)}
+.prop-rc-row label{display:flex;align-items:center;gap:7px;font-size:12.5px;font-weight:500;cursor:pointer;flex:1}
+.prop-rc-input{width:130px;padding:4px 8px;font-size:12px;font-family:'DM Sans',sans-serif;border:1px solid var(--border);border-radius:4px;background:var(--surface);color:var(--text);outline:none;flex-shrink:0}
+.prop-rc-input:focus{border-color:var(--accent)}
+
 </style>
 </head>
 <body>
@@ -1953,20 +1959,22 @@ input[type=range]{width:100%;accent-color:var(--accent)}
 
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;align-items:start">
 
-        <!-- Esquerda: dados + coberturas -->
+        <!-- Esquerda -->
         <div>
-          <div class="card" style="margin-bottom:16px">
-            <div class="card-title">Dados do cliente</div>
+          <!-- DADOS DO CLIENTE -->
+          <div class="card" style="margin-bottom:14px">
+            <div class="card-title">Dados do cliente e veículo</div>
             <div class="form-grid" style="margin-bottom:0">
-              <div class="field"><label>Nome do cliente *</label><input type="text" id="pp_auto_nome" placeholder="Ex: João Silva" style="width:100%;padding:9px 12px;font-size:13px;font-family:'DM Sans',sans-serif;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--bg);color:var(--text);outline:none"></div>
-              <div class="field"><label>Cidade</label><input type="text" id="pp_auto_cidade" placeholder="Ex: Porto Alegre / RS" style="width:100%;padding:9px 12px;font-size:13px;font-family:'DM Sans',sans-serif;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--bg);color:var(--text);outline:none"></div>
-              <div class="field"><label>Veículo</label><input type="text" id="pp_auto_veiculo" placeholder='Ex: Honda Civic 2022' style="width:100%;padding:9px 12px;font-size:13px;font-family:'DM Sans',sans-serif;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--bg);color:var(--text);outline:none"></div>
-              <div class="field"><label>Observação (opcional)</label><input type="text" id="pp_auto_obs" placeholder="Ex: seguro novo, renovação..." style="width:100%;padding:9px 12px;font-size:13px;font-family:'DM Sans',sans-serif;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--bg);color:var(--text);outline:none"></div>
+              <div class="field"><label>Nome do cliente *</label><input type="text" id="pp_auto_nome" placeholder="Ex: João Silva" style="width:100%;padding:9px 12px;font-size:13px;font-family:'DM Sans',sans-serif;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--bg);color:var(--text);outline:none;box-sizing:border-box"></div>
+              <div class="field"><label>Cidade</label><input type="text" id="pp_auto_cidade" placeholder="Ex: Porto Alegre / RS" style="width:100%;padding:9px 12px;font-size:13px;font-family:'DM Sans',sans-serif;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--bg);color:var(--text);outline:none;box-sizing:border-box"></div>
+              <div class="field"><label>Veículo</label><input type="text" id="pp_auto_veiculo" placeholder="Ex: Honda Civic 2022 Prata" style="width:100%;padding:9px 12px;font-size:13px;font-family:'DM Sans',sans-serif;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--bg);color:var(--text);outline:none;box-sizing:border-box"></div>
+              <div class="field"><label>Placa</label><input type="text" id="pp_auto_placa" placeholder="Ex: ABC-1234" style="width:100%;padding:9px 12px;font-size:13px;font-family:'DM Sans',sans-serif;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--bg);color:var(--text);outline:none;box-sizing:border-box"></div>
             </div>
           </div>
 
-          <div class="card" style="margin-bottom:16px">
-            <div class="card-title">Seguradora e valor</div>
+          <!-- SEGURADORA E VALORES -->
+          <div class="card" style="margin-bottom:14px">
+            <div class="card-title">Seguradora e valores</div>
             <div class="form-grid" style="margin-bottom:0">
               <div class="field"><label>Seguradora *</label>
                 <select id="pp_auto_cia" style="width:100%;padding:9px 12px;font-size:13px;font-family:'DM Sans',sans-serif;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--bg);color:var(--text);outline:none">
@@ -1977,48 +1985,104 @@ input[type=range]{width:100%;accent-color:var(--accent)}
                   <option>Zurich</option><option>Outra</option>
                 </select>
               </div>
-              <div class="field"><label>Prêmio mensal (R$)</label><input type="number" id="pp_auto_premio" placeholder="0,00" min="0" step="0.01" style="width:100%;padding:9px 12px;font-size:13px;font-family:'DM Sans',sans-serif;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--bg);color:var(--text);outline:none"></div>
-              <div class="field"><label>Vigência</label><input type="text" id="pp_auto_vigencia" placeholder="Ex: 12 meses" style="width:100%;padding:9px 12px;font-size:13px;font-family:'DM Sans',sans-serif;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--bg);color:var(--text);outline:none"></div>
-              <div class="field"><label>Franquia principal</label><input type="text" id="pp_auto_franquia" placeholder="Ex: R$ 2.500" style="width:100%;padding:9px 12px;font-size:13px;font-family:'DM Sans',sans-serif;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--bg);color:var(--text);outline:none"></div>
+              <div class="field"><label>Prêmio anual (R$)</label><input type="number" id="pp_auto_premio" placeholder="0,00" min="0" step="0.01" style="width:100%;padding:9px 12px;font-size:13px;font-family:'DM Sans',sans-serif;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--bg);color:var(--text);outline:none;box-sizing:border-box"></div>
+              <div class="field"><label>Franquia principal</label><input type="text" id="pp_auto_franquia" placeholder="Ex: R$ 2.500" style="width:100%;padding:9px 12px;font-size:13px;font-family:'DM Sans',sans-serif;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--bg);color:var(--text);outline:none;box-sizing:border-box"></div>
+              <div class="field"><label>Parcelamento</label><input type="text" id="pp_auto_parcelamento" placeholder="Ex: 12x no cartão" style="width:100%;padding:9px 12px;font-size:13px;font-family:'DM Sans',sans-serif;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--bg);color:var(--text);outline:none;box-sizing:border-box"></div>
             </div>
           </div>
 
+          <!-- COBERTURAS -->
           <div class="card">
-            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
-              <div class="card-title" style="margin:0">Coberturas incluídas</div>
-              <button onclick="limparCobProp('auto')" style="font-size:11px;padding:3px 10px;border:1px solid var(--border);border-radius:4px;background:none;cursor:pointer;color:var(--text-3)">Limpar</button>
+            <div class="card-title">Coberturas</div>
+
+            <!-- PRINCIPAL -->
+            <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--text-3);margin-bottom:8px;padding-bottom:4px;border-bottom:1px solid var(--border)">🛡️ Cobertura Principal</div>
+            <div style="display:flex;flex-direction:column;gap:6px;margin-bottom:16px">
+              <label style="display:flex;align-items:center;gap:8px;padding:10px 12px;border:1px solid var(--border);border-radius:var(--radius-sm);cursor:pointer;font-size:13px;font-weight:500;background:var(--bg);transition:all .15s" id="lbl_comp">
+                <input type="radio" name="auto_principal" value="compreensiva" id="rb_compreensiva" onchange="atualizarLblPrincipal()" style="accent-color:var(--accent);width:16px;height:16px">
+                ✅ Compreensiva <span style="font-size:11px;font-weight:400;color:var(--text-3);margin-left:4px">— colisão, furto/roubo, incêndio, natureza e perda total</span>
+              </label>
+              <label style="display:flex;align-items:center;gap:8px;padding:10px 12px;border:1px solid var(--border);border-radius:var(--radius-sm);cursor:pointer;font-size:13px;font-weight:500;background:var(--bg);transition:all .15s" id="lbl_rf">
+                <input type="radio" name="auto_principal" value="roubo_furto" id="rb_roubo_furto" onchange="atualizarLblPrincipal()" style="accent-color:var(--accent);width:16px;height:16px">
+                🔒 Roubo e Furto <span style="font-size:11px;font-weight:400;color:var(--text-3);margin-left:4px">— sem cobertura de colisão</span>
+              </label>
+              <label style="display:flex;align-items:center;gap:8px;padding:10px 12px;border:1px solid var(--border);border-radius:var(--radius-sm);cursor:pointer;font-size:13px;font-weight:500;background:var(--bg);transition:all .15s" id="lbl_terc">
+                <input type="radio" name="auto_principal" value="terceiros" id="rb_terceiros" onchange="atualizarLblPrincipal()" style="accent-color:var(--accent);width:16px;height:16px">
+                ⚠️ Somente Terceiros <span style="font-size:11px;font-weight:400;color:var(--text-3);margin-left:4px">— apenas RC, sem cobertura do próprio veículo</span>
+              </label>
             </div>
-            <div style="max-height:380px;overflow-y:auto">
-              <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--text-3);margin:12px 0 6px;padding-bottom:4px;border-bottom:1px solid var(--border)">🛡️ Principais</div><div class="prop-coberturas-grid"><label class="prop-cobertura-item"><input type="checkbox" id="pc_auto_Colisão" data-nome="Colisão" data-tipo="auto"> Colisão</label><label class="prop-cobertura-item"><input type="checkbox" id="pc_auto_Furto_e_Roubo" data-nome="Furto e Roubo" data-tipo="auto"> Furto e Roubo</label><label class="prop-cobertura-item"><input type="checkbox" id="pc_auto_Incêndio" data-nome="Incêndio" data-tipo="auto"> Incêndio</label><label class="prop-cobertura-item"><input type="checkbox" id="pc_auto_Danos_da_Natureza" data-nome="Danos da Natureza" data-tipo="auto"> Danos da Natureza</label><label class="prop-cobertura-item"><input type="checkbox" id="pc_auto_Cobertura_Compreensiva" data-nome="Cobertura Compreensiva" data-tipo="auto"> Cobertura Compreensiva</label><label class="prop-cobertura-item"><input type="checkbox" id="pc_auto_Perda_Total" data-nome="Perda Total" data-tipo="auto"> Perda Total</label><label class="prop-cobertura-item"><input type="checkbox" id="pc_auto_Perda_Parcial" data-nome="Perda Parcial" data-tipo="auto"> Perda Parcial</label></div><div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--text-3);margin:12px 0 6px;padding-bottom:4px;border-bottom:1px solid var(--border)">👥 Responsabilidade Civil</div><div class="prop-coberturas-grid"><label class="prop-cobertura-item"><input type="checkbox" id="pc_auto_RCF_DM__Danos_Materiais" data-nome="RCF-DM — Danos Materiais" data-tipo="auto"> RCF-DM — Danos Materiais</label><label class="prop-cobertura-item"><input type="checkbox" id="pc_auto_RCF_DC__Danos_Corporais" data-nome="RCF-DC — Danos Corporais" data-tipo="auto"> RCF-DC — Danos Corporais</label><label class="prop-cobertura-item"><input type="checkbox" id="pc_auto_Danos_Morais_e_Estéticos" data-nome="Danos Morais e Estéticos" data-tipo="auto"> Danos Morais e Estéticos</label><label class="prop-cobertura-item"><input type="checkbox" id="pc_auto_APP__Morte" data-nome="APP — Morte" data-tipo="auto"> APP — Morte</label><label class="prop-cobertura-item"><input type="checkbox" id="pc_auto_APP__Invalidez_Permanente" data-nome="APP — Invalidez Permanente" data-tipo="auto"> APP — Invalidez Permanente</label></div><div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--text-3);margin:12px 0 6px;padding-bottom:4px;border-bottom:1px solid var(--border)">🔧 Assistências</div><div class="prop-coberturas-grid"><label class="prop-cobertura-item"><input type="checkbox" id="pc_auto_Assistência_24h" data-nome="Assistência 24h" data-tipo="auto"> Assistência 24h</label><label class="prop-cobertura-item"><input type="checkbox" id="pc_auto_Carro_Reserva" data-nome="Carro Reserva" data-tipo="auto"> Carro Reserva</label><label class="prop-cobertura-item"><input type="checkbox" id="pc_auto_Guincho_Ilimitado" data-nome="Guincho Ilimitado" data-tipo="auto"> Guincho Ilimitado</label><label class="prop-cobertura-item"><input type="checkbox" id="pc_auto_Chaveiro" data-nome="Chaveiro" data-tipo="auto"> Chaveiro</label><label class="prop-cobertura-item"><input type="checkbox" id="pc_auto_Pneu_Furado" data-nome="Pneu Furado" data-tipo="auto"> Pneu Furado</label><label class="prop-cobertura-item"><input type="checkbox" id="pc_auto_Táxi___App" data-nome="Táxi / App" data-tipo="auto"> Táxi / App</label></div><div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--text-3);margin:12px 0 6px;padding-bottom:4px;border-bottom:1px solid var(--border)">⚡ Extras</div><div class="prop-coberturas-grid"><label class="prop-cobertura-item"><input type="checkbox" id="pc_auto_Vidros_Lanternas_e_Retrovisores" data-nome="Vidros, Lanternas e Retrovisores" data-tipo="auto"> Vidros, Lanternas e Retrovisores</label><label class="prop-cobertura-item"><input type="checkbox" id="pc_auto_Faróis" data-nome="Faróis" data-tipo="auto"> Faróis</label><label class="prop-cobertura-item"><input type="checkbox" id="pc_auto_Retrovisores" data-nome="Retrovisores" data-tipo="auto"> Retrovisores</label><label class="prop-cobertura-item"><input type="checkbox" id="pc_auto_Teto_Solar" data-nome="Teto Solar" data-tipo="auto"> Teto Solar</label><label class="prop-cobertura-item"><input type="checkbox" id="pc_auto_Rastreador" data-nome="Rastreador" data-tipo="auto"> Rastreador</label><label class="prop-cobertura-item"><input type="checkbox" id="pc_auto_Proteção_de_Multas" data-nome="Proteção de Multas" data-tipo="auto"> Proteção de Multas</label><label class="prop-cobertura-item"><input type="checkbox" id="pc_auto_Carta_Verde" data-nome="Carta Verde" data-tipo="auto"> Carta Verde</label></div>
+
+            <!-- TABELA FIPE -->
+            <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--text-3);margin-bottom:8px;padding-bottom:4px;border-bottom:1px solid var(--border)">📋 Valor Segurado</div>
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px;flex-wrap:wrap">
+              <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer">
+                <input type="radio" name="auto_fipe" value="100" id="rb_fipe100" style="accent-color:var(--accent)"> 100% FIPE
+              </label>
+              <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer">
+                <input type="radio" name="auto_fipe" value="90" style="accent-color:var(--accent)"> 90% FIPE
+              </label>
+              <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer">
+                <input type="radio" name="auto_fipe" value="outro" style="accent-color:var(--accent)"> Outro:
+              </label>
+              <input type="text" id="pp_auto_fipe_outro" placeholder="Ex: 85%" style="width:80px;padding:5px 8px;font-size:12px;font-family:'DM Sans',sans-serif;border:1px solid var(--border);border-radius:4px;background:var(--bg);color:var(--text);outline:none">
             </div>
-            <div style="margin-top:14px">
+
+            <!-- RC -->
+            <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--text-3);margin-bottom:8px;padding-bottom:4px;border-bottom:1px solid var(--border)">👥 Responsabilidade Civil</div>
+            <div style="display:flex;flex-direction:column;gap:6px;margin-bottom:14px">
+              <div class="prop-rc-row"><label><input type="checkbox" id="rc_dm" data-tipo="auto" style="accent-color:var(--accent)"> Danos Materiais</label><input type="text" id="rc_dm_val" placeholder="Ex: R$ 200.000" class="prop-rc-input"></div>
+              <div class="prop-rc-row"><label><input type="checkbox" id="rc_dc" data-tipo="auto" style="accent-color:var(--accent)"> Danos Corporais</label><input type="text" id="rc_dc_val" placeholder="Ex: R$ 300.000" class="prop-rc-input"></div>
+              <div class="prop-rc-row"><label><input type="checkbox" id="rc_mo" data-tipo="auto" style="accent-color:var(--accent)"> Danos Morais e Estéticos</label><input type="text" id="rc_mo_val" placeholder="Ex: R$ 20.000" class="prop-rc-input"></div>
+              <div class="prop-rc-row"><label><input type="checkbox" id="rc_app_morte" data-tipo="auto" style="accent-color:var(--accent)"> APP — Morte</label><input type="text" id="rc_app_morte_val" placeholder="Ex: R$ 10.000" class="prop-rc-input"></div>
+              <div class="prop-rc-row"><label><input type="checkbox" id="rc_app_inv" data-tipo="auto" style="accent-color:var(--accent)"> APP — Invalidez Permanente</label><input type="text" id="rc_app_inv_val" placeholder="Ex: R$ 10.000" class="prop-rc-input"></div>
+            </div>
+
+            <!-- ASSISTÊNCIAS -->
+            <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--text-3);margin-bottom:8px;padding-bottom:4px;border-bottom:1px solid var(--border)">🔧 Assistências</div>
+            <div style="display:flex;flex-direction:column;gap:6px;margin-bottom:14px">
+              <div class="prop-rc-row"><label><input type="checkbox" id="ass_24h" data-tipo="auto" style="accent-color:var(--accent)"> Assistência 24h</label><input type="text" id="ass_24h_val" placeholder="km de guincho" class="prop-rc-input"></div>
+              <div class="prop-rc-row"><label><input type="checkbox" id="ass_reserva" data-tipo="auto" style="accent-color:var(--accent)"> Carro Reserva</label><input type="text" id="ass_reserva_val" placeholder="qtd. de dias" class="prop-rc-input"></div>
+              <div class="prop-rc-row"><label><input type="checkbox" id="ass_vidros" data-tipo="auto" style="accent-color:var(--accent)"> Vidros, Lanternas e Retrovisores</label><input type="text" id="ass_vidros_val" placeholder="franquia" class="prop-rc-input"></div>
+              <div class="prop-rc-row"><label><input type="checkbox" id="ass_pneu" data-tipo="auto" style="accent-color:var(--accent)"> Pneu Furado</label><span></span></div>
+              <div class="prop-rc-row"><label><input type="checkbox" id="ass_chaveiro" data-tipo="auto" style="accent-color:var(--accent)"> Chaveiro</label><span></span></div>
+            </div>
+
+            <!-- EXTRAS -->
+            <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--text-3);margin-bottom:8px;padding-bottom:4px;border-bottom:1px solid var(--border)">⚡ Coberturas Extras</div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:14px">
+              <label style="display:flex;align-items:center;gap:6px;font-size:12px;cursor:pointer"><input type="checkbox" id="ext_rastreador" data-tipo="auto" style="accent-color:var(--accent)"> Rastreador</label>
+              <label style="display:flex;align-items:center;gap:6px;font-size:12px;cursor:pointer"><input type="checkbox" id="ext_multas" data-tipo="auto" style="accent-color:var(--accent)"> Proteção de Multas</label>
+              <label style="display:flex;align-items:center;gap:6px;font-size:12px;cursor:pointer"><input type="checkbox" id="ext_carta" data-tipo="auto" style="accent-color:var(--accent)"> Carta Verde</label>
+              <label style="display:flex;align-items:center;gap:6px;font-size:12px;cursor:pointer"><input type="checkbox" id="ext_teto" data-tipo="auto" style="accent-color:var(--accent)"> Teto Solar</label>
+            </div>
+
+            <div class="field">
               <label style="font-size:12px;font-weight:500;color:var(--text-2);display:block;margin-bottom:5px">Coberturas adicionais (texto livre):</label>
-              <textarea id="pp_auto_extras" placeholder="Ex: Carro reserva 30 dias, Vidros completos..." rows="3"
-                style="width:100%;padding:9px 12px;font-size:13px;font-family:'DM Sans',sans-serif;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--bg);color:var(--text);outline:none;resize:vertical;box-sizing:border-box"></textarea>
+              <textarea id="pp_auto_extras" placeholder="Ex: Higienização do veículo..." rows="2" style="width:100%;padding:9px 12px;font-size:13px;font-family:'DM Sans',sans-serif;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--bg);color:var(--text);outline:none;resize:vertical;box-sizing:border-box"></textarea>
             </div>
-            <div style="margin-top:12px">
-              <label style="font-size:12px;font-weight:500;color:var(--text-2);display:block;margin-bottom:5px">Observações finais (opcional):</label>
-              <textarea id="pp_auto_notas" placeholder="Ex: Proposta válida por 7 dias..." rows="2"
-                style="width:100%;padding:9px 12px;font-size:13px;font-family:'DM Sans',sans-serif;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--bg);color:var(--text);outline:none;resize:vertical;box-sizing:border-box"></textarea>
+
+            <div class="field" style="margin-top:10px">
+              <label style="font-size:12px;font-weight:500;color:var(--text-2);display:block;margin-bottom:5px">Observações finais:</label>
+              <textarea id="pp_auto_notas" placeholder="Ex: Proposta válida por 7 dias. Sujeita à vistoria." rows="2" style="width:100%;padding:9px 12px;font-size:13px;font-family:'DM Sans',sans-serif;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--bg);color:var(--text);outline:none;resize:vertical;box-sizing:border-box"></textarea>
             </div>
           </div>
 
           <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:16px">
-            <button class="btn btn-primary" onclick="gerarPropostaSeguro('auto')">📄 Visualizar proposta</button>
-            <button class="btn btn-ghost" onclick="copiarWhatsAppSeguro('auto')">💬 WhatsApp</button>
-            <button class="btn" style="background:#1e3a5f;color:#fff;border-color:#1e3a5f" onclick="imprimirPDFSeguro('auto')">⬇️ PDF</button>
-            <button class="btn" style="background:#2DB863;color:#fff;border-color:#2DB863" onclick="gerarLinkSeguro('auto')">🔗 Link pro cliente</button>
+            <button class="btn btn-primary" onclick="gerarPropostaAuto()">📄 Visualizar</button>
+            <button class="btn btn-ghost" onclick="copiarWhatsAppAuto()">💬 WhatsApp</button>
+            <button class="btn" style="background:#1e3a5f;color:#fff;border-color:#1e3a5f" onclick="imprimirPDFAuto()">⬇️ PDF</button>
+            <button class="btn" style="background:#2DB863;color:#fff;border-color:#2DB863" onclick="gerarLinkAuto()">🔗 Link</button>
           </div>
         </div>
 
         <!-- Direita: preview -->
-        <div>
+        <div style="position:sticky;top:20px">
           <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
             <div style="font-size:13px;font-weight:600;color:var(--text-2)">Pré-visualização:</div>
             <button class="btn btn-ghost" style="font-size:12px;padding:5px 12px" onclick="copiarTextoPropostaSeguro('auto')">📋 Copiar</button>
           </div>
-          <div id="pp_auto_preview" style="background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);padding:20px 24px;font-size:13px;line-height:1.8;color:var(--text-3);min-height:400px;white-space:pre-wrap;font-family:'DM Sans',sans-serif">
-            Preencha os dados e clique em "Visualizar proposta" para ver o preview aqui.
+          <div id="pp_auto_preview" style="background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);padding:20px 24px;font-size:13px;line-height:1.8;color:var(--text-3);min-height:500px;overflow-y:auto;font-family:'DM Sans',sans-serif">
+            Preencha os dados e clique em "Visualizar" para ver a proposta aqui.
           </div>
         </div>
       </div>
@@ -6327,6 +6391,12 @@ function imprimirPDFSeguro(tipo){
   .notas-box{background:#FFFBF0;border:1px solid #F0DFA0;border-radius:6px;padding:12px 14px;font-size:11px;color:#5C5850;margin-top:16px;line-height:1.7}
   .footer{margin-top:28px;padding-top:12px;border-top:1px solid #DDE0EC;font-size:8.5px;color:#9C9890;text-align:center;line-height:1.8}
   @media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact}}
+
+.prop-rc-row{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:7px 10px;background:var(--bg);border-radius:var(--radius-sm);border:1px solid var(--border)}
+.prop-rc-row label{display:flex;align-items:center;gap:7px;font-size:12.5px;font-weight:500;cursor:pointer;flex:1}
+.prop-rc-input{width:130px;padding:4px 8px;font-size:12px;font-family:'DM Sans',sans-serif;border:1px solid var(--border);border-radius:4px;background:var(--surface);color:var(--text);outline:none;flex-shrink:0}
+.prop-rc-input:focus{border-color:var(--accent)}
+
 </style></head><body><div class="page">
   <div class="header">
     <div><div class="header-brand">Syros Financial<small>Creta Seguros</small></div></div>
@@ -6418,7 +6488,13 @@ function abrirPropostaLink(dados){
 .cob-item{background:#F0F4FF;border:1px solid #DDE0EC;border-radius:5px;padding:7px 12px;font-size:11px;color:#2A3568;font-weight:500}
 .footer{margin-top:28px;padding-top:12px;border-top:1px solid #DDE0EC;font-size:8.5px;color:#9C9890;text-align:center;line-height:1.8}
 .btn-print{margin:20px auto;display:block;padding:12px 28px;background:#2A3568;color:#fff;border:none;border-radius:8px;font-size:14px;font-family:'DM Sans',sans-serif;cursor:pointer;font-weight:600}
-@media print{.btn-print{display:none}body{-webkit-print-color-adjust:exact;print-color-adjust:exact}}</style></head>
+@media print{.btn-print{display:none}body{-webkit-print-color-adjust:exact;print-color-adjust:exact}}
+.prop-rc-row{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:7px 10px;background:var(--bg);border-radius:var(--radius-sm);border:1px solid var(--border)}
+.prop-rc-row label{display:flex;align-items:center;gap:7px;font-size:12.5px;font-weight:500;cursor:pointer;flex:1}
+.prop-rc-input{width:130px;padding:4px 8px;font-size:12px;font-family:'DM Sans',sans-serif;border:1px solid var(--border);border-radius:4px;background:var(--surface);color:var(--text);outline:none;flex-shrink:0}
+.prop-rc-input:focus{border-color:var(--accent)}
+
+</style></head>
 <body><div class="page">
   <div class="header"><div class="header-brand">Syros Financial<small>Creta Seguros</small></div>
   <div style="text-align:right;font-size:10px;color:#5C5850"><strong style="font-size:13px;color:#2A3568;display:block;font-family:'DM Serif Display',serif">${tipoLabel}</strong>Data: ${hoje}</div></div>
