@@ -1001,7 +1001,7 @@ input[type=range]{width:100%;accent-color:var(--accent)}
         <input type="text" id="renovBuscaNome" placeholder="🔍 Buscar cliente..." oninput="renderRenovacoes()"
           style="padding:8px 10px;font-size:13px;font-family:'DM Sans',sans-serif;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--surface);outline:none;width:180px">
         <label style="font-size:12px;font-weight:500;color:var(--text-2)">Mês:</label>
-        <select id="renovMesFiltro" onchange="renderRenovacoes()" style="padding:8px 10px;font-size:13px;font-family:'DM Sans',sans-serif;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--surface);outline:none"></select>
+        <select id="renovMesFiltro" onchange="localStorage.setItem('renovMesFiltro',this.value);renderRenovacoes()" style="padding:8px 10px;font-size:13px;font-family:'DM Sans',sans-serif;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--surface);outline:none"></select>
         <select id="renovVendedorFiltro" onchange="renderRenovacoes()" style="padding:8px 10px;font-size:13px;font-family:'DM Sans',sans-serif;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--surface);outline:none">
           <option value="">Todos vendedores</option>
           <option>Luiza</option><option>Paulo</option><option>Ícaro</option>
@@ -1120,7 +1120,7 @@ input[type=range]{width:100%;accent-color:var(--accent)}
       <div class="mes-bar" style="justify-content:space-between;margin-bottom:20px">
         <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
           <label style="font-size:12px;font-weight:500;color:var(--text-2)">Mês:</label>
-          <select id="kanbanMes" onchange="renderKanban()" style="padding:8px 10px;font-size:13px;font-family:'DM Sans',sans-serif;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--surface);outline:none"></select>
+          <select id="kanbanMes" onchange="localStorage.setItem('kanbanMes',this.value);renderKanban()" style="padding:8px 10px;font-size:13px;font-family:'DM Sans',sans-serif;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--surface);outline:none"></select>
           <select id="kanbanVendedor" onchange="renderKanban()" style="padding:8px 10px;font-size:13px;font-family:'DM Sans',sans-serif;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--surface);outline:none">
             <option value="">Todos vendedores</option>
             <option>Luiza</option><option>Paulo</option><option>Ícaro</option>
@@ -2908,6 +2908,21 @@ function popularMeses(){
   ['mesFiltro','mesFiltroHist','mesFiltroInd','metaMes','exportMes','renovMesFiltro','kanbanMes','oteMes','dashMesSel'].forEach(id=>{
     const el=document.getElementById(id);if(el) el.innerHTML=html;
   });
+  // Restaurar valores salvos no localStorage
+  ['renovMesFiltro','kanbanMes','oteMes'].forEach(id=>{
+    const saved=localStorage.getItem(id);
+    const el=document.getElementById(id);
+    if(saved&&el&&[...el.options].some(o=>o.value===saved)){
+      el.value=saved;
+    }
+  });
+
+  // Para o dashboard, usar mês atual por padrão
+  const _agora2=new Date();
+  const _mesPad2=`${_agora2.getFullYear()}-${String(_agora2.getMonth()+1).padStart(2,'0')}`;
+  const _selD2=document.getElementById('dashMesSel');
+  if(_selD2&&[..._selD2.options].some(o=>o.value===_mesPad2)) _selD2.value=_mesPad2;
+
   document.getElementById('mesLabel').textContent=capitalize(opts[0].label);
   document.getElementById('metaMes').addEventListener('change',renderFormMetas);
   document.getElementById('exportMes').addEventListener('change',renderPrevia);
