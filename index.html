@@ -1440,15 +1440,15 @@ input[type=range]{width:100%;accent-color:var(--accent)}
                   style="width:100%;padding:4px 8px;font-size:12px;border:1px solid var(--border);border-radius:4px;background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;outline:none"
                   oninput="this.closest('tr').querySelector('input[type=checkbox]').checked=!!this.value;toggleCobertCheck(this.closest('tr').querySelector('input[type=checkbox]'))">
               </td>
-            </tr><tr class="cobert-row" data-tipo="auto" data-nome="Vidros, Lanternas e Retrovisores">
+            </tr><tr class="cobert-row" data-tipo="auto" data-nome="Vidros, Faróis, Lanternas e Retrovisores">
               <td style="padding:6px 8px;width:32px">
-                <input type="checkbox" id="auto_Vidros_Lanternas_e_Retrovisores" data-tipo="auto" data-nome="Vidros, Lanternas e Retrovisores" onchange="toggleCobertCheck(this)" style="width:16px;height:16px;accent-color:var(--accent);cursor:pointer">
+                <input type="checkbox" id="auto_Vidros_Lanternas_e_Retrovisores" data-tipo="auto" data-nome="Vidros, Faróis, Lanternas e Retrovisores" onchange="toggleCobertCheck(this)" style="width:16px;height:16px;accent-color:var(--accent);cursor:pointer">
               </td>
               <td style="padding:6px 8px">
-                <label for="auto_Vidros_Lanternas_e_Retrovisores" style="cursor:pointer;font-size:13px;font-weight:500;color:var(--text)">Vidros, Lanternas e Retrovisores</label>
+                <label for="auto_Vidros_Lanternas_e_Retrovisores" style="cursor:pointer;font-size:13px;font-weight:500;color:var(--text)">Vidros, Faróis, Lanternas e Retrovisores</label>
               </td>
               <td style="padding:6px 8px;width:140px">
-                <input type="text" placeholder="R$ valor" data-tipo="auto" data-nome="Vidros, Lanternas e Retrovisores" class="cobert-valor" disabled
+                <input type="text" placeholder="R$ valor" data-tipo="auto" data-nome="Vidros, Faróis, Lanternas e Retrovisores" class="cobert-valor" disabled
                   style="width:100%;padding:4px 8px;font-size:12px;border:1px solid var(--border);border-radius:4px;background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;outline:none"
                   oninput="this.closest('tr').querySelector('input[type=checkbox]').checked=!!this.value;toggleCobertCheck(this.closest('tr').querySelector('input[type=checkbox]'))">
               </td>
@@ -1985,9 +1985,9 @@ input[type=range]{width:100%;accent-color:var(--accent)}
                   <option>Zurich</option><option>Outra</option>
                 </select>
               </div>
-              <div class="field"><label>Prêmio anual (R$)</label><input type="number" id="pp_auto_premio" placeholder="0,00" min="0" step="0.01" style="width:100%;padding:9px 12px;font-size:13px;font-family:'DM Sans',sans-serif;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--bg);color:var(--text);outline:none;box-sizing:border-box"></div>
+              <div class="field"><label>Prêmio total — base de cálculo (R$)</label><input type="number" id="pp_auto_premio" placeholder="0,00" min="0" step="0.01" style="width:100%;padding:9px 12px;font-size:13px;font-family:'DM Sans',sans-serif;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--bg);color:var(--text);outline:none;box-sizing:border-box"></div>
               <div class="field"><label>Franquia principal</label><input type="text" id="pp_auto_franquia" placeholder="Ex: R$ 2.500" style="width:100%;padding:9px 12px;font-size:13px;font-family:'DM Sans',sans-serif;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--bg);color:var(--text);outline:none;box-sizing:border-box"></div>
-              <div class="field"><label>Parcelamento</label><input type="text" id="pp_auto_parcelamento" placeholder="Ex: 12x no cartão" style="width:100%;padding:9px 12px;font-size:13px;font-family:'DM Sans',sans-serif;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--bg);color:var(--text);outline:none;box-sizing:border-box"></div>
+              <div class="field"><label>Parcelamento</label><input type="text" id="pp_auto_parcelamento" placeholder="Ex: 12x — o sistema calcula o valor" style="width:100%;padding:9px 12px;font-size:13px;font-family:'DM Sans',sans-serif;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--bg);color:var(--text);outline:none;box-sizing:border-box"></div>
             </div>
           </div>
 
@@ -2041,7 +2041,7 @@ input[type=range]{width:100%;accent-color:var(--accent)}
             <div style="display:flex;flex-direction:column;gap:6px;margin-bottom:14px">
               <div class="prop-rc-row"><label><input type="checkbox" id="ass_24h" data-tipo="auto" style="accent-color:var(--accent)"> Assistência 24h</label><input type="text" id="ass_24h_val" placeholder="km de guincho" class="prop-rc-input"></div>
               <div class="prop-rc-row"><label><input type="checkbox" id="ass_reserva" data-tipo="auto" style="accent-color:var(--accent)"> Carro Reserva</label><input type="text" id="ass_reserva_val" placeholder="qtd. de dias" class="prop-rc-input"></div>
-              <div class="prop-rc-row"><label><input type="checkbox" id="ass_vidros" data-tipo="auto" style="accent-color:var(--accent)"> Vidros, Lanternas e Retrovisores</label><input type="text" id="ass_vidros_val" placeholder="franquia" class="prop-rc-input"></div>
+              <div class="prop-rc-row"><label><input type="checkbox" id="ass_vidros" data-tipo="auto" style="accent-color:var(--accent)"> Vidros, Faróis, Lanternas e Retrovisores</label><input type="text" id="ass_vidros_val" placeholder="franquia" class="prop-rc-input"></div>
               <div class="prop-rc-row"><label><input type="checkbox" id="ass_pneu" data-tipo="auto" style="accent-color:var(--accent)"> Pneu Furado</label><span></span></div>
               <div class="prop-rc-row"><label><input type="checkbox" id="ass_chaveiro" data-tipo="auto" style="accent-color:var(--accent)"> Chaveiro</label><span></span></div>
             </div>
@@ -6085,7 +6085,7 @@ function gerarTextoLocal(coberturas, tipoSeguro, contexto){
       desc:'Em caso de morte num acidente envolvendo o veículo, a família do titular ou passageiro recebe uma indenização no valor contratado.'},
     'invalidez':{e:'♿',nome:'APP — Invalidez Permanente',
       desc:'Se você ou um passageiro ficar com sequela permanente por acidente, recebe indenização proporcional à gravidade da sequela.'},
-    'vidros':{e:'🪟',nome:'Vidros, Lanternas e Retrovisores',
+    'vidros':{e:'🪟',nome:'Vidros, Faróis, Lanternas e Retrovisores',
       desc:'Cobre a troca de:\n• Para-brisa\n• Vidros laterais e traseiro\n• Lanternas dianteiras e traseiras\n• Retrovisores\n• Faróis auxiliares\n\nSe uma pedra jogada por um caminhão quebrar seu para-brisa, ou se algum impacto danificar esses itens, você paga uma franquia bem menor (específica pra vidros) e a seguradora resolve. Não precisa acionar a cobertura principal do carro.'},
     'faróis':{e:'💡',nome:'Faróis',
       desc:'Cobre a substituição dos faróis do veículo danificados por impacto ou acidente. Faróis podem ser bem caros de repor, e essa cobertura garante que você não pague o valor cheio.'},
@@ -6694,7 +6694,11 @@ function getDadosAutoCompleto(){
   const cia=g('pp_auto_cia')?.value||'';
   const premio=parseFloat(g('pp_auto_premio')?.value||0)||0;
   const franquia=g('pp_auto_franquia')?.value.trim()||'';
-  const parcelamento=g('pp_auto_parcelamento')?.value.trim()||'';
+  const parcelamentoRaw=g('pp_auto_parcelamento')?.value.trim()||'';
+  // Calcular valor da parcela
+  const nParcelas=parseInt((parcelamentoRaw.match(/(\d+)\s*[xX×]/)||[])[1])||0;
+  const valorParcela=nParcelas>0&&premio>0?premio/nParcelas:0;
+  const parcelamento=parcelamentoRaw;
   const notas=g('pp_auto_notas')?.value.trim()||'';
   const extras=g('pp_auto_extras')?.value.trim()||'';
   const principal=getPrincipalAuto();
@@ -6712,7 +6716,7 @@ function getDadosAutoCompleto(){
   const ass=[];
   if(g('ass_24h')?.checked){const v=g('ass_24h_val')?.value.trim();ass.push({nome:'Assistência 24h',extra:v?v+' km de guincho':'',e:'🛠️',desc:'Disponível a qualquer hora. Cobre pane seca, pane elétrica, bateria, chaveiro e guincho.',ex:'Carro enguiçou às 2h na estrada? É só ligar e o socorro vem.'});}
   if(g('ass_reserva')?.checked){const v=g('ass_reserva_val')?.value.trim();ass.push({nome:'Carro Reserva',extra:v?v+' dias':'',e:'🚙',desc:'Enquanto seu carro está na oficina por sinistro, você recebe um carro emprestado.',ex:'Carro ficou 10 dias na funilaria? Você usou o reserva sem custo adicional.'});}
-  if(g('ass_vidros')?.checked){const v=g('ass_vidros_val')?.value.trim();ass.push({nome:'Vidros, Lanternas e Retrovisores',extra:v?'franquia '+v:'',e:'🪟',desc:'Cobre troca de para-brisa, vidros, lanternas e retrovisores com franquia reduzida.',ex:'Pedra quebrou seu para-brisa? Você paga só a franquia específica.'});}
+  if(g('ass_vidros')?.checked){const v=g('ass_vidros_val')?.value.trim();ass.push({nome:'Vidros, Faróis, Lanternas e Retrovisores',extra:v?'franquia '+v:'',e:'🪟',desc:'Cobre troca de para-brisa, vidros, lanternas e retrovisores com franquia reduzida.',ex:'Pedra quebrou seu para-brisa? Você paga só a franquia específica.'});}
   if(g('ass_pneu')?.checked) ass.push({nome:'Pneu Furado',extra:'',e:'🛞',desc:'Assistência para troca de pneu furado onde você estiver.',ex:'Pneu furou na rodovia? A assistência vem e faz a troca no local.'});
   if(g('ass_chaveiro')?.checked) ass.push({nome:'Chaveiro',extra:'',e:'🔑',desc:'Trancou a chave dentro do carro? A assistência resolve sem custo.',ex:'Chave dentro do carro? Chama pelo seguro — sem taxa extra.'});
   const ext=[];
@@ -6746,9 +6750,10 @@ function gerarPropostaAuto(){
   </div>`;
   if(d.premio>0||d.franquia||d.parcelamento){
     html+=`<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:16px">`;
-    if(d.premio>0) html+=`<div style="background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:10px;text-align:center"><div style="font-size:9px;font-weight:700;text-transform:uppercase;color:var(--text-3)">Prêmio anual</div><div style="font-size:16px;font-weight:700;color:var(--accent);margin-top:3px">R$ ${d.premio.toLocaleString('pt-BR',{minimumFractionDigits:2})}</div>${pm>0?`<div style="font-size:10px;color:var(--text-3)">≈ R$ ${pm.toLocaleString('pt-BR',{minimumFractionDigits:2})}/mês</div>`:''}</div>`;
+    // Mostrar apenas parcela, não o total
+    if(d.valorParcela>0) html+=`<div style="background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:10px;text-align:center"><div style="font-size:9px;font-weight:700;text-transform:uppercase;color:var(--text-3)">Valor por parcela</div><div style="font-size:18px;font-weight:700;color:var(--accent);margin-top:3px">R$ ${d.valorParcela.toLocaleString('pt-BR',{minimumFractionDigits:2})}</div><div style="font-size:10px;color:var(--text-3)">${d.parcelamento}</div></div>`;
+    else if(d.parcelamento) html+=`<div style="background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:10px;text-align:center"><div style="font-size:9px;font-weight:700;text-transform:uppercase;color:var(--text-3)">Parcelamento</div><div style="font-size:14px;font-weight:700;margin-top:3px">${d.parcelamento}</div></div>`;
     if(d.franquia) html+=`<div style="background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:10px;text-align:center"><div style="font-size:9px;font-weight:700;text-transform:uppercase;color:var(--text-3)">Franquia</div><div style="font-size:14px;font-weight:700;margin-top:3px">${d.franquia}</div></div>`;
-    if(d.parcelamento) html+=`<div style="background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:10px;text-align:center"><div style="font-size:9px;font-weight:700;text-transform:uppercase;color:var(--text-3)">Parcelamento</div><div style="font-size:13px;font-weight:700;margin-top:3px">${d.parcelamento}</div></div>`;
     html+=`</div>`;
   }
   html+=sec('🛡️ Cobertura Principal');
@@ -6812,7 +6817,7 @@ function imprimirPDFAuto(){
 @media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact}}</style></head><body><div class="page">
 <div class="hd"><div><div class="br">Creta Seguros</div></div><div class="hr"><strong>🚗 Seguro Auto</strong>Data: ${hoje}<br>Vigência: 12 meses<br>Proposta confidencial</div></div>
 <div class="cl"><div class="cn">${d.nome}</div><div class="cs">${d.cidade?'📍 '+d.cidade+'<br>':''}${d.veiculo?'🚗 '+d.veiculo+(d.placa?' · '+d.placa:'')+'<br>':''}${d.cia?'🏢 Seguradora: <strong>'+d.cia+'</strong>':''}</div></div>
-${d.premio>0||d.franquia||d.parcelamento?`<div class="ig">${d.premio>0?`<div class="ib"><div class="il">Prêmio anual</div><div class="iv">R$ ${d.premio.toLocaleString('pt-BR',{minimumFractionDigits:2})}</div>${pm>0?`<div class="is">≈ R$ ${pm.toLocaleString('pt-BR',{minimumFractionDigits:2})}/mês</div>`:''}</div>`:''}${d.franquia?`<div class="ib"><div class="il">Franquia</div><div class="iv">${d.franquia}</div></div>`:''}${d.parcelamento?`<div class="ib"><div class="il">Parcelamento</div><div class="iv">${d.parcelamento}</div></div>`:''}</div>`:''}
+${d.valorParcela>0||d.franquia?`<div class="ig">${d.valorParcela>0?`<div class="ib"><div class="il">Valor por parcela</div><div class="iv" style="color:#2A3568">R$ ${d.valorParcela.toLocaleString('pt-BR',{minimumFractionDigits:2})}</div><div class="is">${d.parcelamento}</div></div>`:d.parcelamento?`<div class="ib"><div class="il">Parcelamento</div><div class="iv">${d.parcelamento}</div></div>`:''}${d.franquia?`<div class="ib"><div class="il">Franquia</div><div class="iv">${d.franquia}</div></div>`:''}</div>`:''}
 <div class="st">🛡️ Cobertura Principal</div>
 <div class="pb"><div class="pl">✅ ${d.principal.label}${d.fipe?' — '+d.fipe:''}</div><div class="pd">${d.principal.desc}</div>${d.principal.comp?`<div class="tg"><span>🚗 Colisão</span><span>🔒 Furto e Roubo</span><span>🔥 Incêndio</span><span>⛈️ Fenômenos da Natureza</span><span>💥 Perda Total</span></div>`:''}</div>
 ${d.rc.length?`<div class="st">👥 Responsabilidade Civil</div>${rcH}`:''}
@@ -6952,9 +6957,10 @@ function gerarPropostaResid(){
 
   if(d.premio>0||d.franquia||d.parcelamento){
     html+=`<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:16px">`;
-    if(d.premio>0) html+=`<div style="background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:10px;text-align:center"><div style="font-size:9px;font-weight:700;text-transform:uppercase;color:var(--text-3)">Prêmio anual</div><div style="font-size:16px;font-weight:700;color:var(--accent);margin-top:3px">R$ ${d.premio.toLocaleString('pt-BR',{minimumFractionDigits:2})}</div>${pm>0?`<div style="font-size:10px;color:var(--text-3)">≈ R$ ${pm.toLocaleString('pt-BR',{minimumFractionDigits:2})}/mês</div>`:''}</div>`;
+    // Mostrar apenas parcela, não o total
+    if(d.valorParcela>0) html+=`<div style="background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:10px;text-align:center"><div style="font-size:9px;font-weight:700;text-transform:uppercase;color:var(--text-3)">Valor por parcela</div><div style="font-size:18px;font-weight:700;color:var(--accent);margin-top:3px">R$ ${d.valorParcela.toLocaleString('pt-BR',{minimumFractionDigits:2})}</div><div style="font-size:10px;color:var(--text-3)">${d.parcelamento}</div></div>`;
+    else if(d.parcelamento) html+=`<div style="background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:10px;text-align:center"><div style="font-size:9px;font-weight:700;text-transform:uppercase;color:var(--text-3)">Parcelamento</div><div style="font-size:14px;font-weight:700;margin-top:3px">${d.parcelamento}</div></div>`;
     if(d.franquia) html+=`<div style="background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:10px;text-align:center"><div style="font-size:9px;font-weight:700;text-transform:uppercase;color:var(--text-3)">Franquia</div><div style="font-size:14px;font-weight:700;margin-top:3px">${d.franquia}</div></div>`;
-    if(d.parcelamento) html+=`<div style="background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:10px;text-align:center"><div style="font-size:9px;font-weight:700;text-transform:uppercase;color:var(--text-3)">Parcelamento</div><div style="font-size:13px;font-weight:700;margin-top:3px">${d.parcelamento}</div></div>`;
     html+=`</div>`;
   }
 
@@ -7011,7 +7017,7 @@ function imprimirPDFResid(){
 @media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact}}</style></head><body><div class="page">
 <div class="hd"><div><div class="br">Creta Seguros</div></div><div class="hr"><strong>🏠 Seguro Residencial</strong>Data: ${hoje}<br>Vigência: 12 meses<br>Proposta confidencial</div></div>
 <div class="cl"><div class="cn">${d.nome}</div><div class="cs">${d.cidade?'📍 '+d.cidade+'<br>':''}${d.imovel?'🏠 '+d.imovel+(d.cep?' · CEP '+d.cep:'')+'<br>':''}${d.cia?'🏢 Seguradora: <strong>'+d.cia+'</strong>':''}</div></div>
-${d.premio>0||d.franquia||d.parcelamento?`<div class="ig">${d.premio>0?`<div class="ib"><div class="il">Prêmio anual</div><div class="iv">R$ ${d.premio.toLocaleString('pt-BR',{minimumFractionDigits:2})}</div>${pm>0?`<div class="is">≈ R$ ${pm.toLocaleString('pt-BR',{minimumFractionDigits:2})}/mês</div>`:''}</div>`:''}${d.franquia?`<div class="ib"><div class="il">Franquia</div><div class="iv">${d.franquia}</div></div>`:''}${d.parcelamento?`<div class="ib"><div class="il">Parcelamento</div><div class="iv">${d.parcelamento}</div></div>`:''}</div>`:''}
+${d.valorParcela>0||d.franquia?`<div class="ig">${d.valorParcela>0?`<div class="ib"><div class="il">Valor por parcela</div><div class="iv" style="color:#2A3568">R$ ${d.valorParcela.toLocaleString('pt-BR',{minimumFractionDigits:2})}</div><div class="is">${d.parcelamento}</div></div>`:d.parcelamento?`<div class="ib"><div class="il">Parcelamento</div><div class="iv">${d.parcelamento}</div></div>`:''}${d.franquia?`<div class="ib"><div class="il">Franquia</div><div class="iv">${d.franquia}</div></div>`:''}</div>`:''}
 ${cobH?`<div class="st">🏠 Coberturas Incluídas</div>${cobH}`:''}
 ${d.ext.length?`<div class="st">💼 Coberturas Extras</div>${exH}`:''}
 ${d.notas?`<div class="nt">📌 <strong>Observações:</strong> ${d.notas}</div>`:''}
@@ -7032,9 +7038,9 @@ function copiarWhatsAppResid(){
   if(d.imovel) t+=`🏠 ${d.imovel}${d.cep?' · CEP '+d.cep:''}\n`;
   if(d.cia) t+=`🏢 ${d.cia}\n`;
   t+='\n';
-  if(d.premio>0) t+=`💰 *Prêmio anual: R$ ${d.premio.toLocaleString('pt-BR',{minimumFractionDigits:2})}*${pm>0?' (≈ R$ '+pm.toLocaleString('pt-BR',{minimumFractionDigits:2})+'/mês)':''}\n`;
+  if(d.valorParcela>0) t+=`💰 *${d.parcelamento} de R$ ${d.valorParcela.toLocaleString('pt-BR',{minimumFractionDigits:2})}*\n`;
+  else if(d.parcelamento) t+=`💳 Parcelamento: ${d.parcelamento}\n`;
   if(d.franquia) t+=`⚠️ Franquia: ${d.franquia}\n`;
-  if(d.parcelamento) t+=`💳 Parcelamento: ${d.parcelamento}\n`;
   t+=`📅 Vigência: 12 meses\n\n🏠 *COBERTURAS INCLUÍDAS*\n\n`;
   [...d.cobs,...d.ass].forEach(i=>{t+=`${i.e} *${i.nome}*${i.valor?' — '+i.valor:''}${i.extra?' — '+i.extra:''}\n${i.desc}\n👉 ${i.ex}\n\n`;});
   if(d.ext.length) t+=`💼 *Extras:* ${d.ext.join(' · ')}\n\n`;
