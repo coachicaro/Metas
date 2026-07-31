@@ -5797,14 +5797,25 @@ function gerarLinkSeguro(tipo){
 }
 
 // Verificar se há proposta na URL ao carregar
-window.addEventListener('load',function(){
+window.addEventListener('load',async function(){
   const params=new URLSearchParams(window.location.search);
+  const pid=params.get('pid');
   const propParam=params.get('prop');
-  if(propParam){
+  if(pid){
+    // Link curto — buscar no banco
+    try{
+      const{data,error}=await db.from('propostas_link').select('dados').eq('id',pid).single();
+      if(error||!data) throw new Error('não encontrado');
+      const dados=JSON.parse(data.dados);
+      setTimeout(()=>abrirPropostaLink(dados),300);
+    }catch(e){
+      document.body.innerHTML='<div style="font-family:sans-serif;padding:40px;text-align:center;color:#666"><h2>Proposta não encontrada</h2><p>O link pode ter expirado ou sido removido.</p></div>';
+    }
+  } else if(propParam){
+    // Link antigo com dados na URL (fallback)
     try{
       const dados=JSON.parse(decodeURIComponent(atob(propParam)));
-      // Abrir PDF direto se for link de proposta
-      setTimeout(()=>abrirPropostaLink(dados),500);
+      setTimeout(()=>abrirPropostaLink(dados),300);
     }catch(e){}
   }
 });
@@ -5896,9 +5907,9 @@ body{font-family:'DM Sans',sans-serif;color:#1A1917;background:#fff;font-size:10
 </div>
 
 ${d.premio>0||d.franquia||d.parcelamento?`<div class="ig">
-  ${d.premio>0?`<div class="ib"><div class="il">Prêmio anual</div><div class="iv">R$ ${(+d.premio).toLocaleString('pt-BR',{minimumFractionDigits:2})}</div>${pm>0?`<div class="is">≈ R$ ${pm.toLocaleString('pt-BR',{minimumFractionDigits:2})}/mês</div>`:''}</div>`:''}
+  ${(()=>{const nP=parseInt((d.parcelamento||'').match(/(\d+)/)||[0,0])[1]||0;const vP=nP>0&&d.premio>0?(+d.premio)/nP:0;return vP>0?`<div class="ib" style="border-color:#2A3568"><div class="il">Valor por parcela</div><div class="iv" style="font-size:20px;color:#2A3568">R$ ${vP.toLocaleString('pt-BR',{minimumFractionDigits:2})}</div><div class="is">${d.parcelamento}</div></div>`:d.parcelamento?`<div class="ib"><div class="il">Parcelamento</div><div class="iv">${d.parcelamento}</div></div>`:''})()}
   ${d.franquia?`<div class="ib"><div class="il">Franquia</div><div class="iv">${d.franquia}</div></div>`:''}
-  ${d.parcelamento?`<div class="ib"><div class="il">Parcelamento</div><div class="iv">${d.parcelamento}</div></div>`:''}
+  ${(()=>{const nP=parseInt((d.parcelamento||'').match(/(\d+)/)||[0,0])[1]||0;const vP=nP>0&&d.premio>0?(+d.premio)/nP:0;return d.premio>0&&vP>0?`<div class="ib"><div class="il">Prêmio total</div><div class="iv" style="font-size:13px;color:#9C9890">R$ ${(+d.premio).toLocaleString('pt-BR',{minimumFractionDigits:2})}</div></div>`:'';})()}
 </div>`:''}
 
 ${d.principal?`<div class="st">🛡️ Cobertura Principal</div>
@@ -6014,8 +6025,15 @@ function gerarPropostaAuto(){
   if(d.premio>0||d.franquia||d.parcelamento){
     html+=`<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:16px">`;
     // Mostrar apenas parcela, não o total
-    if(d.valorParcela>0) html+=`<div style="background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:10px;text-align:center"><div style="font-size:9px;font-weight:700;text-transform:uppercase;color:var(--text-3)">Valor por parcela</div><div style="font-size:18px;font-weight:700;color:var(--accent);margin-top:3px">R$ ${d.valorParcela.toLocaleString('pt-BR',{minimumFractionDigits:2})}</div><div style="font-size:10px;color:var(--text-3)">${d.parcelamento}</div></div>`;
-    else if(d.parcelamento) html+=`<div style="background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:10px;text-align:center"><div style="font-size:9px;font-weight:700;text-transform:uppercase;color:var(--text-3)">Parcelamento</div><div style="font-size:14px;font-weight:700;margin-top:3px">${d.parcelamento}</div></div>`;
+    if(d.valorParcela>0){
+      html+=`<div style="background:#EEF2FF;border:2px solid var(--accent);border-radius:6px;padding:12px;text-align:center;grid-column:span 2">
+        <div style="font-size:9px;font-weight:700;text-transform:uppercase;color:var(--accent)">${d.parcelamento}</div>
+        <div style="font-size:26px;font-weight:700;color:var(--accent);margin-top:2px">R$ ${d.valorParcela.toLocaleString('pt-BR',{minimumFractionDigits:2})}</div>
+        <div style="font-size:10px;color:var(--text-3);margin-top:2px">Prêmio total: R$ ${d.premio.toLocaleString('pt-BR',{minimumFractionDigits:2})}</div>
+      </div>`;
+    } else if(d.parcelamento){
+      html+=`<div style="background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:10px;text-align:center"><div style="font-size:9px;font-weight:700;text-transform:uppercase;color:var(--text-3)">Parcelamento</div><div style="font-size:14px;font-weight:700;margin-top:3px">${d.parcelamento}</div></div>`;
+    }
     if(d.franquia) html+=`<div style="background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:10px;text-align:center"><div style="font-size:9px;font-weight:700;text-transform:uppercase;color:var(--text-3)">Franquia</div><div style="font-size:14px;font-weight:700;margin-top:3px">${d.franquia}</div></div>`;
     html+=`</div>`;
   }
@@ -6105,7 +6123,9 @@ function copiarWhatsAppAuto(){
   if(d.veiculo)t+=`🚗 ${d.veiculo}${d.placa?' · '+d.placa:''}\n`;
   if(d.cia)t+=`🏢 ${d.cia}\n`;
   t+='\n';
-  if(d.premio>0)t+=`💰 *Prêmio anual: R$ ${d.premio.toLocaleString('pt-BR',{minimumFractionDigits:2})}*${pm>0?' (≈ R$ '+pm.toLocaleString('pt-BR',{minimumFractionDigits:2})+'/mês)':''}\n`;
+  if(d.valorParcela>0) t+=`💰 *${d.parcelamento} de R$ ${d.valorParcela.toLocaleString('pt-BR',{minimumFractionDigits:2})}*\n`;
+  else if(d.parcelamento) t+=`💳 ${d.parcelamento}\n`;
+  if(d.premio>0&&d.valorParcela>0) t+=`_(prêmio total: R$ ${d.premio.toLocaleString('pt-BR',{minimumFractionDigits:2})})_\n`;
   if(d.franquia)t+=`⚠️ Franquia: ${d.franquia}\n`;
   if(d.parcelamento)t+=`💳 Parcelamento: ${d.parcelamento}\n`;
   t+=`📅 Vigência: 12 meses\n\n🛡️ *COBERTURAS*\n\n`;
@@ -6122,12 +6142,23 @@ function copiarWhatsAppAuto(){
   });
 }
 
-function gerarLinkAuto(){
+async function gerarLinkAuto(){
   const d=getDadosAutoCompleto();
   if(!d.nome){showToast('Informe o nome do cliente.','error');return;}
-  const encoded=btoa(encodeURIComponent(JSON.stringify({...d,tipo:'auto'})));
-  const link=`${window.location.origin}${window.location.pathname}?prop=${encoded}`;
-  navigator.clipboard.writeText(link).then(()=>showToast('🔗 Link copiado!','success')).catch(()=>prompt('Copie o link:',link));
+  showToast('⏳ Gerando link...','');
+  try{
+    const payload={tipo:'auto',dados:JSON.stringify({...d,tipo:'auto'}),created_at:new Date().toISOString()};
+    const{data,error}=await db.from('propostas_link').insert([payload]).select('id').single();
+    if(error) throw error;
+    const link=`${window.location.origin}${window.location.pathname}?pid=${data.id}`;
+    navigator.clipboard.writeText(link).then(()=>showToast('🔗 Link copiado!','success')).catch(()=>prompt('Copie o link:',link));
+  }catch(e){
+    // Fallback: URL curta com compressão
+    const d2={...d,tipo:'auto'};
+    const encoded=btoa(encodeURIComponent(JSON.stringify(d2)));
+    const link=`${window.location.origin}${window.location.pathname}?prop=${encoded}`;
+    navigator.clipboard.writeText(link).then(()=>showToast('🔗 Link copiado!','success')).catch(()=>prompt('Copie o link:',link));
+  }
 }
 
 function copiarTextoPropostaSeguro(tipo){
@@ -6221,8 +6252,15 @@ function gerarPropostaResid(){
   if(d.premio>0||d.franquia||d.parcelamento){
     html+=`<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:16px">`;
     // Mostrar apenas parcela, não o total
-    if(d.valorParcela>0) html+=`<div style="background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:10px;text-align:center"><div style="font-size:9px;font-weight:700;text-transform:uppercase;color:var(--text-3)">Valor por parcela</div><div style="font-size:18px;font-weight:700;color:var(--accent);margin-top:3px">R$ ${d.valorParcela.toLocaleString('pt-BR',{minimumFractionDigits:2})}</div><div style="font-size:10px;color:var(--text-3)">${d.parcelamento}</div></div>`;
-    else if(d.parcelamento) html+=`<div style="background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:10px;text-align:center"><div style="font-size:9px;font-weight:700;text-transform:uppercase;color:var(--text-3)">Parcelamento</div><div style="font-size:14px;font-weight:700;margin-top:3px">${d.parcelamento}</div></div>`;
+    if(d.valorParcela>0){
+      html+=`<div style="background:#EEF2FF;border:2px solid var(--accent);border-radius:6px;padding:12px;text-align:center;grid-column:span 2">
+        <div style="font-size:9px;font-weight:700;text-transform:uppercase;color:var(--accent)">${d.parcelamento}</div>
+        <div style="font-size:26px;font-weight:700;color:var(--accent);margin-top:2px">R$ ${d.valorParcela.toLocaleString('pt-BR',{minimumFractionDigits:2})}</div>
+        <div style="font-size:10px;color:var(--text-3);margin-top:2px">Prêmio total: R$ ${d.premio.toLocaleString('pt-BR',{minimumFractionDigits:2})}</div>
+      </div>`;
+    } else if(d.parcelamento){
+      html+=`<div style="background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:10px;text-align:center"><div style="font-size:9px;font-weight:700;text-transform:uppercase;color:var(--text-3)">Parcelamento</div><div style="font-size:14px;font-weight:700;margin-top:3px">${d.parcelamento}</div></div>`;
+    }
     if(d.franquia) html+=`<div style="background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:10px;text-align:center"><div style="font-size:9px;font-weight:700;text-transform:uppercase;color:var(--text-3)">Franquia</div><div style="font-size:14px;font-weight:700;margin-top:3px">${d.franquia}</div></div>`;
     html+=`</div>`;
   }
@@ -6316,12 +6354,21 @@ function copiarWhatsAppResid(){
   });
 }
 
-function gerarLinkResid(){
+async function gerarLinkResid(){
   const d=getDadosResidCompleto();
   if(!d.nome){showToast('Informe o nome do cliente.','error');return;}
-  const encoded=btoa(encodeURIComponent(JSON.stringify(d)));
-  const link=`${window.location.origin}${window.location.pathname}?prop=${encoded}`;
-  navigator.clipboard.writeText(link).then(()=>showToast('🔗 Link copiado!','success')).catch(()=>prompt('Copie o link:',link));
+  showToast('⏳ Gerando link...','');
+  try{
+    const payload={tipo:'resid',dados:JSON.stringify(d),created_at:new Date().toISOString()};
+    const{data,error}=await db.from('propostas_link').insert([payload]).select('id').single();
+    if(error) throw error;
+    const link=`${window.location.origin}${window.location.pathname}?pid=${data.id}`;
+    navigator.clipboard.writeText(link).then(()=>showToast('🔗 Link copiado!','success')).catch(()=>prompt('Copie o link:',link));
+  }catch(e){
+    const encoded=btoa(encodeURIComponent(JSON.stringify(d)));
+    const link=`${window.location.origin}${window.location.pathname}?prop=${encoded}`;
+    navigator.clipboard.writeText(link).then(()=>showToast('🔗 Link copiado!','success')).catch(()=>prompt('Copie o link:',link));
+  }
 }
 
 // ── DEFAULTS PROPOSTA AUTO ─────────────────────────────────────────────
