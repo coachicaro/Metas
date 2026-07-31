@@ -2248,7 +2248,8 @@ function showView(id){
   if(id==='renov_analise') renderAnaliseRenovacoes();
   if(id==='renov_kanban') renderKanban();
   if(id==='ote') renderOTE();
-  if(id==='prop_auto'||id==='prop_resid') { /* ready */ }
+  if(id==='prop_auto'){ initPropostaAutoDefaults(); }
+  if(id==='prop_resid') { /* ready */ }
   if(id==='cobert_auto'||id==='cobert_resid') { /* ready */ }
 }
 
@@ -6321,6 +6322,54 @@ function gerarLinkResid(){
   const encoded=btoa(encodeURIComponent(JSON.stringify(d)));
   const link=`${window.location.origin}${window.location.pathname}?prop=${encoded}`;
   navigator.clipboard.writeText(link).then(()=>showToast('🔗 Link copiado!','success')).catch(()=>prompt('Copie o link:',link));
+}
+
+// ── DEFAULTS PROPOSTA AUTO ─────────────────────────────────────────────
+function initPropostaAutoDefaults(){
+  // Só pré-preenche se os campos estiverem vazios (não sobrescreve o que o usuário já digitou)
+  const g=id=>document.getElementById(id);
+
+  // Cobertura principal: Compreensiva
+  const rbComp=g('rb_compreensiva');
+  if(rbComp&&!document.querySelector('input[name="auto_principal"]:checked')){
+    rbComp.checked=true;
+    atualizarLblPrincipal();
+  }
+
+  // FIPE: 100%
+  const rbFipe=g('rb_fipe100');
+  if(rbFipe&&!document.querySelector('input[name="auto_fipe"]:checked')){
+    rbFipe.checked=true;
+  }
+
+  // Danos Materiais: R$ 250.000
+  const rcDm=g('rc_dm'); const rcDmVal=g('rc_dm_val');
+  if(rcDm&&!rcDm.checked){ rcDm.checked=true; }
+  if(rcDmVal&&!rcDmVal.value) rcDmVal.value='R$ 250.000';
+
+  // Danos Corporais: R$ 250.000
+  const rcDc=g('rc_dc'); const rcDcVal=g('rc_dc_val');
+  if(rcDc&&!rcDc.checked){ rcDc.checked=true; }
+  if(rcDcVal&&!rcDcVal.value) rcDcVal.value='R$ 250.000';
+
+  // Danos Morais: R$ 10.000
+  const rcMo=g('rc_mo'); const rcMoVal=g('rc_mo_val');
+  if(rcMo&&!rcMo.checked){ rcMo.checked=true; }
+  if(rcMoVal&&!rcMoVal.value) rcMoVal.value='R$ 10.000';
+
+  // APP Morte e Invalidez: R$ 5.000
+  const rcApp=g('rc_app'); const rcAppVal=g('rc_app_val');
+  if(rcApp&&!rcApp.checked){ rcApp.checked=true; }
+  if(rcAppVal&&!rcAppVal.value) rcAppVal.value='R$ 5.000';
+
+  // Carro Reserva: 30 dias
+  const assRes=g('ass_reserva'); const assResVal=g('ass_reserva_val');
+  if(assRes&&!assRes.checked){ assRes.checked=true; }
+  if(assResVal&&!assResVal.value) assResVal.value='30';
+
+  // Vidros, Faróis, Lanternas e Retrovisores
+  const assVid=g('ass_vidros');
+  if(assVid&&!assVid.checked){ assVid.checked=true; }
 }
 
 </script>
