@@ -440,6 +440,15 @@ input[type=range]{width:100%;accent-color:var(--accent)}
 .prop-rc-input{width:130px;padding:4px 8px;font-size:12px;font-family:'DM Sans',sans-serif;border:1px solid var(--border);border-radius:4px;background:var(--surface);color:var(--text);outline:none;flex-shrink:0}
 .prop-rc-input:focus{border-color:var(--accent)}
 
+
+.parc-card{background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-sm);padding:8px 6px;text-align:center;cursor:pointer;transition:all .15s;user-select:none}
+.parc-card:hover{border-color:var(--accent);background:#EEF2FF}
+.parc-card.recomendado{border:2px solid var(--accent);background:#EEF2FF;position:relative}
+.parc-card.recomendado::after{content:'⭐';position:absolute;top:-8px;right:-6px;font-size:13px}
+.parc-card-n{font-size:11px;font-weight:700;color:var(--text-3);margin-bottom:2px}
+.parc-card-val{font-size:13px;font-weight:700;color:var(--accent)}
+.parc-card.recomendado .parc-card-val{font-size:14px}
+
 </style>
 </head>
 <body>
@@ -1249,9 +1258,17 @@ input[type=range]{width:100%;accent-color:var(--accent)}
                   <option>Zurich</option><option>Outra</option>
                 </select>
               </div>
-              <div class="field"><label>Prêmio total — base de cálculo (R$)</label><input type="number" id="pp_auto_premio" placeholder="0,00" min="0" step="0.01" style="width:100%;padding:9px 12px;font-size:13px;font-family:'DM Sans',sans-serif;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--bg);color:var(--text);outline:none;box-sizing:border-box"></div>
+              <div class="field"><label>Prêmio total — base de cálculo (R$)</label><input type="number" id="pp_auto_premio" placeholder="0,00" min="0" step="0.01" oninput="atualizarTabelaParcelamento()" style="width:100%;padding:9px 12px;font-size:13px;font-family:'DM Sans',sans-serif;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--bg);color:var(--text);outline:none;box-sizing:border-box"></div>
               <div class="field"><label>Franquia principal</label><input type="text" id="pp_auto_franquia" placeholder="Ex: R$ 2.500" style="width:100%;padding:9px 12px;font-size:13px;font-family:'DM Sans',sans-serif;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--bg);color:var(--text);outline:none;box-sizing:border-box"></div>
-              <div class="field"><label>Parcelamento</label><input type="text" id="pp_auto_parcelamento" placeholder="Ex: 12x — o sistema calcula o valor" style="width:100%;padding:9px 12px;font-size:13px;font-family:'DM Sans',sans-serif;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--bg);color:var(--text);outline:none;box-sizing:border-box"></div>
+              <div class="field" style="grid-column:span 2">
+                <label>Parcelamento</label>
+                <div id="pp_auto_parc_tabela" style="display:none;margin-top:6px">
+                  <div style="display:grid;grid-template-columns:repeat(6,1fr);gap:6px" id="pp_auto_parc_grid"></div>
+                  <div style="font-size:11px;color:var(--text-3);margin-top:6px">⭐ Clique para marcar o parcelamento recomendado ao cliente</div>
+                </div>
+                <div id="pp_auto_parc_vazio" style="font-size:12px;color:var(--text-3);padding:8px 0">Preencha o prêmio total acima para ver as opções de parcelamento</div>
+                <input type="hidden" id="pp_auto_parcelamento" value="">
+              </div>
             </div>
           </div>
 
@@ -2248,7 +2265,7 @@ function showView(id){
   if(id==='renov_analise') renderAnaliseRenovacoes();
   if(id==='renov_kanban') renderKanban();
   if(id==='ote') renderOTE();
-  if(id==='prop_auto'){ initPropostaAutoDefaults(); }
+  if(id==='prop_auto'){ initPropostaAutoDefaults(); setTimeout(atualizarTabelaParcelamento,100); }
   if(id==='prop_resid') { /* ready */ }
   if(id==='cobert_auto'||id==='cobert_resid') { /* ready */ }
 }
@@ -4349,9 +4366,9 @@ function processarRenovImport(file){
           if(row[3]){
             const apolice=String(row[3]).trim();
             const seguradoRaw=String(row[4]||'').trim();
-            const cia=String(row[7]||'').trim();
-            const ramoRaw=String(row[8]||'').trim();
-            if(!seguradoRaw||!cia) continue;
+            const cia=String(row[8]||'').trim();
+            const ramoRaw=String(row[9]||'').trim();
+            if(!seguradoRaw) continue;
 
             // Detectar endosso no nome do segurado
             const endMatch=seguradoRaw.match(/-\s*(END[\s\S]*)/i);
@@ -4510,8 +4527,8 @@ const KANBAN_COLS = [
   {id:'nao_iniciada',  label:'Não Iniciada',       cls:'kanban-col-nao',       icon:'⏳'},
   {id:'cotada',        label:'Cotada',              cls:'kanban-col-cotada',    icon:'📋'},
   {id:'negociacao',    label:'Em Negociação',       cls:'kanban-col-negociacao',icon:'💬'},
-  {id:'fechada',       label:'Fechada ✅',           cls:'kanban-col-fechada',   icon:'✅'},
   {id:'aguardando_transmissao', label:'Ag. Transmissão', cls:'kanban-col-aguardando', icon:'📤'},
+  {id:'fechada',       label:'Fechada ✅',           cls:'kanban-col-fechada',   icon:'✅'},
 ];
 
 let dragId=null;
@@ -4668,11 +4685,11 @@ async function processarHistoricoRenov(files){
           }
           if(row[3]){
             const sr=String(row[4]||'').trim();
-            const cia=String(row[7]||'').trim();
-            if(!sr||!cia) continue;
+            const cia=String(row[8]||'').trim();
+            if(!sr) continue;
             const em=sr.match(/-\s*(END[\s\S]*)/i);
             let ramo='Outro';
-            const ru=String(row[8]||'').toUpperCase();
+            const ru=String(row[9]||'').toUpperCase();
             if(ru.includes('AUTO')||ru.startsWith('01')) ramo='Auto';
             else if(ru.includes('RESID')||ru.startsWith('02')) ramo='Residencial';
             else if(ru.includes('EMPRES')||ru.startsWith('03')) ramo='Empresarial';
@@ -5748,6 +5765,15 @@ function imprimirPDFSeguro(tipo){
 .prop-rc-input{width:130px;padding:4px 8px;font-size:12px;font-family:'DM Sans',sans-serif;border:1px solid var(--border);border-radius:4px;background:var(--surface);color:var(--text);outline:none;flex-shrink:0}
 .prop-rc-input:focus{border-color:var(--accent)}
 
+
+.parc-card{background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-sm);padding:8px 6px;text-align:center;cursor:pointer;transition:all .15s;user-select:none}
+.parc-card:hover{border-color:var(--accent);background:#EEF2FF}
+.parc-card.recomendado{border:2px solid var(--accent);background:#EEF2FF;position:relative}
+.parc-card.recomendado::after{content:'⭐';position:absolute;top:-8px;right:-6px;font-size:13px}
+.parc-card-n{font-size:11px;font-weight:700;color:var(--text-3);margin-bottom:2px}
+.parc-card-val{font-size:13px;font-weight:700;color:var(--accent)}
+.parc-card.recomendado .parc-card-val{font-size:14px}
+
 </style></head><body><div class="page">
   <div class="header">
     <div><div class="header-brand">Syros Financial<small>Creta Seguros</small></div></div>
@@ -5890,6 +5916,15 @@ body{font-family:'DM Sans',sans-serif;color:#1A1917;background:#fff;font-size:10
 .btn-print{display:block;margin:24px auto 0;padding:13px 36px;background:#2A3568;color:#fff;border:none;border-radius:8px;font-size:14px;font-family:'DM Sans',sans-serif;font-weight:600;cursor:pointer;letter-spacing:.02em}
 .btn-print:hover{background:#1f2854}
 @media print{.btn-print{display:none}body{-webkit-print-color-adjust:exact;print-color-adjust:exact}}
+
+.parc-card{background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-sm);padding:8px 6px;text-align:center;cursor:pointer;transition:all .15s;user-select:none}
+.parc-card:hover{border-color:var(--accent);background:#EEF2FF}
+.parc-card.recomendado{border:2px solid var(--accent);background:#EEF2FF;position:relative}
+.parc-card.recomendado::after{content:'⭐';position:absolute;top:-8px;right:-6px;font-size:13px}
+.parc-card-n{font-size:11px;font-weight:700;color:var(--text-3);margin-bottom:2px}
+.parc-card-val{font-size:13px;font-weight:700;color:var(--accent)}
+.parc-card.recomendado .parc-card-val{font-size:14px}
+
 </style></head><body><div class="page">
 
 <div class="hd">
@@ -5972,10 +6007,11 @@ function getDadosAutoCompleto(){
   const premio=parseFloat(g('pp_auto_premio')?.value||0)||0;
   const franquia=g('pp_auto_franquia')?.value.trim()||'';
   const parcelamentoRaw=g('pp_auto_parcelamento')?.value.trim()||'';
-  // Calcular valor da parcela
-  const nParcelas=parseInt((parcelamentoRaw.match(/(\d+)\s*[xX×]/)||[])[1])||0;
+  // Calcular valor da parcela a partir da tabela
+  const nParcelas=parseInt((parcelamentoRaw.match(/(\d+)/)||[])[1])||0;
   const valorParcela=nParcelas>0&&premio>0?premio/nParcelas:0;
-  const parcelamento=parcelamentoRaw;
+  // Label do parcelamento
+  const parcelamento=nParcelas>0?`${nParcelas}x de R$ ${valorParcela.toLocaleString('pt-BR',{minimumFractionDigits:2})} sem juros`:'';
   const notas=g('pp_auto_notas')?.value.trim()||'';
   const extras=g('pp_auto_extras')?.value.trim()||'';
   const principal=getPrincipalAuto();
@@ -6103,7 +6139,16 @@ function imprimirPDFAuto(){
 .eg{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px}.ei{background:#EEF2FF;border:1px solid #C7D2FE;color:#2A3568;padding:3px 12px;border-radius:99px;font-size:10.5px;font-weight:500}
 .nt{background:#FFFBF0;border:1px solid #F0DFA0;border-radius:6px;padding:10px 14px;font-size:10.5px;color:#5C5850;margin-top:14px;line-height:1.7}
 .ft{margin-top:22px;padding-top:10px;border-top:1px solid #DDE0EC;font-size:8.5px;color:#9C9890;text-align:center;line-height:1.8}
-@media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact}}</style></head><body><div class="page">
+@media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact}}
+.parc-card{background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-sm);padding:8px 6px;text-align:center;cursor:pointer;transition:all .15s;user-select:none}
+.parc-card:hover{border-color:var(--accent);background:#EEF2FF}
+.parc-card.recomendado{border:2px solid var(--accent);background:#EEF2FF;position:relative}
+.parc-card.recomendado::after{content:'⭐';position:absolute;top:-8px;right:-6px;font-size:13px}
+.parc-card-n{font-size:11px;font-weight:700;color:var(--text-3);margin-bottom:2px}
+.parc-card-val{font-size:13px;font-weight:700;color:var(--accent)}
+.parc-card.recomendado .parc-card-val{font-size:14px}
+
+</style></head><body><div class="page">
 <div class="hd"><div><div class="br">Creta Seguros</div></div><div class="hr"><strong>🚗 Seguro Auto</strong>Data: ${hoje}<br>Vigência: 12 meses<br>Proposta confidencial</div></div>
 <div class="cl"><div class="cn">${d.nome}</div><div class="cs">${d.cidade?'📍 '+d.cidade+'<br>':''}${d.veiculo?'🚗 '+d.veiculo+(d.placa?' · '+d.placa:'')+'<br>':''}${d.cia?'🏢 Seguradora: <strong>'+d.cia+'</strong>':''}</div></div>
 ${(d.valorParcela>0||d.parcelamento||d.franquia)?`<div class="ig">
@@ -6328,7 +6373,16 @@ function imprimirPDFResid(){
 .eg{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px}.ei{background:#EEF2FF;border:1px solid #C7D2FE;color:#2A3568;padding:3px 12px;border-radius:99px;font-size:10.5px;font-weight:500}
 .nt{background:#FFFBF0;border:1px solid #F0DFA0;border-radius:6px;padding:10px 14px;font-size:10.5px;color:#5C5850;margin-top:14px;line-height:1.7}
 .ft{margin-top:22px;padding-top:10px;border-top:1px solid #DDE0EC;font-size:8.5px;color:#9C9890;text-align:center;line-height:1.8}
-@media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact}}</style></head><body><div class="page">
+@media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact}}
+.parc-card{background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-sm);padding:8px 6px;text-align:center;cursor:pointer;transition:all .15s;user-select:none}
+.parc-card:hover{border-color:var(--accent);background:#EEF2FF}
+.parc-card.recomendado{border:2px solid var(--accent);background:#EEF2FF;position:relative}
+.parc-card.recomendado::after{content:'⭐';position:absolute;top:-8px;right:-6px;font-size:13px}
+.parc-card-n{font-size:11px;font-weight:700;color:var(--text-3);margin-bottom:2px}
+.parc-card-val{font-size:13px;font-weight:700;color:var(--accent)}
+.parc-card.recomendado .parc-card-val{font-size:14px}
+
+</style></head><body><div class="page">
 <div class="hd"><div><div class="br">Creta Seguros</div></div><div class="hr"><strong>🏠 Seguro Residencial</strong>Data: ${hoje}<br>Vigência: 12 meses<br>Proposta confidencial</div></div>
 <div class="cl"><div class="cn">${d.nome}</div><div class="cs">${d.cidade?'📍 '+d.cidade+'<br>':''}${d.imovel?'🏠 '+d.imovel+(d.cep?' · CEP '+d.cep:'')+'<br>':''}${d.cia?'🏢 Seguradora: <strong>'+d.cia+'</strong>':''}</div></div>
 ${(d.valorParcela>0||d.parcelamento||d.franquia)?`<div class="ig">
@@ -6435,6 +6489,53 @@ function initPropostaAutoDefaults(){
   // Vidros, Faróis, Lanternas e Retrovisores
   const assVid=g('ass_vidros');
   if(assVid&&!assVid.checked){ assVid.checked=true; }
+}
+
+// ── TABELA DE PARCELAMENTO AUTO ────────────────────────────────────────
+function atualizarTabelaParcelamento(){
+  const premio=parseFloat(document.getElementById('pp_auto_premio')?.value||0)||0;
+  const grid=document.getElementById('pp_auto_parc_grid');
+  const tabela=document.getElementById('pp_auto_parc_tabela');
+  const vazio=document.getElementById('pp_auto_parc_vazio');
+  const inputParc=document.getElementById('pp_auto_parcelamento');
+
+  if(!premio||premio<=0){
+    if(tabela) tabela.style.display='none';
+    if(vazio) vazio.style.display='block';
+    if(inputParc) inputParc.value='';
+    return;
+  }
+
+  if(tabela) tabela.style.display='block';
+  if(vazio) vazio.style.display='none';
+
+  const atual=inputParc?.value||'';
+  const nAtual=parseInt(atual.match(/(\d+)/)?.[1]||0)||0;
+
+  grid.innerHTML='';
+  for(let n=1;n<=12;n++){
+    const val=premio/n;
+    const card=document.createElement('div');
+    card.className='parc-card'+(n===nAtual?' recomendado':'');
+    card.dataset.n=n;
+    card.innerHTML=`<div class="parc-card-n">${n}x</div><div class="parc-card-val">R$ ${val.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2})}</div>`;
+    card.onclick=()=>selecionarParcela(n,val,premio);
+    grid.appendChild(card);
+  }
+}
+
+function selecionarParcela(n, val, premio){
+  // Atualizar visual
+  document.querySelectorAll('.parc-card').forEach(c=>c.classList.remove('recomendado'));
+  const card=document.querySelector(`.parc-card[data-n="${n}"]`);
+  if(card) card.classList.add('recomendado');
+
+  // Salvar valor
+  const input=document.getElementById('pp_auto_parcelamento');
+  if(input) input.value=`${n}x`;
+
+  // Atualizar valorParcela no estado
+  showToast(`${n}x de R$ ${val.toLocaleString('pt-BR',{minimumFractionDigits:2})} marcado como recomendado ⭐`,'success');
 }
 
 </script>
