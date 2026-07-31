@@ -5823,6 +5823,9 @@ window.addEventListener('load',async function(){
 function abrirPropostaLink(dados){
   const hoje=new Date().toLocaleDateString('pt-BR');
   const d=dados;
+  // Calcular valorParcela a partir do parcelamento e prêmio
+  const nParcelas=parseInt((d.parcelamento||'').match(/(\d+)/)?.[1]||0)||0;
+  d.valorParcela=nParcelas>0&&d.premio>0?(+d.premio)/nParcelas:0;
   const pm=d.premio>0?d.premio/12:0;
   const isAuto=d.tipo==='auto';
   const tipoLabel=isAuto?'Seguro Auto':'Seguro Residencial';
@@ -6067,6 +6070,11 @@ function imprimirPDFAuto(){
   if(!d.principal){showToast('Selecione a cobertura principal.','error');return;}
   const hoje=new Date().toLocaleDateString('pt-BR');
   const pm=d.premio>0?d.premio/12:0;
+  // Garantir que valorParcela está calculado
+  if(!d.valorParcela){
+    const nP=parseInt((d.parcelamento||'').match(/(\d+)/)?.[1]||0)||0;
+    d.valorParcela=nP>0&&d.premio>0?d.premio/nP:0;
+  }
   const rcH=d.rc.map(i=>`<div class="cb"><div class="ct">${i.e} ${i.nome}${i.valor?` <span class="cv">${i.valor}</span>`:''}</div><div class="cd">${i.desc}</div><div class="ce">👉 ${i.ex}</div></div>`).join('');
   const asH=d.ass.map(i=>`<div class="cb"><div class="ct">${i.e} ${i.nome}${i.extra?` <span class="cx">${i.extra}</span>`:''}</div><div class="cd">${i.desc}</div><div class="ce">👉 ${i.ex}</div></div>`).join('');
   const exH=d.ext.length?`<div class="eg">${d.ext.map(e=>`<div class="ei">• ${e}</div>`).join('')}</div>`:'';
@@ -6098,7 +6106,12 @@ function imprimirPDFAuto(){
 @media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact}}</style></head><body><div class="page">
 <div class="hd"><div><div class="br">Creta Seguros</div></div><div class="hr"><strong>🚗 Seguro Auto</strong>Data: ${hoje}<br>Vigência: 12 meses<br>Proposta confidencial</div></div>
 <div class="cl"><div class="cn">${d.nome}</div><div class="cs">${d.cidade?'📍 '+d.cidade+'<br>':''}${d.veiculo?'🚗 '+d.veiculo+(d.placa?' · '+d.placa:'')+'<br>':''}${d.cia?'🏢 Seguradora: <strong>'+d.cia+'</strong>':''}</div></div>
-${d.valorParcela>0||d.franquia?`<div class="ig">${d.valorParcela>0?`<div class="ib"><div class="il">Valor por parcela</div><div class="iv" style="color:#2A3568">R$ ${d.valorParcela.toLocaleString('pt-BR',{minimumFractionDigits:2})}</div><div class="is">${d.parcelamento}</div></div>`:d.parcelamento?`<div class="ib"><div class="il">Parcelamento</div><div class="iv">${d.parcelamento}</div></div>`:''}${d.franquia?`<div class="ib"><div class="il">Franquia</div><div class="iv">${d.franquia}</div></div>`:''}</div>`:''}
+${(d.valorParcela>0||d.parcelamento||d.franquia)?`<div class="ig">
+  ${d.valorParcela>0?`<div class="ib" style="border:2px solid #2A3568"><div class="il" style="color:#2A3568">Valor por parcela</div><div class="iv" style="font-size:20px;color:#2A3568">R$ ${d.valorParcela.toLocaleString('pt-BR',{minimumFractionDigits:2})}</div><div class="is">${d.parcelamento}</div></div>`:d.parcelamento?`<div class="ib"><div class="il">Parcelamento</div><div class="iv">${d.parcelamento}</div></div>`:''}
+  ${d.franquia?`<div class="ib"><div class="il">Franquia</div><div class="iv">${d.franquia}</div></div>`:''}
+  ${d.valorParcela>0&&d.premio>0?`<div class="ib"><div class="il">Prêmio total</div><div class="iv" style="font-size:13px;color:#9C9890">R$ ${(+d.premio).toLocaleString('pt-BR',{minimumFractionDigits:2})}</div></div>`:''}
+</div>`:''}
+
 <div class="st">🛡️ Cobertura Principal</div>
 <div class="pb"><div class="pl">✅ ${d.principal.label}${d.fipe?' — '+d.fipe:''}</div><div class="pd">${d.principal.desc}</div>${d.principal.comp?`<div class="tg"><span>🚗 Colisão</span><span>🔒 Furto e Roubo</span><span>🔥 Incêndio</span><span>⛈️ Fenômenos da Natureza</span><span>💥 Perda Total</span></div>`:''}</div>
 ${d.rc.length?`<div class="st">👥 Responsabilidade Civil</div>${rcH}`:''}
@@ -6318,7 +6331,12 @@ function imprimirPDFResid(){
 @media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact}}</style></head><body><div class="page">
 <div class="hd"><div><div class="br">Creta Seguros</div></div><div class="hr"><strong>🏠 Seguro Residencial</strong>Data: ${hoje}<br>Vigência: 12 meses<br>Proposta confidencial</div></div>
 <div class="cl"><div class="cn">${d.nome}</div><div class="cs">${d.cidade?'📍 '+d.cidade+'<br>':''}${d.imovel?'🏠 '+d.imovel+(d.cep?' · CEP '+d.cep:'')+'<br>':''}${d.cia?'🏢 Seguradora: <strong>'+d.cia+'</strong>':''}</div></div>
-${d.valorParcela>0||d.franquia?`<div class="ig">${d.valorParcela>0?`<div class="ib"><div class="il">Valor por parcela</div><div class="iv" style="color:#2A3568">R$ ${d.valorParcela.toLocaleString('pt-BR',{minimumFractionDigits:2})}</div><div class="is">${d.parcelamento}</div></div>`:d.parcelamento?`<div class="ib"><div class="il">Parcelamento</div><div class="iv">${d.parcelamento}</div></div>`:''}${d.franquia?`<div class="ib"><div class="il">Franquia</div><div class="iv">${d.franquia}</div></div>`:''}</div>`:''}
+${(d.valorParcela>0||d.parcelamento||d.franquia)?`<div class="ig">
+  ${d.valorParcela>0?`<div class="ib" style="border:2px solid #2A3568"><div class="il" style="color:#2A3568">Valor por parcela</div><div class="iv" style="font-size:20px;color:#2A3568">R$ ${d.valorParcela.toLocaleString('pt-BR',{minimumFractionDigits:2})}</div><div class="is">${d.parcelamento}</div></div>`:d.parcelamento?`<div class="ib"><div class="il">Parcelamento</div><div class="iv">${d.parcelamento}</div></div>`:''}
+  ${d.franquia?`<div class="ib"><div class="il">Franquia</div><div class="iv">${d.franquia}</div></div>`:''}
+  ${d.valorParcela>0&&d.premio>0?`<div class="ib"><div class="il">Prêmio total</div><div class="iv" style="font-size:13px;color:#9C9890">R$ ${(+d.premio).toLocaleString('pt-BR',{minimumFractionDigits:2})}</div></div>`:''}
+</div>`:''}
+
 ${cobH?`<div class="st">🏠 Coberturas Incluídas</div>${cobH}`:''}
 ${d.ext.length?`<div class="st">💼 Coberturas Extras</div>${exH}`:''}
 ${d.notas?`<div class="nt">📌 <strong>Observações:</strong> ${d.notas}</div>`:''}
