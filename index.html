@@ -1372,12 +1372,8 @@ input[type=range]{width:100%;accent-color:var(--accent)}
     <div class="view" id="view-prop_resid">
       <div class="page-title">🏠 Proposta — Seguro Residencial</div>
       <p class="page-sub">Monte a proposta, gere o PDF e envie o link pro cliente</p>
-
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;align-items:start">
-
-        <!-- Esquerda -->
         <div>
-          <!-- DADOS -->
           <div class="card" style="margin-bottom:14px">
             <div class="card-title">Dados do cliente e imóvel</div>
             <div class="form-grid" style="margin-bottom:0">
@@ -1387,8 +1383,6 @@ input[type=range]{width:100%;accent-color:var(--accent)}
               <div class="field"><label>CEP</label><input type="text" id="pp_resid_cep" placeholder="Ex: 90000-000" style="width:100%;padding:9px 12px;font-size:13px;font-family:'DM Sans',sans-serif;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--bg);color:var(--text);outline:none;box-sizing:border-box"></div>
             </div>
           </div>
-
-          <!-- SEGURADORA -->
           <div class="card" style="margin-bottom:14px">
             <div class="card-title">Seguradora e valores</div>
             <div class="form-grid" style="margin-bottom:0">
@@ -1401,17 +1395,22 @@ input[type=range]{width:100%;accent-color:var(--accent)}
                   <option>Zurich</option><option>Outra</option>
                 </select>
               </div>
-              <div class="field"><label>Prêmio anual (R$)</label><input type="number" id="pp_resid_premio" placeholder="0,00" min="0" step="0.01" style="width:100%;padding:9px 12px;font-size:13px;font-family:'DM Sans',sans-serif;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--bg);color:var(--text);outline:none;box-sizing:border-box"></div>
+              <div class="field"><label>Prêmio total — base de cálculo (R$)</label><input type="number" id="pp_resid_premio" placeholder="0,00" min="0" step="0.01" oninput="atualizarTabelaParcelamentoResid()" style="width:100%;padding:9px 12px;font-size:13px;font-family:'DM Sans',sans-serif;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--bg);color:var(--text);outline:none;box-sizing:border-box"></div>
               <div class="field"><label>Franquia</label><input type="text" id="pp_resid_franquia" placeholder="Ex: 10% do sinistro" style="width:100%;padding:9px 12px;font-size:13px;font-family:'DM Sans',sans-serif;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--bg);color:var(--text);outline:none;box-sizing:border-box"></div>
-              <div class="field"><label>Parcelamento</label><input type="text" id="pp_resid_parcelamento" placeholder="Ex: 12x no cartão" style="width:100%;padding:9px 12px;font-size:13px;font-family:'DM Sans',sans-serif;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--bg);color:var(--text);outline:none;box-sizing:border-box"></div>
+              <div class="field" style="grid-column:span 2">
+                <label>Parcelamento</label>
+                <div id="pp_resid_parc_tabela" style="display:none;margin-top:6px">
+                  <div style="display:grid;grid-template-columns:repeat(6,1fr);gap:6px" id="pp_resid_parc_grid"></div>
+                  <div style="font-size:11px;color:var(--text-3);margin-top:6px">⭐ Clique para marcar o parcelamento recomendado</div>
+                </div>
+                <div id="pp_resid_parc_vazio" style="font-size:12px;color:var(--text-3);padding:8px 0">Preencha o prêmio total para ver as opções de parcelamento</div>
+                <input type="hidden" id="pp_resid_parcelamento" value="">
+              </div>
             </div>
           </div>
-
-          <!-- COBERTURAS -->
           <div class="card">
             <div class="card-title">Coberturas</div>
 
-            <!-- ESTRUTURA -->
             <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--text-3);margin-bottom:8px;padding-bottom:4px;border-bottom:1px solid var(--border)">🏠 Estrutura e Conteúdo</div>
             <div style="display:flex;flex-direction:column;gap:6px;margin-bottom:14px">
               <div class="prop-rc-row"><label><input type="checkbox" id="re_incendio" data-tipo="resid" style="accent-color:var(--accent)"> Incêndio, Raio e Explosão</label><input type="text" id="re_incendio_val" placeholder="valor segurado" class="prop-rc-input"></div>
@@ -1420,7 +1419,6 @@ input[type=range]{width:100%;accent-color:var(--accent)}
               <div class="prop-rc-row"><label><input type="checkbox" id="re_agua" data-tipo="resid" style="accent-color:var(--accent)"> Danos por Água</label><input type="text" id="re_agua_val" placeholder="valor segurado" class="prop-rc-input"></div>
             </div>
 
-            <!-- NATUREZA -->
             <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--text-3);margin-bottom:8px;padding-bottom:4px;border-bottom:1px solid var(--border)">🌪️ Eventos Naturais</div>
             <div style="display:flex;flex-direction:column;gap:6px;margin-bottom:14px">
               <div class="prop-rc-row"><label><input type="checkbox" id="re_vendaval" data-tipo="resid" style="accent-color:var(--accent)"> Vendaval e Tempestade</label><input type="text" id="re_vendaval_val" placeholder="valor segurado" class="prop-rc-input"></div>
@@ -1428,32 +1426,32 @@ input[type=range]{width:100%;accent-color:var(--accent)}
               <div class="prop-rc-row"><label><input type="checkbox" id="re_inundacao" data-tipo="resid" style="accent-color:var(--accent)"> Inundação e Alagamento</label><input type="text" id="re_inundacao_val" placeholder="valor segurado" class="prop-rc-input"></div>
             </div>
 
-            <!-- RC -->
             <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--text-3);margin-bottom:8px;padding-bottom:4px;border-bottom:1px solid var(--border)">👨‍👩‍👧 Responsabilidade Civil</div>
             <div style="display:flex;flex-direction:column;gap:6px;margin-bottom:14px">
               <div class="prop-rc-row"><label><input type="checkbox" id="re_rc_fam" data-tipo="resid" style="accent-color:var(--accent)"> RC Familiar</label><input type="text" id="re_rc_fam_val" placeholder="Ex: R$ 50.000" class="prop-rc-input"></div>
               <div class="prop-rc-row"><label><input type="checkbox" id="re_rc_emp" data-tipo="resid" style="accent-color:var(--accent)"> RC Empregador Doméstico</label><input type="text" id="re_rc_emp_val" placeholder="Ex: R$ 20.000" class="prop-rc-input"></div>
             </div>
 
-            <!-- ASSISTÊNCIAS -->
-            <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--text-3);margin-bottom:8px;padding-bottom:4px;border-bottom:1px solid var(--border)">🔧 Assistências 24h</div>
-            <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:14px">
-              <label style="display:flex;align-items:center;gap:6px;font-size:12px;padding:7px 10px;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-sm);cursor:pointer"><input type="checkbox" id="re_ass_enc" data-tipo="resid" style="accent-color:var(--accent)"> Encanador</label>
-              <label style="display:flex;align-items:center;gap:6px;font-size:12px;padding:7px 10px;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-sm);cursor:pointer"><input type="checkbox" id="re_ass_ele" data-tipo="resid" style="accent-color:var(--accent)"> Eletricista</label>
-              <label style="display:flex;align-items:center;gap:6px;font-size:12px;padding:7px 10px;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-sm);cursor:pointer"><input type="checkbox" id="re_ass_cha" data-tipo="resid" style="accent-color:var(--accent)"> Chaveiro</label>
-              <label style="display:flex;align-items:center;gap:6px;font-size:12px;padding:7px 10px;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-sm);cursor:pointer"><input type="checkbox" id="re_ass_vid" data-tipo="resid" style="accent-color:var(--accent)"> Vidraceiro</label>
-              <label style="display:flex;align-items:center;gap:6px;font-size:12px;padding:7px 10px;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-sm);cursor:pointer"><input type="checkbox" id="re_ass_det" data-tipo="resid" style="accent-color:var(--accent)"> Desentupimento</label>
-              <div class="prop-rc-row" style="border-radius:var(--radius-sm)"><label><input type="checkbox" id="re_ass_hotel" data-tipo="resid" style="accent-color:var(--accent)"> Hotel (inabitável)</label><input type="text" id="re_ass_hotel_val" placeholder="dias" class="prop-rc-input" style="width:70px"></div>
+            <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--text-3);margin-bottom:8px;padding-bottom:4px;border-bottom:1px solid var(--border)">💼 Coberturas Extras</div>
+            <div style="display:flex;flex-direction:column;gap:6px;margin-bottom:14px">
+              <div class="prop-rc-row"><label><input type="checkbox" id="re_ext_aluguel" data-tipo="resid" style="accent-color:var(--accent)"> Perda de Aluguel</label><input type="text" id="re_ext_aluguel_val" placeholder="valor mensal" class="prop-rc-input"></div>
+              <div class="prop-rc-row"><label><input type="checkbox" id="re_ext_bici" data-tipo="resid" style="accent-color:var(--accent)"> Bicicleta</label><input type="text" id="re_ext_bici_val" placeholder="valor segurado" class="prop-rc-input"></div>
+              <div class="prop-rc-row"><label><input type="checkbox" id="re_ext_port" data-tipo="resid" style="accent-color:var(--accent)"> Portáteis e Eletrônicos</label><input type="text" id="re_ext_port_val" placeholder="valor segurado" class="prop-rc-input"></div>
+              <div class="prop-rc-row"><label><input type="checkbox" id="re_ext_joias" data-tipo="resid" style="accent-color:var(--accent)"> Joias e Obras de Arte</label><input type="text" id="re_ext_joias_val" placeholder="valor segurado" class="prop-rc-input"></div>
+              <div class="prop-rc-row"><label><input type="checkbox" id="re_ext_cond" data-tipo="resid" style="accent-color:var(--accent)"> RC Condomínio</label><input type="text" id="re_ext_cond_val" placeholder="valor segurado" class="prop-rc-input"></div>
             </div>
 
-            <!-- EXTRAS -->
-            <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--text-3);margin-bottom:8px;padding-bottom:4px;border-bottom:1px solid var(--border)">💼 Coberturas Extras</div>
-            <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:14px">
-              <label style="display:flex;align-items:center;gap:6px;font-size:12px;padding:7px 10px;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-sm);cursor:pointer"><input type="checkbox" id="re_ext_aluguel" data-tipo="resid" style="accent-color:var(--accent)"> Perda de Aluguel</label>
-              <label style="display:flex;align-items:center;gap:6px;font-size:12px;padding:7px 10px;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-sm);cursor:pointer"><input type="checkbox" id="re_ext_bici" data-tipo="resid" style="accent-color:var(--accent)"> Bicicleta</label>
-              <label style="display:flex;align-items:center;gap:6px;font-size:12px;padding:7px 10px;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-sm);cursor:pointer"><input type="checkbox" id="re_ext_port" data-tipo="resid" style="accent-color:var(--accent)"> Portáteis e Eletrônicos</label>
-              <label style="display:flex;align-items:center;gap:6px;font-size:12px;padding:7px 10px;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-sm);cursor:pointer"><input type="checkbox" id="re_ext_joias" data-tipo="resid" style="accent-color:var(--accent)"> Joias e Obras de Arte</label>
-              <label style="display:flex;align-items:center;gap:6px;font-size:12px;padding:7px 10px;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-sm);cursor:pointer"><input type="checkbox" id="re_ext_cond" data-tipo="resid" style="accent-color:var(--accent)"> RC Condomínio</label>
+            <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--text-3);margin-bottom:8px;padding-bottom:4px;border-bottom:1px solid var(--border)">🔧 Assistência Residencial</div>
+            <div style="display:flex;gap:8px;margin-bottom:14px">
+              <label style="flex:1;display:flex;align-items:center;justify-content:center;gap:6px;padding:10px;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-sm);cursor:pointer;font-size:12px;font-weight:600;transition:all .15s" id="lbl_ass_basica">
+                <input type="radio" name="resid_ass" value="basica" id="rb_ass_basica" onchange="atualizarLblAssResid()" style="accent-color:var(--accent)"> 🔧 Básica
+              </label>
+              <label style="flex:1;display:flex;align-items:center;justify-content:center;gap:6px;padding:10px;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-sm);cursor:pointer;font-size:12px;font-weight:600;transition:all .15s" id="lbl_ass_inter">
+                <input type="radio" name="resid_ass" value="intermediaria" id="rb_ass_inter" onchange="atualizarLblAssResid()" style="accent-color:var(--accent)"> ⚡ Intermediária
+              </label>
+              <label style="flex:1;display:flex;align-items:center;justify-content:center;gap:6px;padding:10px;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-sm);cursor:pointer;font-size:12px;font-weight:600;transition:all .15s" id="lbl_ass_comp">
+                <input type="radio" name="resid_ass" value="completa" id="rb_ass_comp" onchange="atualizarLblAssResid()" style="accent-color:var(--accent)"> ✅ Completa
+              </label>
             </div>
 
             <div class="field">
@@ -1465,7 +1463,6 @@ input[type=range]{width:100%;accent-color:var(--accent)}
               <textarea id="pp_resid_notas" placeholder="Ex: Proposta válida por 7 dias." rows="2" style="width:100%;padding:9px 12px;font-size:13px;font-family:'DM Sans',sans-serif;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--bg);color:var(--text);outline:none;resize:vertical;box-sizing:border-box"></textarea>
             </div>
           </div>
-
           <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:16px">
             <button class="btn btn-primary" onclick="gerarPropostaResid()">📄 Visualizar</button>
             <button class="btn btn-ghost" onclick="copiarWhatsAppResid()">💬 WhatsApp</button>
@@ -1473,8 +1470,6 @@ input[type=range]{width:100%;accent-color:var(--accent)}
             <button class="btn" style="background:#2DB863;color:#fff;border-color:#2DB863" onclick="gerarLinkResid()">🔗 Link</button>
           </div>
         </div>
-
-        <!-- Preview -->
         <div style="position:sticky;top:20px">
           <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
             <div style="font-size:13px;font-weight:600;color:var(--text-2)">Pré-visualização:</div>
@@ -1487,32 +1482,6 @@ input[type=range]{width:100%;accent-color:var(--accent)}
       </div>
     </div>
 
-
-  </main>
-</div>
-
-<!-- MOBILE NAV -->
-<nav class="mobile-nav" id="mobileNav" style="display:none">
-  <div style="display:flex;overflow-x:auto;width:100%;scrollbar-width:none;-ms-overflow-style:none;padding-bottom:env(safe-area-inset-bottom)">
-    <button class="mobile-nav-item active" id="mnav-dashboard" onclick="showView('dashboard')"><span class="mn-icon">🏠</span><span class="mn-label">Dashboard</span></button>
-    <button class="mobile-nav-item" id="mnav-ranking" onclick="showView('ranking')"><span class="mn-icon">🏆</span><span class="mn-label">Ranking</span></button>
-    <button class="mobile-nav-item" id="mnav-analises" onclick="showView('analises')"><span class="mn-icon">📊</span><span class="mn-label">Análises</span></button>
-    <button class="mobile-nav-item" id="mnav-nova" onclick="showView('nova')"><span class="mn-icon">➕</span><span class="mn-label">Venda</span></button>
-    <button class="mobile-nav-item" id="mnav-historico" onclick="showView('historico')"><span class="mn-icon">📋</span><span class="mn-label">Histórico</span></button>
-    <button class="mobile-nav-item" id="mnav-carteira" onclick="showView('carteira')"><span class="mn-icon">👥</span><span class="mn-label">Carteira</span></button>
-    <button class="mobile-nav-item" id="mnav-tarefas_view" onclick="showView('tarefas_view')"><span class="mn-icon">✅</span><span class="mn-label">Tarefas</span></button>
-    <button class="mobile-nav-item" id="mnav-renovacoes" onclick="showView('renovacoes')"><span class="mn-icon">🔄</span><span class="mn-label">Renovações</span></button>
-    <button class="mobile-nav-item" id="mnav-metas" onclick="showView('metas')"><span class="mn-icon">🎯</span><span class="mn-label">Metas</span></button>
-    <button class="mobile-nav-item" id="mnav-exportar" onclick="showView('exportar')"><span class="mn-icon">📤</span><span class="mn-label">Exportar</span></button>
-    <button class="mobile-nav-item" id="mnav-ote" onclick="showView('ote')"><span class="mn-icon">💰</span><span class="mn-label">OTE</span></button>
-  </div>
-</nav>
-
-<!-- MODAL CLIENTE -->
-<div class="modal-overlay" id="modalCliente" onclick="fecharModalCliente(event)">
-  <div class="modal" style="max-width:680px">
-    <div class="modal-title" id="modalClienteTitulo">Novo Cliente</div>
-    <input type="hidden" id="cli_id">
 
     <!-- Abas -->
     <div class="auth-tabs" id="cliTabsWrap" style="margin-bottom:20px">
@@ -6105,64 +6074,55 @@ function imprimirPDFAuto(){
   if(!d.nome){showToast('Informe o nome do cliente.','error');return;}
   if(!d.principal){showToast('Selecione a cobertura principal.','error');return;}
   const hoje=new Date().toLocaleDateString('pt-BR');
-  const pm=d.premio>0?d.premio/12:0;
-  // Garantir que valorParcela está calculado
-  if(!d.valorParcela){
-    const nP=parseInt((d.parcelamento||'').match(/(\d+)/)?.[1]||0)||0;
-    d.valorParcela=nP>0&&d.premio>0?d.premio/nP:0;
-  }
-  const rcH=d.rc.map(i=>`<div class="cb"><div class="ct">${i.e} ${i.nome}${i.valor?` <span class="cv">${i.valor}</span>`:''}</div><div class="cd">${i.desc}</div><div class="ce">👉 ${i.ex}</div></div>`).join('');
-  const asH=d.ass.map(i=>`<div class="cb"><div class="ct">${i.e} ${i.nome}${i.extra?` <span class="cx">${i.extra}</span>`:''}</div><div class="cd">${i.desc}</div><div class="ce">👉 ${i.ex}</div></div>`).join('');
-  const exH=d.ext.length?`<div class="eg">${d.ext.map(e=>`<div class="ei">• ${e}</div>`).join('')}</div>`:'';
-  const win=window.open('','_blank');
-  win.document.write(`<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8"><title>Proposta Auto — ${d.nome}</title>
-<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
-<style>*{box-sizing:border-box;margin:0;padding:0}body{font-family:'DM Sans',sans-serif;color:#1A1917;background:#fff;font-size:10.5pt;line-height:1.6}
-@page{size:A4;margin:20px 24px}.page{max-width:720px;margin:0 auto;padding:24px 28px 40px}
-.hd{display:flex;justify-content:space-between;border-bottom:3px solid #2A3568;padding-bottom:14px;margin-bottom:20px}
-.br{font-family:'DM Serif Display',serif;font-size:22px;color:#2A3568}.br small{display:block;font-size:9px;font-family:'DM Sans',sans-serif;color:#9C9890;text-transform:uppercase;letter-spacing:.1em;margin-top:2px}
-.hr{text-align:right;font-size:9.5px;color:#5C5850;line-height:1.9}.hr strong{font-size:14px;color:#2A3568;display:block;font-family:'DM Serif Display',serif}
-.cl{background:#E8EAF3;border-left:4px solid #2A3568;border-radius:6px;padding:12px 16px;margin-bottom:16px}
-.cn{font-family:'DM Serif Display',serif;font-size:18px;margin-bottom:4px}.cs{font-size:10.5px;color:#5C5850;line-height:1.8}
-.ig{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:18px}
-.ib{background:#F5F6FA;border:1px solid #DDE0EC;border-radius:7px;padding:10px 13px;text-align:center}
-.il{font-size:8.5px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:#9C9890;margin-bottom:3px}
-.iv{font-size:15px;font-weight:700}.is{font-size:9px;color:#9C9890;margin-top:1px}
-.pb{background:#EEF2FF;border:1px solid #C7D2FE;border-left:4px solid #2A3568;border-radius:7px;padding:13px 16px;margin-bottom:16px}
-.pl{font-size:13px;font-weight:700;color:#2A3568;margin-bottom:5px}.pd{font-size:11px;color:#5C5850;line-height:1.7}
-.tg{display:flex;flex-wrap:wrap;gap:5px;margin-top:8px}.tg span{background:#fff;border:1px solid #C7D2FE;color:#2A3568;padding:2px 9px;border-radius:99px;font-size:10px;font-weight:500}
-.st{font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:#2A3568;margin:16px 0 10px;padding-bottom:5px;border-bottom:2px solid #C7D2FE}
-.cb{padding:9px 0;border-bottom:1px solid #EEF2FF}.ct{font-size:12px;font-weight:700;color:#1A1917;margin-bottom:3px;display:flex;align-items:center;gap:7px;flex-wrap:wrap}
-.cv{font-size:10px;font-weight:700;color:#fff;background:#2A3568;padding:1px 8px;border-radius:99px}
-.cx{font-size:10px;color:#5C5850;background:#F5F6FA;padding:1px 8px;border-radius:99px;border:1px solid #DDE0EC}
-.cd{font-size:10.5px;color:#5C5850;line-height:1.7;margin-bottom:2px}.ce{font-size:10px;color:#9C9890;font-style:italic}
-.eg{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px}.ei{background:#EEF2FF;border:1px solid #C7D2FE;color:#2A3568;padding:3px 12px;border-radius:99px;font-size:10.5px;font-weight:500}
-.nt{background:#FFFBF0;border:1px solid #F0DFA0;border-radius:6px;padding:10px 14px;font-size:10.5px;color:#5C5850;margin-top:14px;line-height:1.7}
-.ft{margin-top:22px;padding-top:10px;border-top:1px solid #DDE0EC;font-size:8.5px;color:#9C9890;text-align:center;line-height:1.8}
-@media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact}}
-.parc-card{background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-sm);padding:8px 6px;text-align:center;cursor:pointer;transition:all .15s;user-select:none}
-.parc-card:hover{border-color:var(--accent);background:#EEF2FF}
-.parc-card.recomendado{border:2px solid var(--accent);background:#EEF2FF;position:relative}
-.parc-card.recomendado::after{content:'⭐';position:absolute;top:-8px;right:-6px;font-size:13px}
-.parc-card-n{font-size:11px;font-weight:700;color:var(--text-3);margin-bottom:2px}
-.parc-card-val{font-size:13px;font-weight:700;color:var(--accent)}
-.parc-card.recomendado .parc-card-val{font-size:14px}
+  if(!d.valorParcela){const nP=parseInt((d.parcelamento||'').match(/(\d+)/)?.[1]||0)||0;d.valorParcela=nP>0&&d.premio>0?d.premio/nP:0;}
 
-</style></head><body><div class="page">
-<div class="hd"><div><div class="br">Creta Seguros</div></div><div class="hr"><strong>🚗 Seguro Auto</strong>Data: ${hoje}<br>Vigência: 12 meses<br>Proposta confidencial</div></div>
-<div class="cl"><div class="cn">${d.nome}</div><div class="cs">${d.cidade?'📍 '+d.cidade+'<br>':''}${d.veiculo?'🚗 '+d.veiculo+(d.placa?' · '+d.placa:'')+'<br>':''}${d.cia?'🏢 Seguradora: <strong>'+d.cia+'</strong>':''}</div></div>
-${(d.valorParcela>0||d.parcelamento||d.franquia)?`<div class="ig">
-  ${d.valorParcela>0?`<div class="ib" style="border:2px solid #2A3568"><div class="il" style="color:#2A3568">Valor por parcela</div><div class="iv" style="font-size:20px;color:#2A3568">R$ ${d.valorParcela.toLocaleString('pt-BR',{minimumFractionDigits:2})}</div><div class="is">${d.parcelamento}</div></div>`:d.parcelamento?`<div class="ib"><div class="il">Parcelamento</div><div class="iv">${d.parcelamento}</div></div>`:''}
-  ${d.franquia?`<div class="ib"><div class="il">Franquia</div><div class="iv">${d.franquia}</div></div>`:''}
-  ${d.valorParcela>0&&d.premio>0?`<div class="ib"><div class="il">Prêmio total</div><div class="iv" style="font-size:13px;color:#9C9890">R$ ${(+d.premio).toLocaleString('pt-BR',{minimumFractionDigits:2})}</div></div>`:''}
-</div>`:''}
+  const rcH=d.rc.map(i=>`<div class="cb"><div class="ct">${i.e} ${i.nome}${i.valor?`<span class="cv">${i.valor}</span>`:''}</div><div class="cd">${i.desc}</div><div class="ce">👉 ${i.ex}</div></div>`).join('');
+  const assH=d.ass.map(i=>`<div class="cb"><div class="ct">${i.e} ${i.nome}${i.extra?`<span class="cx">${i.extra}</span>`:''}</div><div class="cd">${i.desc}</div><div class="ce">👉 ${i.ex}</div></div>`).join('');
+  const exH=d.ext.length?`<div style="margin-top:6px">${d.ext.map(e=>`<span class="eg">• ${e}</span>`).join('')}</div>`:'';
+
+  const win=window.open('','_blank');
+  win.document.write(`<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8">
+<title>Proposta Auto — ${d.nome}</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>*{box-sizing:border-box;margin:0;padding:0}body{font-family:\'DM Sans\',sans-serif;color:#1A1917;background:#fff;font-size:10.5pt;line-height:1.6}@page{size:A4;margin:20px 24px}.page{max-width:720px;margin:0 auto;padding:20px 24px 40px}.hd{background:linear-gradient(135deg,#1e2d6b 0%,#2A3568 60%,#3a4a8f 100%);border-radius:10px;padding:18px 22px;margin-bottom:20px}.hd table{width:100%;border-collapse:collapse}.hd td{vertical-align:middle}.hd td:last-child{text-align:right}.brand{font-family:\'DM Serif Display\',Georgia,serif;font-size:22px;color:#fff;letter-spacing:-.02em}.brand-sub{font-size:9px;color:rgba(255,255,255,.6);text-transform:uppercase;letter-spacing:.12em;margin-top:2px;font-family:\'DM Sans\',Arial,sans-serif}.badge-title{font-size:14px;font-weight:700;color:#fff}.badge-sub{font-size:9px;color:rgba(255,255,255,.65);line-height:1.9;display:block}.cl{background:#E8EAF3;border-left:4px solid #2A3568;border-radius:6px;padding:12px 16px;margin-bottom:16px}.cn{font-family:\'DM Serif Display\',Georgia,serif;font-size:18px;margin-bottom:4px}.cs{font-size:10.5px;color:#5C5850;line-height:1.8}.ig{width:100%;border-collapse:separate;border-spacing:8px 0;margin-bottom:18px}.ib{background:#F5F6FA;border:1px solid #DDE0EC;border-radius:7px;padding:10px 13px;text-align:center;width:33%}.ib.dest{background:#EEF2FF;border:2px solid #2A3568}.il{font-size:8px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:#9C9890;margin-bottom:3px}.iv{font-size:15px;font-weight:700;color:#1A1917}.iv.grande{font-size:20px;color:#2A3568}.is{font-size:9px;color:#9C9890;margin-top:1px}.st{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:#2A3568;margin:14px 0 8px;padding-bottom:5px;border-bottom:2px solid #C7D2FE}.pb{background:#EEF2FF;border:1px solid #C7D2FE;border-left:4px solid #2A3568;border-radius:7px;padding:12px 14px;margin-bottom:10px}.pl{font-size:13px;font-weight:700;color:#2A3568;margin-bottom:4px}.pd{font-size:11px;color:#5C5850;line-height:1.7}.tg{display:inline-block;background:#fff;border:1px solid #C7D2FE;color:#2A3568;padding:2px 8px;border-radius:99px;font-size:10px;font-weight:500;margin:2px 2px 0 0}.cb{padding:9px 0;border-bottom:1px solid #EEF2FF}.ct{font-size:12px;font-weight:700;color:#1A1917;margin-bottom:3px}.cv{display:inline-block;font-size:10px;font-weight:700;color:#fff;background:#2A3568;padding:1px 8px;border-radius:99px;margin-left:5px}.cx{display:inline-block;font-size:10px;color:#5C5850;background:#F5F6FA;padding:1px 8px;border-radius:99px;border:1px solid #DDE0EC;margin-left:5px}.cd{font-size:10.5px;color:#5C5850;line-height:1.7;margin-bottom:2px}.ce{font-size:10px;color:#9C9890;font-style:italic}.ass-badge{display:inline-block;font-size:11px;font-weight:700;padding:4px 14px;border-radius:99px;border:1.5px solid #2A3568;color:#2A3568;background:#EEF2FF}.eg{display:inline-block;background:#EEF2FF;border:1px solid #C7D2FE;color:#2A3568;padding:3px 12px;border-radius:99px;font-size:10.5px;font-weight:500;margin:2px 2px 0 0}.nt{background:#FFFBF0;border:1px solid #F0DFA0;border-radius:6px;padding:10px 14px;font-size:10.5px;color:#5C5850;margin-top:14px;line-height:1.7}.ft{margin-top:22px;padding-top:10px;border-top:1px solid #DDE0EC;font-size:8.5px;color:#9C9890;text-align:center;line-height:1.8}@media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact}}</style></head><body><div class="page">
+
+<div class="hd">
+  <table><tr>
+    <td><div class="brand">Creta Seguros</div><div class="brand-sub">Corretora de Seguros</div></td>
+    <td><div class="badge-title">🚗 Seguro Auto</div>
+        <span class="badge-sub">${hoje} · Vigência: 12 meses</span>
+        <span class="badge-sub">Proposta confidencial</span></td>
+  </tr></table>
+</div>
+
+<div class="cl">
+  <div class="cn">${d.nome}</div>
+  <div class="cs">
+    ${d.cidade?'📍 '+d.cidade+'<br>':''}
+    ${d.veiculo?'🚗 '+d.veiculo+(d.placa?' · '+d.placa:'')+'<br>':''}
+    ${d.cia?'🏢 Seguradora: <strong>'+d.cia+'</strong>':''}
+  </div>
+</div>
+
+${d.valorParcela>0||d.franquia?`
+<table class="ig"><tr>
+  ${d.valorParcela>0?`<td class="ib dest"><div class="il">Valor por parcela</div><div class="iv grande">R$ ${d.valorParcela.toLocaleString('pt-BR',{minimumFractionDigits:2})}</div><div class="is">${d.parcelamento}</div></td>`:''}
+  ${d.franquia?`<td class="ib"><div class="il">Franquia</div><div class="iv">${d.franquia}</div></td>`:''}
+  ${d.valorParcela>0&&d.premio>0?`<td class="ib"><div class="il">Prêmio total</div><div class="iv" style="font-size:13px;color:#9C9890">R$ ${(+d.premio).toLocaleString('pt-BR',{minimumFractionDigits:2})}</div></td>`:''}
+</tr></table>`:''}
 
 <div class="st">🛡️ Cobertura Principal</div>
-<div class="pb"><div class="pl">✅ ${d.principal.label}${d.fipe?' — '+d.fipe:''}</div><div class="pd">${d.principal.desc}</div>${d.principal.comp?`<div class="tg"><span>🚗 Colisão</span><span>🔒 Furto e Roubo</span><span>🔥 Incêndio</span><span>⛈️ Fenômenos da Natureza</span><span>💥 Perda Total</span></div>`:''}</div>
-${d.rc.length?`<div class="st">👥 Responsabilidade Civil</div>${rcH}`:''}
-${d.ass.length?`<div class="st">🔧 Assistências</div>${asH}`:''}
-${d.ext.length?`<div class="st">⚡ Coberturas Extras</div>${exH}`:''}
+<div class="pb">
+  <div class="pl">✅ ${d.principal.label}${d.fipe?' — '+d.fipe:''}</div>
+  <div class="pd">${d.principal.desc}</div>
+  ${d.principal.comp?`<div style="margin-top:7px"><span class="tg">🚗 Colisão</span><span class="tg">🔒 Furto e Roubo</span><span class="tg">🔥 Incêndio</span><span class="tg">⛈️ Fenômenos da Natureza</span><span class="tg">💥 Perda Total</span></div>`:''}
+</div>
+
+${rcH?`<div class="st">👥 Responsabilidade Civil</div>${rcH}`:''}
+${assH?`<div class="st">🔧 Assistências</div>${assH}`:''}
+${exH?`<div class="st">⚡ Coberturas Extras</div>${exH}`:''}
 ${d.notas?`<div class="nt">📌 <strong>Observações:</strong> ${d.notas}</div>`:''}
+
 <div class="ft">Proposta de ${hoje} · Vigência: 12 meses · Valores sujeitos à confirmação pela seguradora · Creta Seguros</div>
 </div><script>window.onload=function(){window.print()}<\/script></body></html>`);
   win.document.close();
@@ -6238,6 +6198,47 @@ function copiarWhatsAppSeguro(t){if(t==='auto')copiarWhatsAppAuto();}
 function gerarLinkSeguro(t){if(t==='auto')gerarLinkAuto();}
 
 // ── PROPOSTA RESIDENCIAL ──────────────────────────────────────────────
+function atualizarLblAssResid(){
+  const val=document.querySelector('input[name="resid_ass"]:checked')?.value||'';
+  [['lbl_ass_basica','basica'],['lbl_ass_inter','intermediaria'],['lbl_ass_comp','completa']].forEach(([id,v])=>{
+    const lbl=document.getElementById(id);
+    if(lbl){lbl.style.background=val===v?'#EEF2FF':'var(--bg)';lbl.style.borderColor=val===v?'var(--accent)':'var(--border)';}
+  });
+}
+
+function atualizarTabelaParcelamentoResid(){
+  const premio=parseFloat(document.getElementById('pp_resid_premio')?.value||0)||0;
+  const grid=document.getElementById('pp_resid_parc_grid');
+  const tabela=document.getElementById('pp_resid_parc_tabela');
+  const vazio=document.getElementById('pp_resid_parc_vazio');
+  const inputParc=document.getElementById('pp_resid_parcelamento');
+  if(!premio||premio<=0){
+    if(tabela)tabela.style.display='none';
+    if(vazio)vazio.style.display='block';
+    if(inputParc)inputParc.value='';
+    return;
+  }
+  if(tabela)tabela.style.display='block';
+  if(vazio)vazio.style.display='none';
+  const atual=inputParc?.value||'';
+  const nAtual=parseInt(atual.match(/(\d+)/)?.[1]||0)||0;
+  grid.innerHTML='';
+  for(let n=1;n<=12;n++){
+    const val=premio/n;
+    const card=document.createElement('div');
+    card.className='parc-card'+(n===nAtual?' recomendado':'');
+    card.dataset.n=n;
+    card.innerHTML=`<div class="parc-card-n">${n}x</div><div class="parc-card-val">R$ ${val.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2})}</div>`;
+    card.onclick=()=>{
+      document.querySelectorAll('#pp_resid_parc_grid .parc-card').forEach(c=>c.classList.remove('recomendado'));
+      card.classList.add('recomendado');
+      if(inputParc)inputParc.value=`${n}x`;
+      showToast(`${n}x de R$ ${val.toLocaleString('pt-BR',{minimumFractionDigits:2})} marcado ⭐`,'success');
+    };
+    grid.appendChild(card);
+  }
+}
+
 function getDadosResidCompleto(){
   const g=id=>document.getElementById(id);
   const nome=g('pp_resid_nome')?.value.trim()||'';
@@ -6247,52 +6248,63 @@ function getDadosResidCompleto(){
   const cia=g('pp_resid_cia')?.value||'';
   const premio=parseFloat(g('pp_resid_premio')?.value||0)||0;
   const franquia=g('pp_resid_franquia')?.value.trim()||'';
-  const parcelamento=g('pp_resid_parcelamento')?.value.trim()||'';
+  const parcelamentoRaw=g('pp_resid_parcelamento')?.value.trim()||'';
+  const nParcelas=parseInt((parcelamentoRaw.match(/(\d+)/)||[])[1])||0;
+  const valorParcela=nParcelas>0&&premio>0?premio/nParcelas:0;
+  const parcelamento=nParcelas>0?`${nParcelas}x de R$ ${valorParcela.toLocaleString('pt-BR',{minimumFractionDigits:2})} sem juros`:'';
   const notas=g('pp_resid_notas')?.value.trim()||'';
   const extras=g('pp_resid_extras')?.value.trim()||'';
+  const assistencia=document.querySelector('input[name="resid_ass"]:checked')?.value||'';
 
-  const COB_RESID=[
-    ['re_incendio','re_incendio_val','Incêndio, Raio e Explosão','🔥','Se pegar fogo, cair raio ou explodir gás na sua casa, a seguradora cobre todos os danos à estrutura e ao conteúdo.','Curto-circuito causou incêndio na cozinha. A seguradora reconstrói e repõe o que foi perdido.'],
-    ['re_eletrico','re_eletrico_val','Danos Elétricos','⚡','Cobre equipamentos danificados por variação de tensão, curto-circuito ou queda de raio.','Raio queimou sua TV, geladeira e ar-condicionado. A seguradora repõe os equipamentos.'],
-    ['re_roubo','re_roubo_val','Roubo e Furto Qualificado','🔒','Se arrombarem sua casa e levarem seus pertences, você é indenizado pelo valor dos bens roubados.','Arrombaram a porta e levaram notebook, TV e joias. A seguradora indeniza o que foi levado.'],
-    ['re_agua','re_agua_val','Danos por Água','💧','Cobre danos causados por vazamento, infiltração, entupimento ou transbordamento dentro do imóvel.','A torneira do vizinho de cima abriu e alagou seu apartamento. A seguradora paga o conserto.'],
-    ['re_vendaval','re_vendaval_val','Vendaval e Tempestade','🌪️','Cobre danos causados por ventos fortes, tempestades, queda de árvores e seus efeitos na estrutura.','Vendaval arrancou o telhado e quebrou vidros. A seguradora paga todo o reparo.'],
-    ['re_granizo','re_granizo_val','Granizo','🌨️','Cobre danos por chuva de granizo no telhado, fachada, calhas e vidros do imóvel.','Chuva de granizo amassou e furou o telhado de fibra. A seguradora cobre o conserto.'],
-    ['re_inundacao','re_inundacao_val','Inundação e Alagamento','🌊','Cobre danos quando a água de chuva ou enchente invade o interior do imóvel.','Enchente entrou pela garagem e danificou o piso e paredes. A seguradora paga.'],
-    ['re_rc_fam','re_rc_fam_val','RC Familiar','👨‍👩‍👧','Cobre danos que você ou sua família causarem a terceiros involuntariamente. Sem franquia.','Seu filho quebrou o vidro do vizinho com uma bola. A seguradora paga sem sair do seu bolso.'],
-    ['re_rc_emp','re_rc_emp_val','RC Empregador Doméstico','👩‍🍳','Cobre acidentes de trabalho sofridos por empregados domésticos enquanto trabalham no seu imóvel.','Sua diarista escorregou e se machucou. A seguradora cobre os custos médicos e indenização.'],
+  const COB=[
+    ['re_incendio','re_incendio_val','Incêndio, Raio e Explosão','🔥','Se pegar fogo, cair raio ou explodir gás, a seguradora cobre todos os danos à estrutura e conteúdo.','Curto-circuito causou incêndio na cozinha. A seguradora reconstrói e repõe o que foi perdido.'],
+    ['re_eletrico','re_eletrico_val','Danos Elétricos','⚡','Cobre equipamentos danificados por variação de tensão, curto-circuito ou queda de raio.','Raio queimou TV, geladeira e ar-condicionado. A seguradora repõe os equipamentos.'],
+    ['re_roubo','re_roubo_val','Roubo e Furto Qualificado','🔒','Se arrombarem sua casa e levarem seus pertences, você é indenizado pelo valor dos bens.','Arrombaram a porta e levaram notebook, TV e joias. A seguradora indeniza.'],
+    ['re_agua','re_agua_val','Danos por Água','💧','Cobre danos causados por vazamento, infiltração ou transbordamento dentro do imóvel.','A torneira do vizinho de cima abriu e alagou seu apartamento. A seguradora paga o conserto.'],
+    ['re_vendaval','re_vendaval_val','Vendaval e Tempestade','🌪️','Cobre danos por ventos fortes, tempestades e queda de árvores na estrutura.','Vendaval arrancou o telhado e quebrou vidros. A seguradora paga o reparo.'],
+    ['re_granizo','re_granizo_val','Granizo','🌨️','Cobre danos por chuva de granizo no telhado, fachada e vidros.','Granizo amassou e furou o telhado. A seguradora cobre o conserto.'],
+    ['re_inundacao','re_inundacao_val','Inundação e Alagamento','🌊','Cobre danos quando a água invade o interior do imóvel.','Enchente entrou pela garagem e danificou piso e paredes. A seguradora paga.'],
+    ['re_rc_fam','re_rc_fam_val','RC Familiar','👨‍👩‍👧','Cobre danos que você ou sua família causarem a terceiros involuntariamente.','Seu filho quebrou o vidro do vizinho com uma bola. A seguradora paga.'],
+    ['re_rc_emp','re_rc_emp_val','RC Empregador Doméstico','👩‍🍳','Cobre acidentes de trabalho sofridos por empregados domésticos no imóvel.','Sua diarista escorregou e se machucou. A seguradora cobre custos médicos e indenização.'],
+  ];
+
+  const EXTRAS=[
+    ['re_ext_aluguel','re_ext_aluguel_val','Perda de Aluguel','🏘️','Se o imóvel ficar inabitável por sinistro, a seguradora repõe os aluguéis perdidos.','Incêndio deixou inabitável 3 meses? Você recebe os aluguéis do período.'],
+    ['re_ext_bici','re_ext_bici_val','Bicicleta','🚲','Cobre roubo ou danos à bicicleta.','Bicicleta furtada da garagem? A seguradora indeniza.'],
+    ['re_ext_port','re_ext_port_val','Portáteis e Eletrônicos','💻','Cobre notebook, tablet e outros eletrônicos portáteis contra roubo e danos.','Roubaram seu notebook? A seguradora repõe.'],
+    ['re_ext_joias','re_ext_joias_val','Joias e Obras de Arte','💎','Cobre joias, relógios e obras de arte contra roubo e danos.','Roubaram suas joias durante uma invasão? A seguradora indeniza.'],
+    ['re_ext_cond','re_ext_cond_val','RC Condomínio','🏢','Cobre danos causados a terceiros ou ao condomínio.','Vazamento do seu apartamento danificou o do vizinho. A seguradora paga.'],
   ];
 
   const cobs=[];
-  COB_RESID.forEach(([chkId,valId,nome,e,desc,ex])=>{
+  COB.forEach(([chkId,valId,nome,e,desc,ex])=>{
     if(g(chkId)?.checked) cobs.push({nome,valor:g(valId)?.value.trim()||'',e,desc,ex});
   });
 
-  const ass=[];
-  if(g('re_ass_enc')?.checked) ass.push({nome:'Encanador de Emergência',extra:'',e:'🔧',desc:'Cano estourou ou vazamento urgente? A assistência envia um encanador a qualquer hora.',ex:'Cano furou às 2h da manhã e estava alagando tudo. O encanador chegou em 40 minutos.'});
-  if(g('re_ass_ele')?.checked) ass.push({nome:'Eletricista de Emergência',extra:'',e:'⚡',desc:'Curto-circuito, disjuntor queimado ou falha elétrica urgente? A assistência resolve.',ex:'Disjuntor queimou e a casa ficou sem luz. O eletricista foi lá e resolveu na hora.'});
-  if(g('re_ass_cha')?.checked) ass.push({nome:'Chaveiro',extra:'',e:'🔑',desc:'Trancou a chave dentro de casa ou perdeu? A assistência resolve sem custo.',ex:'Saiu e esqueceu a chave dentro. Chama o chaveiro pelo seguro — sem pagar nada.'});
-  if(g('re_ass_vid')?.checked) ass.push({nome:'Vidraceiro',extra:'',e:'🪟',desc:'Vidro quebrado em janela, porta ou box? A assistência providencia o conserto de emergência.',ex:'Vidro da janela quebrou à noite. O vidraceiro foi lá e fez um tamponamento emergencial.'});
-  if(g('re_ass_det')?.checked) ass.push({nome:'Desentupimento',extra:'',e:'🚿',desc:'Pia, vaso ou ralo entupido com urgência? A assistência envia um técnico sem custo.',ex:'Vaso entupiu no fim de semana. A assistência desentupiu sem cobrar nada à parte.'});
-  if(g('re_ass_hotel')?.checked){const v=g('re_ass_hotel_val')?.value.trim();ass.push({nome:'Hotel (Imóvel Inabitável)',extra:v?'até '+v+' dias':'',e:'🏨',desc:'Se um sinistro deixar sua casa inabitável, a seguradora paga sua hospedagem temporária.',ex:'Incêndio deixou o apartamento inabitável por 12 dias. A seguradora pagou o hotel.'});}
-
   const ext=[];
-  if(g('re_ext_aluguel')?.checked) ext.push('Perda de Aluguel');
-  if(g('re_ext_bici')?.checked) ext.push('Bicicleta');
-  if(g('re_ext_port')?.checked) ext.push('Portáteis e Eletrônicos');
-  if(g('re_ext_joias')?.checked) ext.push('Joias e Obras de Arte');
-  if(g('re_ext_cond')?.checked) ext.push('RC Condomínio');
-  if(extras) extras.split(/\n|,/).map(s=>s.trim()).filter(Boolean).forEach(e=>ext.push(e));
+  EXTRAS.forEach(([chkId,valId,nome,e,desc,ex])=>{
+    if(g(chkId)?.checked) ext.push({nome,valor:g(valId)?.value.trim()||'',e,desc,ex});
+  });
 
-  return{tipo:'resid',nome,cidade,imovel,cep,cia,premio,franquia,parcelamento,notas,cobs,ass,ext};
+  if(extras) extras.split(/\n|,/).map(s=>s.trim()).filter(Boolean).forEach(e=>ext.push({nome:e,valor:'',e:'📌',desc:'',ex:''}));
+
+  return{tipo:'resid',nome,cidade,imovel,cep,cia,premio,valorParcela,parcelamento,franquia,notas,cobs,ext,assistencia};
 }
 
 function gerarPropostaResid(){
   const d=getDadosResidCompleto();
   if(!d.nome){showToast('Informe o nome do cliente.','error');return;}
   const hoje=new Date().toLocaleDateString('pt-BR');
-  const pm=d.premio>0?d.premio/12:0;
   const sec=t=>`<div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--accent);margin:16px 0 10px;padding-bottom:4px;border-bottom:2px solid #C7D2FE">${t}</div>`;
+  const itemH=items=>items.map(i=>`<div style="padding:10px 0;border-bottom:1px solid var(--border)">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:5px">
+      <span style="font-size:13px;font-weight:700">${i.e} ${i.nome}</span>
+      ${i.valor?`<span style="font-size:11px;font-weight:700;color:var(--accent);background:#EEF2FF;padding:2px 10px;border-radius:99px">${i.valor}</span>`:''}
+    </div>
+    ${i.desc?`<div style="font-size:11.5px;color:var(--text-2);line-height:1.7">${i.desc}</div>`:''}
+    ${i.ex?`<div style="font-size:11px;color:var(--text-3);font-style:italic;margin-top:3px">👉 ${i.ex}</div>`:''}
+  </div>`).join('');
+
   let html=`<div>
   <div style="border-bottom:2px solid var(--accent);padding-bottom:12px;margin-bottom:16px">
     <div style="font-size:16px;font-weight:700;color:var(--accent)">🏠 PROPOSTA — SEGURO RESIDENCIAL</div>
@@ -6307,37 +6319,22 @@ function gerarPropostaResid(){
     </div>
   </div>`;
 
-  if(d.premio>0||d.franquia||d.parcelamento){
+  if(d.valorParcela>0||d.franquia){
     html+=`<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:16px">`;
-    // Mostrar apenas parcela, não o total
-    if(d.valorParcela>0){
-      html+=`<div style="background:#EEF2FF;border:2px solid var(--accent);border-radius:6px;padding:12px;text-align:center;grid-column:span 2">
-        <div style="font-size:9px;font-weight:700;text-transform:uppercase;color:var(--accent)">${d.parcelamento}</div>
-        <div style="font-size:26px;font-weight:700;color:var(--accent);margin-top:2px">R$ ${d.valorParcela.toLocaleString('pt-BR',{minimumFractionDigits:2})}</div>
-        <div style="font-size:10px;color:var(--text-3);margin-top:2px">Prêmio total: R$ ${d.premio.toLocaleString('pt-BR',{minimumFractionDigits:2})}</div>
-      </div>`;
-    } else if(d.parcelamento){
-      html+=`<div style="background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:10px;text-align:center"><div style="font-size:9px;font-weight:700;text-transform:uppercase;color:var(--text-3)">Parcelamento</div><div style="font-size:14px;font-weight:700;margin-top:3px">${d.parcelamento}</div></div>`;
-    }
+    if(d.valorParcela>0) html+=`<div style="background:#EEF2FF;border:2px solid var(--accent);border-radius:6px;padding:10px;text-align:center;grid-column:span 2"><div style="font-size:9px;font-weight:700;text-transform:uppercase;color:var(--accent)">${d.parcelamento}</div><div style="font-size:22px;font-weight:700;color:var(--accent);margin-top:2px">R$ ${d.valorParcela.toLocaleString('pt-BR',{minimumFractionDigits:2})}</div><div style="font-size:10px;color:var(--text-3);margin-top:2px">Prêmio total: R$ ${d.premio.toLocaleString('pt-BR',{minimumFractionDigits:2})}</div></div>`;
     if(d.franquia) html+=`<div style="background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:10px;text-align:center"><div style="font-size:9px;font-weight:700;text-transform:uppercase;color:var(--text-3)">Franquia</div><div style="font-size:14px;font-weight:700;margin-top:3px">${d.franquia}</div></div>`;
     html+=`</div>`;
   }
 
-  const itemHtml=items=>items.map(i=>`<div style="padding:10px 0;border-bottom:1px solid var(--border)">
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:5px">
-      <span style="font-size:13px;font-weight:700">${i.e} ${i.nome}</span>
-      ${i.valor?`<span style="font-size:11px;font-weight:700;color:var(--accent);background:#EEF2FF;padding:2px 10px;border-radius:99px">${i.valor}</span>`:''}
-      ${i.extra?`<span style="font-size:11px;color:var(--text-3);background:var(--bg);padding:2px 9px;border-radius:99px;border:1px solid var(--border)">${i.extra}</span>`:''}
-    </div>
-    <div style="font-size:11.5px;color:var(--text-2);line-height:1.7">${i.desc}</div>
-    <div style="font-size:11px;color:var(--text-3);font-style:italic;margin-top:3px">👉 ${i.ex}</div>
-  </div>`).join('');
-
-  if(d.cobs.length){html+=sec('🏠 Coberturas Incluídas');html+=itemHtml(d.cobs);html+=`<div style="margin-bottom:8px"></div>`;}
-  if(d.ass.length){html+=sec('🔧 Assistências 24h');html+=itemHtml(d.ass);html+=`<div style="margin-bottom:8px"></div>`;}
-  if(d.ext.length){html+=sec('💼 Coberturas Extras');html+=`<div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px">${d.ext.map(e=>`<span style="background:#F0F4FF;border:1px solid #C7D2FE;color:var(--accent);padding:4px 12px;border-radius:99px;font-size:12px;font-weight:500">• ${e}</span>`).join('')}</div>`;}
+  if(d.cobs.length){html+=sec('🏠 Coberturas Incluídas');html+=itemH(d.cobs);}
+  if(d.ext.length){html+=sec('💼 Coberturas Extras');html+=itemH(d.ext);}
+  if(d.assistencia){
+    const assLabel={'basica':'🔧 Básica','intermediaria':'⚡ Intermediária','completa':'✅ Completa'};
+    html+=sec('🔧 Assistência Residencial');
+    html+=`<div style="padding:10px 0"><span style="font-size:13px;font-weight:700;background:#EEF2FF;border:2px solid var(--accent);padding:5px 16px;border-radius:99px;color:var(--accent)">${assLabel[d.assistencia]||d.assistencia}</span></div>`;
+  }
   if(d.notas) html+=`<div style="background:#FFFBF0;border:1px solid #F0DFA0;border-radius:6px;padding:10px 14px;font-size:12px;color:var(--text-2);margin-top:12px;line-height:1.7">📌 ${d.notas}</div>`;
-  html+=`<div style="margin-top:16px;padding-top:12px;border-top:1px solid var(--border);font-size:10.5px;color:var(--text-3);text-align:center;line-height:1.8">Vigência: 12 meses · ${hoje} · Creta Seguros</div></div>`;
+  html+=`<div style="margin-top:16px;padding-top:12px;border-top:1px solid var(--border);font-size:10.5px;color:var(--text-3);text-align:center">Vigência: 12 meses · ${hoje} · Creta Seguros</div></div>`;
 
   const el=document.getElementById('pp_resid_preview');
   if(el){el.innerHTML=html;el.style.color='var(--text)';}
@@ -6348,53 +6345,33 @@ function imprimirPDFResid(){
   const d=getDadosResidCompleto();
   if(!d.nome){showToast('Informe o nome do cliente.','error');return;}
   const hoje=new Date().toLocaleDateString('pt-BR');
-  const pm=d.premio>0?d.premio/12:0;
-  const cobH=[...d.cobs,...d.ass].map(i=>`<div class="cb"><div class="ct">${i.e} ${i.nome}${i.valor?` <span class="cv">${i.valor}</span>`:''}${i.extra?` <span class="cx">${i.extra}</span>`:''}</div><div class="cd">${i.desc}</div><div class="ce">👉 ${i.ex}</div></div>`).join('');
-  const exH=d.ext.length?`<div class="eg">${d.ext.map(e=>`<div class="ei">• ${e}</div>`).join('')}</div>`:'';
+  const cobH=[...d.cobs,...d.ext].map(i=>`<div class="cb"><div class="ct">${i.e} ${i.nome}${i.valor?`<span class="cv">${i.valor}</span>`:''}</div>${i.desc?`<div class="cd">${i.desc}</div>`:''}${i.ex?`<div class="ce">👉 ${i.ex}</div>`:''}</div>`).join('');
+  const assLabel={'basica':'🔧 Assistência Básica','intermediaria':'⚡ Assistência Intermediária','completa':'✅ Assistência Completa'};
+  const assH=d.assistencia?`<div class="st">🔧 Assistência Residencial</div><div style="padding:10px 0"><span class="ass-badge">${assLabel[d.assistencia]||d.assistencia}</span></div>`:'';
+  const CSS=`*{box-sizing:border-box;margin:0;padding:0}body{font-family:'DM Sans',sans-serif;color:#1A1917;background:#fff;font-size:10.5pt;line-height:1.6}@page{size:A4;margin:20px 24px}.page{max-width:720px;margin:0 auto;padding:20px 24px 40px}.hd{background:linear-gradient(135deg,#1e2d6b 0%,#2A3568 60%,#3a4a8f 100%);border-radius:10px;padding:18px 22px;margin-bottom:20px}.hd table{width:100%;border-collapse:collapse}.hd td{vertical-align:middle}.hd td:last-child{text-align:right}.brand{font-family:'DM Serif Display',Georgia,serif;font-size:22px;color:#fff;letter-spacing:-.02em}.brand-sub{font-size:9px;color:rgba(255,255,255,.6);text-transform:uppercase;letter-spacing:.12em;margin-top:2px;font-family:'DM Sans',Arial,sans-serif}.badge-title{font-size:14px;font-weight:700;color:#fff}.badge-sub{font-size:9px;color:rgba(255,255,255,.65);line-height:1.9;display:block}.cl{background:#E8EAF3;border-left:4px solid #2A3568;border-radius:6px;padding:12px 16px;margin-bottom:16px}.cn{font-family:'DM Serif Display',Georgia,serif;font-size:18px;margin-bottom:4px}.cs{font-size:10.5px;color:#5C5850;line-height:1.8}.ig{width:100%;border-collapse:separate;border-spacing:8px 0;margin-bottom:18px}.ib{background:#F5F6FA;border:1px solid #DDE0EC;border-radius:7px;padding:10px 13px;text-align:center;width:33%}.ib.dest{background:#EEF2FF;border:2px solid #2A3568}.il{font-size:8px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:#9C9890;margin-bottom:3px}.iv{font-size:15px;font-weight:700;color:#1A1917}.iv.grande{font-size:20px;color:#2A3568}.is{font-size:9px;color:#9C9890;margin-top:1px}.st{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:#2A3568;margin:14px 0 8px;padding-bottom:5px;border-bottom:2px solid #C7D2FE}.pb{background:#EEF2FF;border:1px solid #C7D2FE;border-left:4px solid #2A3568;border-radius:7px;padding:12px 14px;margin-bottom:10px}.pl{font-size:13px;font-weight:700;color:#2A3568;margin-bottom:4px}.pd{font-size:11px;color:#5C5850;line-height:1.7}.tg{display:inline-block;background:#fff;border:1px solid #C7D2FE;color:#2A3568;padding:2px 8px;border-radius:99px;font-size:10px;font-weight:500;margin:2px 2px 0 0}.cb{padding:9px 0;border-bottom:1px solid #EEF2FF}.ct{font-size:12px;font-weight:700;color:#1A1917;margin-bottom:3px}.cv{display:inline-block;font-size:10px;font-weight:700;color:#fff;background:#2A3568;padding:1px 8px;border-radius:99px;margin-left:5px}.cx{display:inline-block;font-size:10px;color:#5C5850;background:#F5F6FA;padding:1px 8px;border-radius:99px;border:1px solid #DDE0EC;margin-left:5px}.cd{font-size:10.5px;color:#5C5850;line-height:1.7;margin-bottom:2px}.ce{font-size:10px;color:#9C9890;font-style:italic}.ass-badge{display:inline-block;font-size:12px;font-weight:700;padding:5px 18px;border-radius:99px;border:2px solid #2A3568;color:#2A3568;background:#EEF2FF}.eg{display:inline-block;background:#EEF2FF;border:1px solid #C7D2FE;color:#2A3568;padding:3px 12px;border-radius:99px;font-size:10.5px;font-weight:500;margin:2px 2px 0 0}.nt{background:#FFFBF0;border:1px solid #F0DFA0;border-radius:6px;padding:10px 14px;font-size:10.5px;color:#5C5850;margin-top:14px;line-height:1.7}.ft{margin-top:22px;padding-top:10px;border-top:1px solid #DDE0EC;font-size:8.5px;color:#9C9890;text-align:center;line-height:1.8}@media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact}}`;
   const win=window.open('','_blank');
-  win.document.write(`<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8"><title>Proposta Residencial — ${d.nome}</title>
+  win.document.write(`<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8">
+<title>Proposta Residencial — ${d.nome}</title>
 <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
-<style>*{box-sizing:border-box;margin:0;padding:0}body{font-family:'DM Sans',sans-serif;color:#1A1917;background:#fff;font-size:10.5pt;line-height:1.6}
-@page{size:A4;margin:20px 24px}.page{max-width:720px;margin:0 auto;padding:24px 28px 40px}
-.hd{display:flex;justify-content:space-between;border-bottom:3px solid #2A3568;padding-bottom:14px;margin-bottom:20px}
-.br{font-family:'DM Serif Display',serif;font-size:22px;color:#2A3568}
-.hr{text-align:right;font-size:9.5px;color:#5C5850;line-height:1.9}.hr strong{font-size:14px;color:#2A3568;display:block;font-family:'DM Serif Display',serif}
-.cl{background:#E8EAF3;border-left:4px solid #2A3568;border-radius:6px;padding:12px 16px;margin-bottom:16px}
-.cn{font-family:'DM Serif Display',serif;font-size:18px;margin-bottom:4px}.cs{font-size:10.5px;color:#5C5850;line-height:1.8}
-.ig{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:18px}
-.ib{background:#F5F6FA;border:1px solid #DDE0EC;border-radius:7px;padding:10px 13px;text-align:center}
-.il{font-size:8.5px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:#9C9890;margin-bottom:3px}
-.iv{font-size:15px;font-weight:700}.is{font-size:9px;color:#9C9890;margin-top:1px}
-.st{font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:#2A3568;margin:16px 0 10px;padding-bottom:5px;border-bottom:2px solid #C7D2FE}
-.cb{padding:9px 0;border-bottom:1px solid #EEF2FF}.ct{font-size:12px;font-weight:700;color:#1A1917;margin-bottom:3px;display:flex;align-items:center;gap:7px;flex-wrap:wrap}
-.cv{font-size:10px;font-weight:700;color:#fff;background:#2A3568;padding:1px 8px;border-radius:99px}
-.cx{font-size:10px;color:#5C5850;background:#F5F6FA;padding:1px 8px;border-radius:99px;border:1px solid #DDE0EC}
-.cd{font-size:10.5px;color:#5C5850;line-height:1.7;margin-bottom:2px}.ce{font-size:10px;color:#9C9890;font-style:italic}
-.eg{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px}.ei{background:#EEF2FF;border:1px solid #C7D2FE;color:#2A3568;padding:3px 12px;border-radius:99px;font-size:10.5px;font-weight:500}
-.nt{background:#FFFBF0;border:1px solid #F0DFA0;border-radius:6px;padding:10px 14px;font-size:10.5px;color:#5C5850;margin-top:14px;line-height:1.7}
-.ft{margin-top:22px;padding-top:10px;border-top:1px solid #DDE0EC;font-size:8.5px;color:#9C9890;text-align:center;line-height:1.8}
-@media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact}}
-.parc-card{background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-sm);padding:8px 6px;text-align:center;cursor:pointer;transition:all .15s;user-select:none}
-.parc-card:hover{border-color:var(--accent);background:#EEF2FF}
-.parc-card.recomendado{border:2px solid var(--accent);background:#EEF2FF;position:relative}
-.parc-card.recomendado::after{content:'⭐';position:absolute;top:-8px;right:-6px;font-size:13px}
-.parc-card-n{font-size:11px;font-weight:700;color:var(--text-3);margin-bottom:2px}
-.parc-card-val{font-size:13px;font-weight:700;color:var(--accent)}
-.parc-card.recomendado .parc-card-val{font-size:14px}
-
-</style></head><body><div class="page">
-<div class="hd"><div><div class="br">Creta Seguros</div></div><div class="hr"><strong>🏠 Seguro Residencial</strong>Data: ${hoje}<br>Vigência: 12 meses<br>Proposta confidencial</div></div>
-<div class="cl"><div class="cn">${d.nome}</div><div class="cs">${d.cidade?'📍 '+d.cidade+'<br>':''}${d.imovel?'🏠 '+d.imovel+(d.cep?' · CEP '+d.cep:'')+'<br>':''}${d.cia?'🏢 Seguradora: <strong>'+d.cia+'</strong>':''}</div></div>
-${(d.valorParcela>0||d.parcelamento||d.franquia)?`<div class="ig">
-  ${d.valorParcela>0?`<div class="ib" style="border:2px solid #2A3568"><div class="il" style="color:#2A3568">Valor por parcela</div><div class="iv" style="font-size:20px;color:#2A3568">R$ ${d.valorParcela.toLocaleString('pt-BR',{minimumFractionDigits:2})}</div><div class="is">${d.parcelamento}</div></div>`:d.parcelamento?`<div class="ib"><div class="il">Parcelamento</div><div class="iv">${d.parcelamento}</div></div>`:''}
-  ${d.franquia?`<div class="ib"><div class="il">Franquia</div><div class="iv">${d.franquia}</div></div>`:''}
-  ${d.valorParcela>0&&d.premio>0?`<div class="ib"><div class="il">Prêmio total</div><div class="iv" style="font-size:13px;color:#9C9890">R$ ${(+d.premio).toLocaleString('pt-BR',{minimumFractionDigits:2})}</div></div>`:''}
-</div>`:''}
-
+<style>${CSS}</style></head><body><div class="page">
+<div class="hd"><table><tr>
+  <td><div class="brand">Creta Seguros</div><div class="brand-sub">Corretora de Seguros</div></td>
+  <td><div class="badge-title">🏠 Seguro Residencial</div><span class="badge-sub">${hoje} · Vigência: 12 meses</span><span class="badge-sub">Proposta confidencial</span></td>
+</tr></table></div>
+<div class="cl"><div class="cn">${d.nome}</div><div class="cs">
+  ${d.cidade?'📍 '+d.cidade+'<br>':''}
+  ${d.imovel?'🏠 '+d.imovel+(d.cep?' · CEP '+d.cep:'')+'<br>':''}
+  ${d.cia?'🏢 Seguradora: <strong>'+d.cia+'</strong>':''}
+</div></div>
+${d.valorParcela>0||d.franquia?`<table class="ig"><tr>
+  ${d.valorParcela>0?`<td class="ib dest"><div class="il">Valor por parcela</div><div class="iv grande">R$ ${d.valorParcela.toLocaleString('pt-BR',{minimumFractionDigits:2})}</div><div class="is">${d.parcelamento}</div></td>`:''}
+  ${d.franquia?`<td class="ib"><div class="il">Franquia</div><div class="iv">${d.franquia}</div></td>`:''}
+  ${d.valorParcela>0&&d.premio>0?`<td class="ib"><div class="il">Prêmio total</div><div class="iv" style="font-size:13px;color:#9C9890">R$ ${(+d.premio).toLocaleString('pt-BR',{minimumFractionDigits:2})}</div></td>`:''}
+</tr></table>`:''}
 ${cobH?`<div class="st">🏠 Coberturas Incluídas</div>${cobH}`:''}
-${d.ext.length?`<div class="st">💼 Coberturas Extras</div>${exH}`:''}
+${assH}
 ${d.notas?`<div class="nt">📌 <strong>Observações:</strong> ${d.notas}</div>`:''}
-<div class="ft">Proposta de ${hoje} · Vigência: 12 meses · Valores sujeitos à confirmação pela seguradora · Creta Seguros</div>
+<div class="ft">Proposta de ${hoje} · Vigência: 12 meses · Valores sujeitos à confirmação · Creta Seguros</div>
 </div><script>window.onload=function(){window.print()}<\/script></body></html>`);
   win.document.close();
   showToast('📄 Abrindo PDF...','success');
@@ -6404,20 +6381,19 @@ function copiarWhatsAppResid(){
   const d=getDadosResidCompleto();
   if(!d.nome){showToast('Informe o nome do cliente.','error');return;}
   const hoje=new Date().toLocaleDateString('pt-BR');
-  const pm=d.premio>0?d.premio/12:0;
+  const assLabel={'basica':'🔧 Básica','intermediaria':'⚡ Intermediária','completa':'✅ Completa'};
   let t='🏠 *PROPOSTA — SEGURO RESIDENCIAL*\n━━━━━━━━━━━━━━━━━━━━━━\n\n';
   t+=`👤 *${d.nome}*\n`;
-  if(d.cidade) t+=`📍 ${d.cidade}\n`;
-  if(d.imovel) t+=`🏠 ${d.imovel}${d.cep?' · CEP '+d.cep:''}\n`;
-  if(d.cia) t+=`🏢 ${d.cia}\n`;
+  if(d.cidade)t+=`📍 ${d.cidade}\n`;
+  if(d.imovel)t+=`🏠 ${d.imovel}${d.cep?' · CEP '+d.cep:''}\n`;
+  if(d.cia)t+=`🏢 ${d.cia}\n`;
   t+='\n';
-  if(d.valorParcela>0) t+=`💰 *${d.parcelamento} de R$ ${d.valorParcela.toLocaleString('pt-BR',{minimumFractionDigits:2})}*\n`;
-  else if(d.parcelamento) t+=`💳 Parcelamento: ${d.parcelamento}\n`;
-  if(d.franquia) t+=`⚠️ Franquia: ${d.franquia}\n`;
+  if(d.valorParcela>0)t+=`💰 *${d.parcelamento}*\n_(prêmio total: R$ ${d.premio.toLocaleString('pt-BR',{minimumFractionDigits:2})})_\n`;
+  if(d.franquia)t+=`⚠️ Franquia: ${d.franquia}\n`;
   t+=`📅 Vigência: 12 meses\n\n🏠 *COBERTURAS INCLUÍDAS*\n\n`;
-  [...d.cobs,...d.ass].forEach(i=>{t+=`${i.e} *${i.nome}*${i.valor?' — '+i.valor:''}${i.extra?' — '+i.extra:''}\n${i.desc}\n👉 ${i.ex}\n\n`;});
-  if(d.ext.length) t+=`💼 *Extras:* ${d.ext.join(' · ')}\n\n`;
-  if(d.notas) t+=`📌 ${d.notas}\n\n`;
+  [...d.cobs,...d.ext].forEach(i=>{t+=`${i.e} *${i.nome}*${i.valor?' — '+i.valor:''}\n${i.desc}\n👉 ${i.ex}\n\n`;});
+  if(d.assistencia)t+=`🔧 *Assistência:* ${assLabel[d.assistencia]||d.assistencia}\n\n`;
+  if(d.notas)t+=`📌 ${d.notas}\n\n`;
   t+=`━━━━━━━━━━━━━━━━━━━━━━\n${hoje} · Creta Seguros`;
   navigator.clipboard.writeText(t).then(()=>showToast('✅ Copiado para WhatsApp!','success')).catch(()=>{
     const ta=document.createElement('textarea');ta.value=t;ta.style.position='fixed';ta.style.opacity='0';
@@ -6426,116 +6402,23 @@ function copiarWhatsAppResid(){
   });
 }
 
-async function gerarLinkResid(){
+function gerarLinkResid(){
   const d=getDadosResidCompleto();
   if(!d.nome){showToast('Informe o nome do cliente.','error');return;}
   showToast('⏳ Gerando link...','');
-  try{
-    const payload={tipo:'resid',dados:JSON.stringify(d),created_at:new Date().toISOString()};
-    const{data,error}=await db.from('propostas_link').insert([payload]).select('id').single();
-    if(error) throw error;
-    const link=`${window.location.origin}${window.location.pathname}?pid=${data.id}`;
-    navigator.clipboard.writeText(link).then(()=>showToast('🔗 Link copiado!','success')).catch(()=>prompt('Copie o link:',link));
-  }catch(e){
-    const encoded=btoa(encodeURIComponent(JSON.stringify(d)));
-    const link=`${window.location.origin}${window.location.pathname}?prop=${encoded}`;
-    navigator.clipboard.writeText(link).then(()=>showToast('🔗 Link copiado!','success')).catch(()=>prompt('Copie o link:',link));
-  }
-}
-
-// ── DEFAULTS PROPOSTA AUTO ─────────────────────────────────────────────
-function initPropostaAutoDefaults(){
-  // Só pré-preenche se os campos estiverem vazios (não sobrescreve o que o usuário já digitou)
-  const g=id=>document.getElementById(id);
-
-  // Cobertura principal: Compreensiva
-  const rbComp=g('rb_compreensiva');
-  if(rbComp&&!document.querySelector('input[name="auto_principal"]:checked')){
-    rbComp.checked=true;
-    atualizarLblPrincipal();
-  }
-
-  // FIPE: 100%
-  const rbFipe=g('rb_fipe100');
-  if(rbFipe&&!document.querySelector('input[name="auto_fipe"]:checked')){
-    rbFipe.checked=true;
-  }
-
-  // Danos Materiais: R$ 250.000
-  const rcDm=g('rc_dm'); const rcDmVal=g('rc_dm_val');
-  if(rcDm&&!rcDm.checked){ rcDm.checked=true; }
-  if(rcDmVal&&!rcDmVal.value) rcDmVal.value='R$ 250.000';
-
-  // Danos Corporais: R$ 250.000
-  const rcDc=g('rc_dc'); const rcDcVal=g('rc_dc_val');
-  if(rcDc&&!rcDc.checked){ rcDc.checked=true; }
-  if(rcDcVal&&!rcDcVal.value) rcDcVal.value='R$ 250.000';
-
-  // Danos Morais: R$ 10.000
-  const rcMo=g('rc_mo'); const rcMoVal=g('rc_mo_val');
-  if(rcMo&&!rcMo.checked){ rcMo.checked=true; }
-  if(rcMoVal&&!rcMoVal.value) rcMoVal.value='R$ 10.000';
-
-  // APP Morte e Invalidez: R$ 5.000
-  const rcApp=g('rc_app'); const rcAppVal=g('rc_app_val');
-  if(rcApp&&!rcApp.checked){ rcApp.checked=true; }
-  if(rcAppVal&&!rcAppVal.value) rcAppVal.value='R$ 5.000';
-
-  // Carro Reserva: 30 dias
-  const assRes=g('ass_reserva'); const assResVal=g('ass_reserva_val');
-  if(assRes&&!assRes.checked){ assRes.checked=true; }
-  if(assResVal&&!assResVal.value) assResVal.value='30';
-
-  // Vidros, Faróis, Lanternas e Retrovisores
-  const assVid=g('ass_vidros');
-  if(assVid&&!assVid.checked){ assVid.checked=true; }
-}
-
-// ── TABELA DE PARCELAMENTO AUTO ────────────────────────────────────────
-function atualizarTabelaParcelamento(){
-  const premio=parseFloat(document.getElementById('pp_auto_premio')?.value||0)||0;
-  const grid=document.getElementById('pp_auto_parc_grid');
-  const tabela=document.getElementById('pp_auto_parc_tabela');
-  const vazio=document.getElementById('pp_auto_parc_vazio');
-  const inputParc=document.getElementById('pp_auto_parcelamento');
-
-  if(!premio||premio<=0){
-    if(tabela) tabela.style.display='none';
-    if(vazio) vazio.style.display='block';
-    if(inputParc) inputParc.value='';
-    return;
-  }
-
-  if(tabela) tabela.style.display='block';
-  if(vazio) vazio.style.display='none';
-
-  const atual=inputParc?.value||'';
-  const nAtual=parseInt(atual.match(/(\d+)/)?.[1]||0)||0;
-
-  grid.innerHTML='';
-  for(let n=1;n<=12;n++){
-    const val=premio/n;
-    const card=document.createElement('div');
-    card.className='parc-card'+(n===nAtual?' recomendado':'');
-    card.dataset.n=n;
-    card.innerHTML=`<div class="parc-card-n">${n}x</div><div class="parc-card-val">R$ ${val.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2})}</div>`;
-    card.onclick=()=>selecionarParcela(n,val,premio);
-    grid.appendChild(card);
-  }
-}
-
-function selecionarParcela(n, val, premio){
-  // Atualizar visual
-  document.querySelectorAll('.parc-card').forEach(c=>c.classList.remove('recomendado'));
-  const card=document.querySelector(`.parc-card[data-n="${n}"]`);
-  if(card) card.classList.add('recomendado');
-
-  // Salvar valor
-  const input=document.getElementById('pp_auto_parcelamento');
-  if(input) input.value=`${n}x`;
-
-  // Atualizar valorParcela no estado
-  showToast(`${n}x de R$ ${val.toLocaleString('pt-BR',{minimumFractionDigits:2})} marcado como recomendado ⭐`,'success');
+  (async()=>{
+    try{
+      const payload={tipo:'resid',dados:JSON.stringify(d),created_at:new Date().toISOString()};
+      const{data,error}=await db.from('propostas_link').insert([payload]).select('id').single();
+      if(error)throw error;
+      const link=`${window.location.origin}${window.location.pathname}?pid=${data.id}`;
+      navigator.clipboard.writeText(link).then(()=>showToast('🔗 Link copiado!','success')).catch(()=>prompt('Copie o link:',link));
+    }catch(e){
+      const encoded=btoa(encodeURIComponent(JSON.stringify(d)));
+      const link=`${window.location.origin}${window.location.pathname}?prop=${encoded}`;
+      navigator.clipboard.writeText(link).then(()=>showToast('🔗 Link copiado!','success')).catch(()=>prompt('Copie o link:',link));
+    }
+  })();
 }
 
 </script>
