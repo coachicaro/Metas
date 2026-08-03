@@ -1483,6 +1483,10 @@ input[type=range]{width:100%;accent-color:var(--accent)}
       </div>
     </div>
 
+<!-- MODAL NOVO/EDITAR CLIENTE -->
+<div class="modal-overlay" id="modalCliente" onclick="fecharModalCliente(event)">
+  <div class="modal" style="max-width:720px">
+    <div class="modal-title" id="modalClienteTitulo">Novo Cliente</div>
 
     <!-- Abas -->
     <div class="auth-tabs" id="cliTabsWrap" style="margin-bottom:20px">
@@ -1500,97 +1504,54 @@ input[type=range]{width:100%;accent-color:var(--accent)}
       <div class="form-grid" style="margin-bottom:14px">
         <div class="field"><label>CPF / CNPJ</label><input type="text" id="cli_doc" placeholder="000.000.000-00"></div>
         <div class="field"><label>Tipo</label>
-          <select id="cli_tipo"><option value="PF">Pessoa Física</option><option value="PJ">Pessoa Jurídica</option></select>
+          <select id="cli_tipo">
+            <option value="PF">Pessoa Física</option>
+            <option value="PJ">Pessoa Jurídica</option>
+          </select>
         </div>
         <div class="field"><label>Origem</label>
-          <select id="cli_origem"><option value="manual">Cadastro manual</option><option value="venda">Venda no sistema</option><option value="indicacao">Indicação</option><option value="prospect">Prospect</option></select>
+          <select id="cli_origem">
+            <option value="manual">Cadastro manual</option>
+            <option value="venda">Venda no sistema</option>
+            <option value="indicacao">Indicação</option>
+            <option value="prospect">Prospect</option>
+          </select>
         </div>
       </div>
-      <div class="field" style="margin-bottom:16px"><label>Observações</label>
-        <textarea id="cli_obs" rows="2" placeholder="Anotações..." style="resize:vertical"></textarea>
+      <div class="field" style="margin-bottom:14px">
+        <label>Observações</label>
+        <textarea id="cli_obs" rows="3" placeholder="Anotações..." style="resize:vertical"></textarea>
       </div>
-      <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:var(--text-3);margin-bottom:10px">Produtos que possui</div>
-      <div class="produto-grid" style="margin-bottom:20px">
-        <div class="produto-chip" id="chip_auto" onclick="toggleProduto('auto')">🚗 Auto</div>
-        <div class="produto-chip" id="chip_residencial" onclick="toggleProduto('residencial')">🏠 Residencial</div>
-        <div class="produto-chip" id="chip_vida" onclick="toggleProduto('vida')">❤️ Vida</div>
-        <div class="produto-chip" id="chip_saude" onclick="toggleProduto('saude')">🏥 Saúde</div>
-        <div class="produto-chip" id="chip_empresarial" onclick="toggleProduto('empresarial')">🏢 Empresarial</div>
-        <div class="produto-chip" id="chip_cartao" onclick="toggleProduto('cartao')">💳 Cartão</div>
-        <div class="produto-chip" id="chip_outros" onclick="toggleProduto('outros')">📦 Outros</div>
-      </div>
-      <div class="form-actions">
-        <button class="btn btn-ghost" onclick="fecharModalClienteDireto()">Cancelar</button>
-        <button class="btn btn-primary" onclick="salvarCliente()">💾 Salvar</button>
+      <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--text-3);margin-bottom:10px">Produtos que possui</div>
+      <div class="prod-toggle-grid" id="cli_prods_grid">
+        <button type="button" class="prod-toggle" data-key="auto" onclick="toggleProd(this)">🚗 Auto</button>
+        <button type="button" class="prod-toggle" data-key="residencial" onclick="toggleProd(this)">🏠 Residencial</button>
+        <button type="button" class="prod-toggle" data-key="vida" onclick="toggleProd(this)">❤️ Vida</button>
+        <button type="button" class="prod-toggle" data-key="saude" onclick="toggleProd(this)">🏥 Saúde</button>
+        <button type="button" class="prod-toggle" data-key="empresarial" onclick="toggleProd(this)">🏢 Empresarial</button>
+        <button type="button" class="prod-toggle" data-key="cartao" onclick="toggleProd(this)">💳 Cartão</button>
+        <button type="button" class="prod-toggle" data-key="outros" onclick="toggleProd(this)">📦 Outros</button>
       </div>
     </div>
 
     <!-- ABA IMPORTAR DAS VENDAS -->
     <div id="cliPanelVendas" style="display:none">
-      <p style="font-size:13px;color:var(--text-2);margin-bottom:14px">
-        Clientes que você já vendeu e ainda não estão na sua carteira.
-      </p>
-      <input type="text" id="buscaCliVenda" placeholder="🔍 Buscar cliente..." oninput="renderClientesDasVendas()"
-        style="width:100%;padding:9px 12px;font-size:13px;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--bg);outline:none;margin-bottom:14px;font-family:'DM Sans',sans-serif">
-      <div id="listaCliVendas" style="max-height:360px;overflow-y:auto;display:flex;flex-direction:column;gap:8px"></div>
-      <div class="form-actions" style="margin-top:16px">
-        <button class="btn btn-ghost" onclick="fecharModalClienteDireto()">Cancelar</button>
+      <div style="background:var(--accent-light);border-radius:var(--radius-sm);padding:14px 16px;margin-bottom:16px;font-size:13px;color:var(--accent-text);line-height:1.7">
+        Selecione um cliente que já aparece nas vendas para importar automaticamente.
       </div>
+      <input type="text" id="cli_busca_venda" placeholder="🔍 Buscar pelo nome..." oninput="filtrarClientesVenda()"
+        style="width:100%;padding:9px 12px;font-size:13px;font-family:'DM Sans',sans-serif;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--bg);color:var(--text);outline:none;margin-bottom:12px;box-sizing:border-box">
+      <div id="cli_lista_venda" style="max-height:280px;overflow-y:auto;border:1px solid var(--border);border-radius:var(--radius-sm)"></div>
     </div>
-  </div>
-</div>
 
-<!-- MODAL DETALHE CLIENTE -->
-<div class="modal-overlay" id="modalDetalhe" onclick="fecharModalDetalhe(event)">
-  <div class="modal" style="max-width:700px">
-    <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:20px">
-      <div>
-        <div class="modal-title" id="detalheNome" style="margin-bottom:4px"></div>
-        <div id="detalheInfo" style="font-size:13px;color:var(--text-2)"></div>
-      </div>
-      <div style="display:flex;gap:8px">
-        <button class="btn btn-ghost" style="padding:6px 12px;font-size:12px" onclick="editarClienteAtual()">✏️ Editar</button>
-        <button class="btn btn-ghost" style="padding:6px 12px;font-size:12px" onclick="fecharModalDetalhe()">✕</button>
-      </div>
-    </div>
-    <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:var(--text-3);margin-bottom:10px">Produtos</div>
-    <div class="produto-grid" id="detalheProdutos" style="margin-bottom:20px"></div>
-    <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:var(--text-3);margin-bottom:10px">Histórico de Vendas</div>
-    <div id="detalheVendas" style="margin-bottom:20px;max-height:160px;overflow-y:auto"></div>
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
-      <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:var(--text-3)">Tarefas / Lembretes</div>
-      <button class="btn btn-primary" style="padding:5px 12px;font-size:12px" onclick="abrirModalTarefa(clienteDetalheId)">+ Tarefa</button>
-    </div>
-    <div id="detalheTarefas"></div>
-    <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:20px;padding-top:16px;border-top:1px solid var(--border)">
-      <button class="btn btn-ghost" id="btnDesvincular" style="font-size:12px;padding:7px 14px;display:none" onclick="desvincularClienteDetalhe()">🔗 Remover do grupo</button>
-      <button class="btn btn-ghost" style="font-size:12px;padding:7px 14px" onclick="abrirModalVincular(null,'',null,clienteDetalheId,'')">+ Adicionar ao grupo</button>
-      <button class="btn btn-danger" style="font-size:12px;padding:7px 14px" onclick="deletarClienteAtual()">🗑️ Excluir cliente</button>
-    </div>
-  </div>
-</div>
-
-<!-- MODAL TAREFA -->
-<div class="modal-overlay" id="modalTarefa" onclick="fecharModalTarefa(event)">
-  <div class="modal" style="max-width:500px">
-    <div class="modal-title" id="modalTarefaTitulo">Nova Tarefa</div>
-    <input type="hidden" id="tar_id">
-    <input type="hidden" id="tar_cliente_id">
-    <div class="field"><label>Título *</label><input type="text" id="tar_titulo" placeholder="Ex: Ligar para oferecer residencial"></div>
-    <div class="field"><label>Descrição</label><textarea id="tar_desc" rows="2" placeholder="Detalhes..." style="resize:vertical"></textarea></div>
-    <div class="form-grid-2" style="margin-bottom:14px">
-      <div class="field"><label>Data / Hora do lembrete</label><input type="datetime-local" id="tar_data"></div>
-      <div class="field"><label>E-mail para lembrete</label><input type="email" id="tar_email" placeholder="seu@email.com"></div>
-    </div>
-    <div class="field"><label>Status</label>
-      <select id="tar_status"><option value="pendente">Pendente</option><option value="concluida">Concluída</option><option value="cancelada">Cancelada</option></select>
-    </div>
+    <input type="hidden" id="cli_id">
     <div class="form-actions">
-      <button class="btn btn-ghost" onclick="fecharModalTarefaDireto()">Cancelar</button>
-      <button class="btn btn-primary" onclick="salvarTarefa()">💾 Salvar</button>
+      <button class="btn btn-ghost" onclick="fecharModalClienteDireto()">Cancelar</button>
+      <button class="btn btn-primary" onclick="salvarCliente()">💾 Salvar</button>
     </div>
   </div>
 </div>
+
 
 <!-- MODAL IMPORTAR HISTÓRICO RENOVAÇÕES -->
 <div class="modal-overlay" id="modalImportHistRenov" onclick="fecharModalImportHistRenovEvt(event)">
@@ -6421,6 +6382,51 @@ function gerarLinkResid(){
       navigator.clipboard.writeText(link).then(()=>showToast('🔗 Link copiado!','success')).catch(()=>prompt('Copie o link:',link));
     }
   })();
+}
+
+// ── DEFAULTS PROPOSTA AUTO ─────────────────────────────────────────────
+function initPropostaAutoDefaults(){
+  const g=id=>document.getElementById(id);
+
+  // Só pré-preenche se nada estiver selecionado ainda
+  if(!document.querySelector('input[name="auto_principal"]:checked')){
+    const rb=g('rb_compreensiva');
+    if(rb){rb.checked=true;atualizarLblPrincipal();}
+  }
+
+  if(!document.querySelector('input[name="auto_fipe"]:checked')){
+    const rb=g('rb_fipe100');
+    if(rb) rb.checked=true;
+  }
+
+  // RC — Danos Materiais R$ 250.000
+  const dm=g('rc_dm'),dmv=g('rc_dm_val');
+  if(dm&&!dm.checked){dm.checked=true;}
+  if(dmv&&!dmv.value) dmv.value='R$ 250.000';
+
+  // RC — Danos Corporais R$ 250.000
+  const dc=g('rc_dc'),dcv=g('rc_dc_val');
+  if(dc&&!dc.checked){dc.checked=true;}
+  if(dcv&&!dcv.value) dcv.value='R$ 250.000';
+
+  // RC — Danos Morais R$ 10.000
+  const mo=g('rc_mo'),mov=g('rc_mo_val');
+  if(mo&&!mo.checked){mo.checked=true;}
+  if(mov&&!mov.value) mov.value='R$ 10.000';
+
+  // APP — Morte e Invalidez R$ 5.000
+  const app=g('rc_app'),appv=g('rc_app_val');
+  if(app&&!app.checked){app.checked=true;}
+  if(appv&&!appv.value) appv.value='R$ 5.000';
+
+  // Carro Reserva — 30 dias
+  const res=g('ass_reserva'),resv=g('ass_reserva_val');
+  if(res&&!res.checked){res.checked=true;}
+  if(resv&&!resv.value) resv.value='30';
+
+  // Vidros, Faróis, Lanternas e Retrovisores
+  const vid=g('ass_vidros');
+  if(vid&&!vid.checked){vid.checked=true;}
 }
 
 </script>
