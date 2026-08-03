@@ -117,6 +117,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
 .kanban-col-cotada{border-top:3px solid #6366f1}
 .kanban-col-negociacao{border-top:3px solid #f59e0b}
 .kanban-col-fechada{border-top:3px solid #10b981}
+.kanban-col-perdida{border-top:3px solid #ef4444}
 .kanban-col-aguardando{border-top:3px solid #3b82f6}
 .kanban-search{padding:8px 12px;font-size:13px;font-family:'DM Sans',sans-serif;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--surface);outline:none;width:200px}
 .kanban-search:focus{border-color:var(--accent)}
@@ -4498,6 +4499,7 @@ const KANBAN_COLS = [
   {id:'negociacao',    label:'Em Negociação',       cls:'kanban-col-negociacao',icon:'💬'},
   {id:'aguardando_transmissao', label:'Ag. Transmissão', cls:'kanban-col-aguardando', icon:'📤'},
   {id:'fechada',       label:'Fechada ✅',           cls:'kanban-col-fechada',   icon:'✅'},
+  {id:'perdida',       label:'Perdida ❌',           cls:'kanban-col-perdida',   icon:'❌'},
 ];
 
 let dragId=null;
