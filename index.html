@@ -688,6 +688,44 @@ input[type=range]{width:100%;accent-color:var(--accent)}
       <div class="page-title">Análises</div>
       <p class="page-sub">Inteligência comercial do time</p>
 
+      <!-- FILTROS DE ANÁLISE -->
+      <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:20px;padding:14px 16px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius)">
+        <div style="font-size:12px;font-weight:600;color:var(--text-2);white-space:nowrap">📊 Filtrar por:</div>
+
+        <div style="display:flex;flex-direction:column;gap:3px">
+          <label style="font-size:10px;font-weight:600;color:var(--text-3);text-transform:uppercase;letter-spacing:.06em">Período</label>
+          <select id="analisePeriodo" onchange="renderAnalises()" style="padding:6px 10px;font-size:12px;font-family:'DM Sans',sans-serif;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--bg);color:var(--text);outline:none">
+            <option value="1">Mês atual</option>
+            <option value="3" selected>Últimos 3 meses</option>
+            <option value="6">Últimos 6 meses</option>
+            <option value="12">Últimos 12 meses</option>
+            <option value="24">Últimos 24 meses</option>
+            <option value="0">Todo o período</option>
+          </select>
+        </div>
+
+        <div style="display:flex;flex-direction:column;gap:3px">
+          <label style="font-size:10px;font-weight:600;color:var(--text-3);text-transform:uppercase;letter-spacing:.06em">Origem</label>
+          <select id="analiseOrigem" onchange="renderAnalises()" style="padding:6px 10px;font-size:12px;font-family:'DM Sans',sans-serif;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--bg);color:var(--text);outline:none">
+            <option value="">Todas as origens</option>
+          </select>
+        </div>
+
+        <div style="display:flex;flex-direction:column;gap:3px">
+          <label style="font-size:10px;font-weight:600;color:var(--text-3);text-transform:uppercase;letter-spacing:.06em">Vendedor</label>
+          <select id="analiseVendedor" onchange="renderAnalises()" style="padding:6px 10px;font-size:12px;font-family:'DM Sans',sans-serif;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--bg);color:var(--text);outline:none">
+            <option value="">Todos</option>
+            <option>Comercial Escritório</option>
+            <option>Paulo</option>
+            <option>Ícaro</option>
+          </select>
+        </div>
+
+        <button onclick="limparFiltrosAnalise()" style="padding:6px 12px;font-size:12px;font-family:'DM Sans',sans-serif;border:1px solid var(--border);border-radius:var(--radius-sm);background:none;color:var(--text-3);cursor:pointer;margin-top:16px">✕ Limpar</button>
+
+        <div id="analise_resumo_filtro" style="margin-left:auto;font-size:11px;color:var(--text-3);margin-top:16px"></div>
+      </div>
+
       <!-- CARDS DE DESTAQUE -->
       <div class="summary-grid" style="margin-bottom:24px" id="analiseCards"></div>
 
@@ -2935,7 +2973,72 @@ function getMeses(n){
   return meses;
 }
 
+// ── FILTROS DE ANÁLISE ───────────────────────────────────────────────
+function getAnaliseConfig(){
+  const periodo=parseInt(document.getElementById('analisePeriodo')?.value||'3');
+  const origem=document.getElementById('analiseOrigem')?.value||'';
+  const vendedor=document.getElementById('analiseVendedor')?.value||'';
+  return{periodo,origem,vendedor};
+}
+
+function getVendasFiltradas(){
+  const{periodo,origem,vendedor}=getAnaliseConfig();
+  let vendas=todasVendas;
+  // Filtro de período
+  if(periodo>0){
+    const meses=getMeses(periodo);
+    vendas=vendas.filter(v=>meses.includes(v.data?.slice(0,7)));
+  }
+  // Filtro de origem
+  if(origem) vendas=vendas.filter(v=>v.sdr_indicacao===origem);
+  // Filtro de vendedor
+  if(vendedor) vendas=vendas.filter(v=>v.vendedor===vendedor);
+  return vendas;
+}
+
+function getMesesFiltrados(){
+  const{periodo}=getAnaliseConfig();
+  return periodo>0?getMeses(periodo):getMeses(36);
+}
+
+function popularOrigensAnalise(){
+  const sel=document.getElementById('analiseOrigem');
+  if(!sel) return;
+  const origens=[...new Set(todasVendas.map(v=>v.sdr_indicacao).filter(Boolean))].sort();
+  const atual=sel.value;
+  sel.innerHTML='<option value="">Todas as origens</option>';
+  origens.forEach(o=>{
+    const opt=document.createElement('option');
+    opt.value=o;opt.textContent=o;
+    sel.appendChild(opt);
+  });
+  if(atual) sel.value=atual;
+}
+
+function atualizarResumoFiltro(){
+  const{periodo,origem,vendedor}=getAnaliseConfig();
+  const vendas=getVendasFiltradas();
+  const partes=[];
+  if(periodo>0) partes.push(`${periodo} meses`); else partes.push('todo o período');
+  if(origem) partes.push(`origem: ${origem}`);
+  if(vendedor) partes.push(`vendedor: ${vendedor}`);
+  const el=document.getElementById('analise_resumo_filtro');
+  if(el) el.textContent=`${vendas.length} vendas · ${partes.join(' · ')}`;
+}
+
+function limparFiltrosAnalise(){
+  const p=document.getElementById('analisePeriodo');
+  const o=document.getElementById('analiseOrigem');
+  const v=document.getElementById('analiseVendedor');
+  if(p) p.value='3';
+  if(o) o.value='';
+  if(v) v.value='';
+  renderAnalises();
+}
+
 function renderAnalises(){
+  popularOrigensAnalise();
+  atualizarResumoFiltro();
   renderAnaliseCards();
   renderChartEvolucao();
   renderChartTendencia();
@@ -2958,9 +3061,10 @@ function renderAnaliseCards(){
   const agora=new Date();
   const mes=`${agora.getFullYear()}-${String(agora.getMonth()+1).padStart(2,'0')}`;
   const mesAnt=mesAnteriorDe(mes);
-  const vendas12=getMeses(12).flatMap(m=>vendasDoMes(m));
-  const vendasMes=vendasDoMes(mes);
-  const vendasAnt=vendasDoMes(mesAnt);
+  const vendasFiltradas=getVendasFiltradas();
+  const vendas12=vendasFiltradas;
+  const vendasMes=vendasFiltradas.filter(v=>v.data?.slice(0,7)===mes);
+  const vendasAnt=vendasFiltradas.filter(v=>v.data?.slice(0,7)===mesAnt);
 
   // Melhor mês histórico
   const porMes={};
@@ -3007,11 +3111,13 @@ function renderAnaliseCards(){
 // ── EVOLUÇÃO COM SELETOR ─────────────────────────────────────────────
 function renderChartEvolucao(){
   destroyChart('evolucao');
-  const meses=getMeses(periodoEvolucao);
+  const cfg=getAnaliseConfig();
+  const meses=cfg.periodo>0?getMeses(Math.max(periodoEvolucao,cfg.periodo)):getMeses(periodoEvolucao);
   const labels=meses.map(m=>fmtMesLabel(m));
+  const vendsBase=getVendasFiltradas();
   const datasets=VENDEDORES.map(v=>({
     label:v,
-    data:meses.map(m=>soma(vendasDoMes(m).filter(x=>x.vendedor===v),'comissao')),
+    data:meses.map(m=>soma(vendsBase.filter(x=>x.vendedor===v&&x.data?.slice(0,7)===m),'comissao')),
     borderColor:CORES_VENDEDOR[v],backgroundColor:CORES_VENDEDOR[v]+'22',
     tension:.4,fill:true,borderWidth:2.5,pointRadius:5,pointHoverRadius:7
   }));
@@ -3158,8 +3264,7 @@ function renderChartTicket(){
 // ── FAIXAS DE COMISSÃO ────────────────────────────────────────────────
 function renderChartFaixa(){
   destroyChart('faixa');
-  const mes=mesSelecionado('mesFiltro');
-  const vendas=vendasDoMes(mes);
+  const vendas=getVendasFiltradas();
   const faixas={'Até R$100':0,'R$100–500':0,'R$500–1k':0,'R$1k–5k':0,'Acima R$5k':0};
   vendas.forEach(v=>{
     const c=+v.comissao||0;
